@@ -1,0 +1,694 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  
+}
+
+
+
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model announcements {
+  id         String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  posted_by  String                  @db.Uuid
+  scope      announcement_scope_enum @default(GLOBAL)
+  batch_id   String?                 @db.Uuid
+  program_id String?                 @db.Uuid
+  content    String
+  posted_at  DateTime                @default(now()) @db.Timestamptz(6)
+  remarks    String?
+  batch      batch?                  @relation(fields: [batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users      users                   @relation(fields: [posted_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  programs   programs?               @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([posted_at(sort: Desc)], map: "idx_announcements_posted")
+}
+
+model attendance {
+  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id       String                 @db.Uuid
+  enrollment_id    String                 @db.Uuid
+  status           attendance_status_enum
+  recorded_by      String                 @db.Uuid
+  remarks          String?
+  created_at       DateTime               @default(now()) @db.Timestamptz(6)
+  enrollments      enrollments            @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users            users                  @relation(fields: [recorded_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  training_session training_session       @relation(fields: [session_id], references: [session_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([enrollment_id], map: "idx_attendance_enrollment")
+  @@index([session_id], map: "idx_attendance_session")
+}
+
+model batch {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  program_id        String             @db.Uuid
+  trainer_id        String             @db.Uuid
+  created_by        String             @db.Uuid
+  batch_name        String             @db.VarChar(100)
+  capacity          Int
+  start_date        DateTime           @db.Date
+  end_date          DateTime           @db.Date
+  batch_status      batch_status_enum  @default(OPEN)
+  remarks           String?
+  created_at        DateTime           @default(now()) @db.Timestamptz(6)
+  announcements     announcements[]
+  users             users              @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  programs          programs           @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  trainer           trainer            @relation(fields: [trainer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  batch_student_seq batch_student_seq?
+  enrollments       enrollments[]
+  training_session  training_session[]
+
+  @@index([program_id], map: "idx_batch_program")
+  @@index([batch_status], map: "idx_batch_status")
+  @@index([trainer_id], map: "idx_batch_trainer")
+}
+
+model batch_seq {
+  program_id    String   @db.Uuid
+  year          Int      @db.SmallInt
+  last_sequence Int      @default(0)
+  programs      programs @relation(fields: [program_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([program_id, year])
+}
+
+model batch_student_seq {
+  batch_id      String @id @db.Uuid
+  last_sequence Int    @default(0)
+  batch         batch  @relation(fields: [batch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model certificate_type {
+  certificate_type_id   String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type                  certificate_type_enum   @unique
+  description           String?
+  certificates          certificates[]
+  clearance_certificate clearance_certificate[]
+  generated_certificate generated_certificate[]
+  request_form          request_form[]
+}
+
+model certificates {
+  template_id           String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  certificate_type_id   String                  @db.Uuid
+  template_image        String
+  template_name         String                  @db.VarChar(50)
+  is_active             Boolean                 @default(true)
+  certificate_type      certificate_type        @relation(fields: [certificate_type_id], references: [certificate_type_id], onDelete: NoAction, onUpdate: NoAction)
+  generated_certificate generated_certificate[]
+}
+
+model clearance {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  request_form_id       String                  @unique @db.Uuid
+  enrollment_id         String                  @db.Uuid
+  clearance_status      clearance_status_enum   @default(NOT_CLEARED)
+  surrendered_id        Boolean                 @default(false)
+  schedule              DateTime?               @db.Date
+  release_date          DateTime?               @db.Date
+  released_by           String?                 @db.Uuid
+  date_released         DateTime?               @db.Date
+  remarks               String?
+  enrollments           enrollments             @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                 users?                  @relation(fields: [released_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  request_form          request_form            @relation(fields: [request_form_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  clearance_approval    clearance_approval[]
+  clearance_certificate clearance_certificate[]
+  generated_certificate generated_certificate[]
+
+  @@index([request_form_id], map: "idx_clearance_request")
+  @@index([clearance_status], map: "idx_clearance_status")
+}
+
+model clearance_approval {
+  approval_id     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clearance_id    String               @db.Uuid
+  office_role_id  String               @db.Uuid
+  signed_by       String?              @db.Uuid
+  approval_status approval_status_enum @default(PENDING)
+  date_signed     DateTime?            @db.Date
+  remarks         String?
+  clearance       clearance            @relation(fields: [clearance_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  office_role     office_role          @relation(fields: [office_role_id], references: [office_role_id], onDelete: NoAction, onUpdate: NoAction)
+  users           users?               @relation(fields: [signed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([clearance_id], map: "idx_clearance_approval_clearance")
+}
+
+model clearance_certificate {
+  clearance_id        String           @db.Uuid
+  certificate_type_id String           @db.Uuid
+  other_specify       String?
+  certificate_type    certificate_type @relation(fields: [certificate_type_id], references: [certificate_type_id], onDelete: NoAction, onUpdate: NoAction)
+  clearance           clearance        @relation(fields: [clearance_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([clearance_id, certificate_type_id])
+}
+
+model competency {
+  competency_id       String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  program_id          String              @db.Uuid
+  category_id         String              @db.Uuid
+  competency_code     String              @db.VarChar(10)
+  competency_title    String
+  sort_order          Int                 @default(0)
+  competency_category competency_category @relation(fields: [category_id], references: [category_id], onDelete: NoAction, onUpdate: NoAction)
+  programs            programs            @relation(fields: [program_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  learning_outcome    learning_outcome[]
+
+  @@index([program_id], map: "idx_competency_program")
+}
+
+model competency_category {
+  category_id   String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  category_name competency_category_enum
+  competency    competency[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model ctrl_num_seq {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  program_id    String   @db.Uuid
+  year          Int      @db.SmallInt
+  sequence_type String   @default("CERTIFICATE") @db.VarChar(20)
+  last_sequence Int      @default(0)
+  programs      programs @relation(fields: [program_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([program_id, year, sequence_type])
+}
+
+model distribution_checklist {
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollment_id    String      @unique @db.Uuid
+  inventory_id     String?     @db.Uuid
+  uniform_given    Boolean     @default(false)
+  size_issued      size_enum?
+  id_card_given    Boolean     @default(false)
+  date_distributed DateTime?   @db.Date
+  distributed_by   String?     @db.Uuid
+  remarks          String?
+  updated_at       DateTime    @default(now()) @db.Timestamptz(6)
+  users            users?      @relation(fields: [distributed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments      enrollments @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  inventory        inventory?  @relation(fields: [inventory_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([enrollment_id], map: "idx_distribution_checklist_enrollment")
+}
+
+model enrollments {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  trainee_id             String                   @db.Uuid
+  batch_id               String                   @db.Uuid
+  enrollment_status      enrollment_status_enum   @default(PENDING)
+  uniform_size           size_enum?
+  id_card_number         String?                  @unique @db.VarChar(50)
+  exit_reason            String?
+  remarks                String?
+  enrolled_by            String                   @db.Uuid
+  enrolled_at            DateTime                 @default(now()) @db.Timestamptz(6)
+  attendance             attendance[]
+  clearance              clearance[]
+  distribution_checklist distribution_checklist?
+  batch                  batch                    @relation(fields: [batch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                  users                    @relation(fields: [enrolled_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  trainee                trainee                  @relation(fields: [trainee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  generated_certificate  generated_certificate[]
+  official_receipts      official_receipts[]
+  request_form           request_form[]
+  requirement_checklist  requirement_checklist?
+  trainee_outcome_status trainee_outcome_status[]
+  withdrawal_request     withdrawal_request[]
+
+  @@index([batch_id], map: "idx_enrollments_batch")
+  @@index([enrollment_status], map: "idx_enrollments_status")
+  @@index([trainee_id], map: "idx_enrollments_trainee")
+}
+
+model generated_certificate {
+  generated_certificate_id String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  clearance_id             String              @db.Uuid
+  enrollment_id            String              @db.Uuid
+  certificate_type_id      String              @db.Uuid
+  template_id              String              @db.Uuid
+  date_generated           DateTime?           @default(dbgenerated("CURRENT_DATE")) @db.Date
+  date_released            DateTime?           @db.Date
+  released_by              String?             @db.Uuid
+  release_status           release_status_enum @default(PENDING)
+  control_number           String              @unique @db.VarChar(50)
+  remarks                  String?
+  certificate_type         certificate_type    @relation(fields: [certificate_type_id], references: [certificate_type_id], onDelete: NoAction, onUpdate: NoAction)
+  clearance                clearance           @relation(fields: [clearance_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  enrollments              enrollments         @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                    users?              @relation(fields: [released_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  certificates             certificates        @relation(fields: [template_id], references: [template_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([clearance_id], map: "idx_generated_cert_clearance")
+  @@index([enrollment_id], map: "idx_generated_cert_enrollment")
+}
+
+model insurance_coverage {
+  coverage_id         String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  trainee_id          String            @db.Uuid
+  effective_date      DateTime          @db.Date
+  expiry_date         DateTime          @db.Date
+  official_receipt_id String            @db.Uuid
+  official_receipts   official_receipts @relation(fields: [official_receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  trainee             trainee           @relation(fields: [trainee_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model inventory {
+  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  program_id             String                   @db.Uuid
+  item_name              String                   @db.VarChar(100)
+  sizes                  size_enum
+  quantity               Int                      @default(0)
+  updated_by             String                   @db.Uuid
+  updated_at             DateTime                 @default(now()) @db.Timestamptz(6)
+  distribution_checklist distribution_checklist[]
+  programs               programs                 @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                  users                    @relation(fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([program_id], map: "idx_inventory_program")
+}
+
+model learning_outcome {
+  learning_outcome_id    String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  competency_id          String                   @db.Uuid
+  outcome_number         Int                      @db.SmallInt
+  outcome_description    String
+  sort_order             Int                      @default(0)
+  competency             competency               @relation(fields: [competency_id], references: [competency_id], onDelete: Cascade, onUpdate: NoAction)
+  trainee_outcome_status trainee_outcome_status[]
+
+  @@index([competency_id], map: "idx_learning_outcome_competency")
+}
+
+model office_role {
+  office_role_id     String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  role_name          String               @db.VarChar(50)
+  clearance_approval clearance_approval[]
+  user_role          user_role[]
+}
+
+model official_receipts {
+  id                 String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollment_id      String               @db.Uuid
+  or_number          String               @unique @db.VarChar(50)
+  base_fee           Decimal              @db.Decimal(10, 2)
+  amount             Decimal              @db.Decimal(10, 2)
+  payment_date       DateTime             @db.Date
+  payment_method     payment_method_enum
+  reason_of_dues     payment_reason_enum
+  remarks            String?
+  confirmed_by       String?              @db.Uuid
+  created_at         DateTime             @default(now()) @db.Timestamptz(6)
+  insurance_coverage insurance_coverage[]
+  users              users?               @relation(fields: [confirmed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments        enrollments          @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([enrollment_id], map: "idx_official_receipts_enrollment")
+}
+
+model programs {
+  id                               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                             String          @unique @db.VarChar(50)
+  is_accredited                    Boolean         @default(false)
+  schedule                         day_enum[]
+  start_time                       DateTime        @db.Time(6)
+  end_time                         DateTime        @db.Time(6)
+  is_active                        Boolean         @default(true)
+  total_training_hours             Decimal?        @db.Decimal(6, 2)
+  approx_months                    String?         @db.VarChar(50)
+  control_number_prefix            String          @db.VarChar(20)
+  id_card_prefix                   String          @db.VarChar(20)
+  created_at                       DateTime        @default(now()) @db.Timestamptz(6)
+  created_by                       String          @db.Uuid
+  updated_by                       String          @db.Uuid
+  announcements                    announcements[]
+  batch                            batch[]
+  batch_seq                        batch_seq[]
+  competency                       competency[]
+  ctrl_num_seq                     ctrl_num_seq[]
+  inventory                        inventory[]
+  users_programs_created_byTousers users           @relation("programs_created_byTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_programs_updated_byTousers users           @relation("programs_updated_byTousers", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([is_active], map: "idx_programs_active")
+}
+
+model request_form {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollment_id       String              @db.Uuid
+  certificate_type_id String              @db.Uuid
+  other_specify       String?
+  purpose_of_request  String
+  request_status      request_status_enum @default(PENDING)
+  is_window_open      Boolean             @default(false)
+  requested_at        DateTime            @default(now()) @db.Timestamptz(6)
+  remarks             String?
+  clearance           clearance?
+  certificate_type    certificate_type    @relation(fields: [certificate_type_id], references: [certificate_type_id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments         enrollments         @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([enrollment_id], map: "idx_request_form_enrollment")
+  @@index([request_status], map: "idx_request_form_status")
+}
+
+model requirement_checklist {
+  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollment_id   String      @unique @db.Uuid
+  checked_by      String      @db.Uuid
+  bc_nso_psa_copy Boolean     @default(false)
+  diploma_tor     Boolean     @default(false)
+  brgy_clearance  Boolean     @default(false)
+  one_by_one_pic  Boolean     @default(false)
+  two_by_two_pic  Boolean     @default(false)
+  passport_size   Boolean     @default(false)
+  commitment_fee  Boolean     @default(false)
+  remarks         String?
+  checked_at      DateTime    @default(now()) @db.Timestamptz(6)
+  users           users       @relation(fields: [checked_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments     enrollments @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model sessions {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String   @db.Uuid
+  expires       DateTime @db.Timestamptz(6)
+  session_token String   @unique
+  users         users    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_sessions_user")
+}
+
+model trainee {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  users_id              String?                 @db.Uuid
+  contact_number        String                  @db.VarChar(15)
+  street_address        String                  @db.VarChar(100)
+  barangay              String                  @db.VarChar(100)
+  municipality          String                  @db.VarChar(100)
+  district              String                  @db.VarChar(100)
+  province              String                  @db.VarChar(100)
+  gender                gender_enum
+  date_of_birth         DateTime                @db.Date
+  place_of_birth        String                  @db.VarChar(100)
+  citizenship           String                  @default("FILIPINO") @db.VarChar(100)
+  mother_name           String                  @db.VarChar(100)
+  father_name           String                  @db.VarChar(100)
+  civil_status          civil_status_enum
+  highest_education     highest_education_enum
+  pwd                   Boolean                 @default(false)
+  employment_status     employment_status_enum
+  employment_type       employment_type_enum
+  enrollments           enrollments[]
+  insurance_coverage    insurance_coverage[]
+  users                 users?                  @relation(fields: [users_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  trainee_beneficiaries trainee_beneficiaries[]
+}
+
+model trainee_beneficiaries {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  trainee_id     String  @db.Uuid
+  first_name     String  @db.VarChar(50)
+  last_name      String  @db.VarChar(50)
+  middle_name    String  @db.VarChar(50)
+  relationship   String  @db.VarChar(50)
+  contact_number String  @unique @db.VarChar(15)
+  id_number      String  @unique @db.VarChar(50)
+  address        String  @db.VarChar(100)
+  trainee        trainee @relation(fields: [trainee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([trainee_id], map: "idx_beneficiaries_trainee")
+}
+
+model trainee_outcome_status {
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollment_id       String              @db.Uuid
+  learning_outcome_id String              @db.Uuid
+  status              outcome_status_enum @default(PENDING)
+  date_checked        DateTime?           @db.Date
+  remarks             String?
+  checked_by          String?             @db.Uuid
+  users               users?              @relation(fields: [checked_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments         enrollments         @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  learning_outcome    learning_outcome    @relation(fields: [learning_outcome_id], references: [learning_outcome_id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([enrollment_id], map: "idx_outcome_enrollment")
+}
+
+model trainer {
+  id                String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String                 @unique @db.Uuid
+  gender            gender_enum
+  complete_address  String
+  highest_education highest_education_enum
+  date_of_birth     DateTime               @db.Date
+  contact_number    String                 @db.VarChar(15)
+  batch             batch[]
+  users             users                  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model training_session {
+  session_id     String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  batch_id       String       @db.Uuid
+  session_date   DateTime     @db.Date
+  topics_covered String?
+  created_by     String       @db.Uuid
+  attendance     attendance[]
+  batch          batch        @relation(fields: [batch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users          users        @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([batch_id], map: "idx_training_session_batch")
+}
+
+model user_role {
+  users_id       String      @db.Uuid
+  office_role_id String      @db.Uuid
+  office_role    office_role @relation(fields: [office_role_id], references: [office_role_id], onDelete: Cascade, onUpdate: NoAction)
+  users          users       @relation(fields: [users_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([users_id, office_role_id])
+}
+
+model users {
+  id                                  String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  first_name                          String                   @db.VarChar(100)
+  last_name                           String                   @db.VarChar(100)
+  middle_name                         String                   @db.VarChar(100)
+  password_hash                       String
+  role                                user_role_enum
+  avatar_url                          String?                  @db.VarChar(255)
+  is_active                           Boolean                  @default(true)
+  created_at                          DateTime                 @default(now()) @db.Timestamptz(6)
+  updated_at                          DateTime                 @default(now()) @db.Timestamptz(6)
+  announcements                       announcements[]
+  attendance                          attendance[]
+  batch                               batch[]
+  clearance                           clearance[]
+  clearance_approval                  clearance_approval[]
+  distribution_checklist              distribution_checklist[]
+  enrollments                         enrollments[]
+  generated_certificate               generated_certificate[]
+  inventory                           inventory[]
+  official_receipts                   official_receipts[]
+  programs_programs_created_byTousers programs[]               @relation("programs_created_byTousers")
+  programs_programs_updated_byTousers programs[]               @relation("programs_updated_byTousers")
+  requirement_checklist               requirement_checklist[]
+  sessions                            sessions[]
+  trainee                             trainee[]
+  trainee_outcome_status              trainee_outcome_status[]
+  trainer                             trainer?
+  training_session                    training_session[]
+  user_role                           user_role[]
+  withdrawal_request                  withdrawal_request[]
+}
+
+model withdrawal_request {
+  withdrawal_request_id String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollment_id         String              @db.Uuid
+  requested_reason      String
+  date_requested        DateTime            @db.Date
+  flagged_by_system     Boolean             @default(false)
+  request_status        request_status_enum @default(PENDING)
+  surrendered_id        Boolean             @default(false)
+  reviewed_by           String?             @db.Uuid
+  date_reviewed         DateTime?           @db.Date
+  remarks               String?
+  enrollments           enrollments         @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users                 users?              @relation(fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([enrollment_id], map: "idx_withdrawal_enrollment")
+}
+
+enum announcement_scope_enum {
+  GLOBAL
+  PROGRAM
+  BATCH
+}
+
+enum approval_status_enum {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum attendance_status_enum {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum batch_status_enum {
+  OPEN
+  ONGOING
+  CLOSED
+  CANCELLED
+}
+
+enum certificate_type_enum {
+  COC
+  COT
+  NC
+  OTHER
+}
+
+enum civil_status_enum {
+  SINGLE
+  MARRIED
+  WIDOWED
+  SEPARATED
+  DIVORCED
+}
+
+enum clearance_status_enum {
+  NOT_CLEARED
+  PENDING
+  CLEARED
+}
+
+enum competency_category_enum {
+  BASIC
+  COMMON
+  CORE
+}
+
+enum day_enum {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+enum employment_status_enum {
+  EMPLOYED
+  UNEMPLOYED
+  SELF_EMPLOYED
+  STUDENT
+}
+
+enum employment_type_enum {
+  FULL_TIME
+  PART_TIME
+  CASUAL
+  CONTRACTUAL
+  SEASONAL
+}
+
+enum enrollment_status_enum {
+  PENDING
+  ENROLLED
+  WITHDRAWN
+  COMPLETED
+  DROPPED
+}
+
+enum gender_enum {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum highest_education_enum {
+  ELEMENTARY
+  HIGH_SCHOOL
+  VOCATIONAL
+  COLLEGE
+  POST_GRADUATE
+}
+
+enum outcome_status_enum {
+  PENDING
+  PASSED
+  FAILED
+  NOT_YET_ASSESSED
+}
+
+enum payment_method_enum {
+  CASH
+  GCASH
+  BANK_TRANSFER
+  CHECK
+}
+
+enum payment_reason_enum {
+  ENROLLMENT
+  PROCESSING_FEE
+  UNIFORM_ID_FEE
+  ASSESSMENT_DEPOSIT
+  EXTERNAL_FEES
+}
+
+enum release_status_enum {
+  PENDING
+  RELEASED
+  CANCELLED
+}
+
+enum request_status_enum {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum size_enum {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+  XXXL
+}
+
+enum user_role_enum {
+  ADMIN
+  REGISTRAR
+  TRAINER
+  TRAINEE
+  ENCODER
+}
