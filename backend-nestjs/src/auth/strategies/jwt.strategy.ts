@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 // Type declarations may be unavailable in environments where passport-jwt is
 // installed without its optional DefinitelyTyped package.
-// @ts-expect-error passport-jwt is provided at runtime by the authentication setup.
+
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
