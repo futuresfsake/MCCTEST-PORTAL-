@@ -17,7 +17,7 @@ function LandingPage() {
           {/* Left side */}
           <div>
             <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
-              MCCTEST Training Portal
+              MCCTEST Portal
             </p>
 
             <h1 className="max-w-2xl text-5xl font-bold leading-[1.05] tracking-tight text-slate-950 md:text-6xl lg:text-7xl">
@@ -78,7 +78,7 @@ function LandingPage() {
               </p>
 
               <p className="mt-4 text-base leading-7 text-slate-600">
-                The MCCTEST Training Portal brings training, assessment,
+                The MCCTEST Portal brings training, assessment,
                 and certification information together in one place.
               </p>
             </div>
@@ -249,7 +249,7 @@ function LandingPage() {
                 </p>
 
                 <p className="mt-2 text-sm text-slate-600">
-                  MCCTEST Training Center
+                  J.M Ceniza St., Looc Mandaue, Mandaue City, Philippines
                 </p>
               </div>
 
@@ -259,7 +259,7 @@ function LandingPage() {
                 </p>
 
                 <p className="mt-2 text-sm text-slate-600">
-                  info@mcctest.edu.ph
+                  mcctesttrainingassessmentcntr@gmail.com
                 </p>
               </div>
 
@@ -283,7 +283,7 @@ function LandingPage() {
       <footer className="border-t border-slate-200 bg-slate-900">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-slate-400 md:flex-row md:items-center md:justify-between lg:px-8">
           <p>
-            © {new Date().getFullYear()} MCCTEST Training Portal
+            © {new Date().getFullYear()} MCCTEST Portal
           </p>
 
           <p>

@@ -19,7 +19,7 @@ function Header() {
             </p>
 
             <p className="mt-1 text-[11px] font-medium tracking-[0.15em] text-slate-500">
-              TRAINING PORTAL
+              PORTAL
             </p>
           </div>
         </a>
