@@ -121,7 +121,7 @@ export class AuthService {
       sessionToken,
       user: {
         id: user.id,
-        systemId: user.system_id,
+        systemId: user.system_id ?? '',
         role: user.role,
         firstName: user.first_name,
         lastName: user.last_name,
@@ -189,7 +189,7 @@ export class AuthService {
       `Admin ${createdByUserId} created account ${newUser.system_id} with role ${role}`,
     );
 
-    return { systemId: newUser.system_id, userId: newUser.id };
+    return { systemId: newUser.system_id ?? '', userId: newUser.id };
   }
 
   // ── system_id Generator ─────────────────────────────────────────────────────
@@ -222,7 +222,7 @@ export class AuthService {
     let nextSeq = 1;
     if (last) {
       // system_id = MCCTP-26-042 → split on '-' → ['MCCTP','26','042'] → last part
-      const parts = last.system_id.split('-');
+      const parts = (last.system_id ?? '').split('-');
       const lastSeq = parseInt(parts[parts.length - 1], 10);
       nextSeq = lastSeq + 1;
     }
