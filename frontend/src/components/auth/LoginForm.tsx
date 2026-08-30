@@ -45,6 +45,7 @@ function LoginForm() {
       // Redirect based on role
       switch (data.user.role) {
         case 'ADMIN':
+            console.log(data.user.role)
             console.log('Redirecting to /admin')
             navigate('/admin', { replace: true })
             break
@@ -93,7 +94,7 @@ function LoginForm() {
             htmlFor="systemId"
             className="mb-2 block text-sm font-medium text-slate-700"
           >
-            System ID
+            ID
           </label>
 
           <input
