@@ -1,7 +1,7 @@
-
 import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import mcctestLogo from '../../../assets/mcctest-logo.png'
+import Header from '../../../components/layout/Header'
+import Sidebar from '../../../components/layout/Sidebar'
 
 type Activity = {
   id: number
@@ -28,7 +28,7 @@ const AdminDashboard: React.FC = () => {
 
   /* =============================================================
      DASHBOARD DATA
-     ============================================================= */
+  ============================================================= */
 
   const stats = [
     {
@@ -139,7 +139,7 @@ const AdminDashboard: React.FC = () => {
       trainer: 'John Villanueva',
       trainees: 17,
       capacity: 20,
-      schedule: 'Completed',
+      schedule: 'Mon–Fri • 2:00 PM',
       status: 'Completed',
     },
   ]
@@ -183,7 +183,7 @@ const AdminDashboard: React.FC = () => {
 
   /* =============================================================
      HELPERS
-     ============================================================= */
+  ============================================================= */
 
   const activityIconClass = (type: Activity['type']) => {
     switch (type) {
@@ -216,417 +216,476 @@ const AdminDashboard: React.FC = () => {
 
   /* =============================================================
      RENDER
-     ============================================================= */
+  ============================================================= */
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="h-screen overflow-hidden bg-white text-slate-900">
 
       {/* =========================================================
-          EXISTING LANDING PAGE HEADER
+          GLOBAL HEADER
       ========================================================= */}
 
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-3">
-            <img
-              src={mcctestLogo}
-              alt="MCCTEST"
-              className="h-12 w-12 object-contain"
-            />
-            <div className="hidden sm:block">
-              <p className="text-lg font-bold leading-none text-blue-900">
-                MCCTEST
-              </p>
-              <p className="mt-1 text-[11px] font-medium tracking-[0.15em] text-slate-500">
-                PORTAL
-              </p>
-            </div>
-          </a>
-
-          {/* Sign Out */}
-          <button
-            onClick={() => navigate('/')}
-            className="border border-blue-900 px-5 py-2.5 text-sm font-semibold text-blue-900 transition hover:bg-blue-900 hover:text-white"
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
+      <Header />
 
       {/* =========================================================
-          ADMIN CONTENT
+          FIXED VIEWPORT AREA
+          
+          Sidebar stays in place.
+          Only the main content scrolls.
       ========================================================= */}
 
-      <main>
+      <div className="flex h-[calc(100vh-5rem)] overflow-hidden">
 
         {/* =======================================================
-            ADMIN INTRO
+            SIDEBAR
+
+            This does NOT scroll.
         ======================================================= */}
 
-        <section className="border-b border-slate-200 bg-white">
+        <Sidebar variant="admin" />
 
-          <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+        {/* =======================================================
+            MAIN CONTENT
 
-            <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+            This is the ONLY scrolling area.
+        ======================================================= */}
 
-              {/* Heading */}
+        <main className="min-w-0 flex-1 overflow-y-auto">
 
-              <div>
+          {/* =====================================================
+              ADMIN INTRO
+          ===================================================== */}
 
-                <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
-                  Administration
-                </p>
+          <section className="border-b border-slate-200 bg-white">
 
-                <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight text-slate-950 md:text-5xl">
-                  MCCTEST
-                  <span className="block text-blue-900">
-                   Admin Dashboard.
-                  </span>
-                </h1>
+            <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
 
-                <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                  Monitor trainees, training batches, enrollment,
-                  certification, inventory, and other administrative
-                  activities from one place.
-                </p>
+              <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
 
-                <div className="mt-8 flex flex-wrap gap-6">
+                <div>
 
-                  <span className="border-l-4 border-yellow-400 pl-4 text-sm font-semibold text-slate-700">
-                    Training
-                  </span>
+                  <p className="mb-4 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
+                    Administration
+                  </p>
 
-                  <span className="border-l-4 border-yellow-400 pl-4 text-sm font-semibold text-slate-700">
-                    Records
-                  </span>
+                  <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight text-slate-950 md:text-5xl">
+                    MCCTEST
+                    <span className="block text-blue-900">
+                      Admin Dashboard.
+                    </span>
+                  </h1>
 
-                  <span className="border-l-4 border-yellow-400 pl-4 text-sm font-semibold text-slate-700">
-                    Certification
-                  </span>
+                  <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
+                    Monitor trainees, training batches, enrollment,
+                    certification, inventory, and other administrative
+                    activities from one place.
+                  </p>
+
+                  <div className="mt-8 flex flex-wrap gap-6">
+
+                    <span className="border-l-4 border-yellow-400 pl-4 text-sm font-semibold text-slate-700">
+                      Training
+                    </span>
+
+                    <span className="border-l-4 border-yellow-400 pl-4 text-sm font-semibold text-slate-700">
+                      Records
+                    </span>
+
+                    <span className="border-l-4 border-yellow-400 pl-4 text-sm font-semibold text-slate-700">
+                      Certification
+                    </span>
+
+                  </div>
+
+                </div>
+
+                <div className="border-l border-slate-200 pl-6 lg:ml-auto lg:max-w-sm">
+
+                  <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">
+                    Today
+                  </p>
+
+                  <p className="mt-2 text-2xl font-bold text-slate-900">
+                    August 31, 2026
+                  </p>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-500">
+                    Welcome back, Administrator. Here is the current
+                    operational overview of MCCTEST.
+                  </p>
 
                 </div>
 
               </div>
 
-              {/* Date / admin information */}
-
-              <div className="border-l border-slate-200 pl-6 lg:ml-auto lg:max-w-sm">
-
-                <p className="text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">
-                  Today
-                </p>
-
-                <p className="mt-2 text-2xl font-bold text-slate-900">
-                  August 31, 2026
-                </p>
-
-                <p className="mt-3 text-sm leading-6 text-slate-500">
-                  Welcome back, Administrator. Here is the current
-                  operational overview of MCCTEST.
-                </p>
-
-              </div>
-
             </div>
 
-          </div>
+          </section>
 
-        </section>
+          {/* =====================================================
+              DASHBOARD BODY
+          ===================================================== */}
 
-        {/* =======================================================
-            DASHBOARD BODY
-        ======================================================= */}
+          <section className="border-b border-slate-200 bg-slate-50">
 
-        <section className="border-b border-slate-200 bg-slate-50">
+            <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
 
-          <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8">
+              {/* =================================================
+                  KEY STATISTICS
+              ================================================= */}
 
-            {/* ===================================================
-                KEY STATISTICS
-            =================================================== */}
+              <div className="mb-16">
 
-            <div className="mb-16">
+                <div className="mb-8">
 
-              <div className="mb-8">
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
+                    Overview
+                  </p>
 
-                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
-                  Overview
-                </p>
+                  <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                    What's happening today?
+                  </h2>
 
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                  What's happening today?
-                </h2>
+                </div>
 
-              </div>
+                <div className="grid grid-cols-1 gap-px border border-slate-200 bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
 
-              <div className="grid grid-cols-1 gap-px border border-slate-200 bg-slate-200 sm:grid-cols-2 lg:grid-cols-4">
+                  {stats.map((stat) => (
 
-                {stats.map((stat) => (
+                    <div
+                      key={stat.title}
+                      className="bg-white p-6 transition hover:bg-slate-50"
+                    >
 
-                  <div
-                    key={stat.title}
-                    className="bg-white p-6 transition hover:bg-slate-50"
-                  >
+                      <div className="flex items-start justify-between">
 
-                    <div className="flex items-start justify-between">
+                        <div>
 
-                      <div>
+                          <p className="text-sm font-medium text-slate-500">
+                            {stat.title}
+                          </p>
 
-                        <p className="text-sm font-medium text-slate-500">
-                          {stat.title}
-                        </p>
+                          <p className="mt-3 text-4xl font-bold tracking-tight text-slate-950">
+                            {stat.value}
+                          </p>
 
-                        <p className="mt-3 text-4xl font-bold tracking-tight text-slate-950">
-                          {stat.value}
-                        </p>
+                          <p className="mt-3 text-xs font-medium text-slate-400">
+                            {stat.change}
+                          </p>
 
-                        <p className="mt-3 text-xs font-medium text-slate-400">
-                          {stat.change}
-                        </p>
+                        </div>
+
+                        <i
+                          className={`${stat.icon} text-lg text-blue-900`}
+                        />
 
                       </div>
 
-                      <i
-                        className={`${stat.icon} text-lg text-blue-900`}
-                      />
+                    </div>
+
+                  ))}
+
+                </div>
+
+              </div>
+
+              {/* =================================================
+                  QUICK ACTIONS
+              ================================================= */}
+
+              <div className="mb-16">
+
+                <div className="mb-8">
+
+                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
+                    Administration
+                  </p>
+
+                  <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                    Quick access
+                  </h2>
+
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+
+                  <button
+                    onClick={() => navigate('/admin/trainees')}
+                    className="group border border-slate-200 bg-white p-6 text-left transition hover:border-blue-900"
+                  >
+
+                    <i className="fa-solid fa-users text-lg text-blue-900" />
+
+                    <h3 className="mt-5 text-base font-semibold text-slate-900">
+                      Manage Trainees
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      View and manage trainee records and profiles.
+                    </p>
+
+                    <div className="mt-5 text-xs font-semibold text-blue-900">
+                      Open section
+                      <i className="fa-solid fa-arrow-right ml-2 text-[9px] transition group-hover:translate-x-1" />
+                    </div>
+
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/admin/enrollment')}
+                    className="group border border-slate-200 bg-white p-6 text-left transition hover:border-blue-900"
+                  >
+
+                    <i className="fa-solid fa-user-check text-lg text-blue-900" />
+
+                    <h3 className="mt-5 text-base font-semibold text-slate-900">
+                      Enrollment
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Review applications, requirements, and enrollment records.
+                    </p>
+
+                    <div className="mt-5 text-xs font-semibold text-blue-900">
+                      Open section
+                      <i className="fa-solid fa-arrow-right ml-2 text-[9px] transition group-hover:translate-x-1" />
+                    </div>
+
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/admin/batches')}
+                    className="group border border-slate-200 bg-white p-6 text-left transition hover:border-blue-900"
+                  >
+
+                    <i className="fa-solid fa-layer-group text-lg text-blue-900" />
+
+                    <h3 className="mt-5 text-base font-semibold text-slate-900">
+                      Training & Batches
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Monitor active batches, schedules, trainers, and capacity.
+                    </p>
+
+                    <div className="mt-5 text-xs font-semibold text-blue-900">
+                      Open section
+                      <i className="fa-solid fa-arrow-right ml-2 text-[9px] transition group-hover:translate-x-1" />
+                    </div>
+
+                  </button>
+
+                  <button
+                    onClick={() => navigate('/admin/reports')}
+                    className="group border border-slate-200 bg-white p-6 text-left transition hover:border-blue-900"
+                  >
+
+                    <i className="fa-solid fa-chart-column text-lg text-blue-900" />
+
+                    <h3 className="mt-5 text-base font-semibold text-slate-900">
+                      Reports
+                    </h3>
+
+                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                      Access institutional and TESDA-related reports.
+                    </p>
+
+                    <div className="mt-5 text-xs font-semibold text-blue-900">
+                      Open section
+                      <i className="fa-solid fa-arrow-right ml-2 text-[9px] transition group-hover:translate-x-1" />
+                    </div>
+
+                  </button>
+
+                </div>
+
+              </div>
+
+              {/* =================================================
+                  ENROLLMENT + PROGRAMS
+              ================================================= */}
+
+              <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.3fr_0.7fr]">
+
+                <div>
+
+                  <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+
+                    <div>
+
+                      <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
+                        Enrollment
+                      </p>
+
+                      <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                        Enrollment activity
+                      </h2>
+
+                      <p className="mt-2 text-sm text-slate-500">
+                        Overview of recent trainee enrollment activity.
+                      </p>
+
+                    </div>
+
+                    <div className="flex gap-4 border-b border-slate-200">
+
+                      {['This Week', 'This Month', 'This Year'].map(
+                        (period) => (
+
+                          <button
+                            key={period}
+                            onClick={() => setActivePeriod(period)}
+                            className={`border-b-2 px-1 pb-3 text-xs font-semibold transition ${
+                              activePeriod === period
+                                ? 'border-blue-900 text-blue-900'
+                                : 'border-transparent text-slate-400 hover:text-blue-900'
+                            }`}
+                          >
+                            {period}
+                          </button>
+
+                        ),
+                      )}
 
                     </div>
 
                   </div>
 
-                ))}
+                  <div className="border border-slate-200 bg-white p-6">
 
-              </div>
+                    <div className="flex h-64 items-end gap-3 border-b border-slate-200 sm:gap-6">
 
-            </div>
+                      {currentEnrollment.map((value, index) => {
 
-            {/* ===================================================
-                QUICK ACTIONS
-            =================================================== */}
+                        const days = [
+                          'Mon',
+                          'Tue',
+                          'Wed',
+                          'Thu',
+                          'Fri',
+                          'Sat',
+                          'Sun',
+                        ]
 
-            <div className="mb-16">
+                        return (
+                          <div
+                            key={days[index]}
+                            className="group flex h-full flex-1 flex-col items-center justify-end"
+                          >
 
-              <div className="mb-8">
+                            <div className="relative flex w-full justify-center">
 
-                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
-                  Administration
-                </p>
+                              <span className="absolute -top-6 text-[10px] font-semibold text-blue-900 opacity-0 transition group-hover:opacity-100">
+                                {value}
+                              </span>
 
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                  Quick access
-                </h2>
+                              <div
+                                className="w-full max-w-10 bg-blue-900 transition group-hover:bg-blue-950"
+                                style={{
+                                  height: `${Math.max(value * 2, 12)}px`,
+                                }}
+                              />
 
-              </div>
+                            </div>
 
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+                            <span className="mt-3 text-[10px] font-medium text-slate-400">
+                              {days[index]}
+                            </span>
 
-                <button
-                  onClick={() => navigate('/admin/trainees')}
-                  className="group border border-slate-200 bg-white p-6 text-left transition hover:border-blue-900"
-                >
+                          </div>
+                        )
+                      })}
 
-                  <i className="fa-solid fa-users text-lg text-blue-900" />
+                    </div>
 
-                  <h3 className="mt-5 text-base font-semibold text-slate-900">
-                    Manage Trainees
-                  </h3>
+                    <div className="mt-5 flex items-center justify-between">
 
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    View and manage trainee records and profiles.
-                  </p>
+                      <div className="flex items-center gap-2">
 
-                  <div className="mt-5 text-xs font-semibold text-blue-900">
-                    Open section
-                    <i className="fa-solid fa-arrow-right ml-2 text-[9px] transition group-hover:translate-x-1" />
-                  </div>
+                        <span className="h-2 w-2 bg-blue-900" />
 
-                </button>
+                        <span className="text-xs text-slate-500">
+                          New enrollments
+                        </span>
 
-                <button
-                  onClick={() => navigate('/admin/enrollment')}
-                  className="group border border-slate-200 bg-white p-6 text-left transition hover:border-blue-900"
-                >
+                      </div>
 
-                  <i className="fa-solid fa-user-check text-lg text-blue-900" />
+                      <span className="text-xs text-slate-400">
+                        {activePeriod}
+                      </span>
 
-                  <h3 className="mt-5 text-base font-semibold text-slate-900">
-                    Enrollment
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Review applications, requirements, and enrollment records.
-                  </p>
-
-                  <div className="mt-5 text-xs font-semibold text-blue-900">
-                    Open section
-                    <i className="fa-solid fa-arrow-right ml-2 text-[9px] transition group-hover:translate-x-1" />
-                  </div>
-
-                </button>
-
-                <button
-                  onClick={() => navigate('/admin/batches')}
-                  className="group border border-slate-200 bg-white p-6 text-left transition hover:border-blue-900"
-                >
-
-                  <i className="fa-solid fa-layer-group text-lg text-blue-900" />
-
-                  <h3 className="mt-5 text-base font-semibold text-slate-900">
-                    Training & Batches
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Monitor active batches, schedules, trainers, and capacity.
-                  </p>
-
-                  <div className="mt-5 text-xs font-semibold text-blue-900">
-                    Open section
-                    <i className="fa-solid fa-arrow-right ml-2 text-[9px] transition group-hover:translate-x-1" />
-                  </div>
-
-                </button>
-
-                <button
-                  onClick={() => navigate('/admin/reports')}
-                  className="group border border-slate-200 bg-white p-6 text-left transition hover:border-blue-900"
-                >
-
-                  <i className="fa-solid fa-chart-column text-lg text-blue-900" />
-
-                  <h3 className="mt-5 text-base font-semibold text-slate-900">
-                    Reports
-                  </h3>
-
-                  <p className="mt-2 text-sm leading-6 text-slate-500">
-                    Access institutional and TESDA-related reports.
-                  </p>
-
-                  <div className="mt-5 text-xs font-semibold text-blue-900">
-                    Open section
-                    <i className="fa-solid fa-arrow-right ml-2 text-[9px] transition group-hover:translate-x-1" />
-                  </div>
-
-                </button>
-
-              </div>
-
-            </div>
-
-            {/* ===================================================
-                ENROLLMENT + PROGRAMS
-            =================================================== */}
-
-            <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1.3fr_0.7fr]">
-
-              {/* Enrollment */}
-
-              <div>
-
-                <div className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-
-                  <div>
-
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
-                      Enrollment
-                    </p>
-
-                    <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                      Enrollment activity
-                    </h2>
-
-                    <p className="mt-2 text-sm text-slate-500">
-                      Overview of recent trainee enrollment activity.
-                    </p>
-
-                  </div>
-
-                  <div className="flex gap-4 border-b border-slate-200">
-
-                    {['This Week', 'This Month', 'This Year'].map(
-                      (period) => (
-
-                        <button
-                          key={period}
-                          onClick={() => setActivePeriod(period)}
-                          className={`border-b-2 px-1 pb-3 text-xs font-semibold transition ${
-                            activePeriod === period
-                              ? 'border-blue-900 text-blue-900'
-                              : 'border-transparent text-slate-400 hover:text-blue-900'
-                          }`}
-                        >
-                          {period}
-                        </button>
-
-                      ),
-                    )}
+                    </div>
 
                   </div>
 
                 </div>
 
-                <div className="border border-slate-200 bg-white p-6">
+                <div>
 
-                  <div className="flex h-64 items-end gap-3 border-b border-slate-200 sm:gap-6">
+                  <div className="mb-8">
 
-                    {currentEnrollment.map((value, index) => {
+                    <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
+                      Programs
+                    </p>
 
-                      const days = [
-                        'Mon',
-                        'Tue',
-                        'Wed',
-                        'Thu',
-                        'Fri',
-                        'Sat',
-                        'Sun',
-                      ]
+                    <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                      Trainee distribution
+                    </h2>
 
-                      return (
-                        <div
-                          key={days[index]}
-                          className="group flex h-full flex-1 flex-col items-center justify-end"
-                        >
+                    <p className="mt-2 text-sm text-slate-500">
+                      Current active trainees by program.
+                    </p>
 
-                          <div className="relative flex w-full justify-center">
+                  </div>
 
-                            <span className="absolute -top-6 text-[10px] font-semibold text-blue-900 opacity-0 transition group-hover:opacity-100">
-                              {value}
+                  <div className="border border-slate-200 bg-white p-6">
+
+                    <div className="mb-8 flex items-end gap-4">
+
+                      <span className="text-5xl font-bold tracking-tight text-slate-950">
+                        248
+                      </span>
+
+                      <span className="pb-2 text-sm text-slate-500">
+                        active trainees
+                      </span>
+
+                    </div>
+
+                    <div className="space-y-6">
+
+                      {programs.map((program) => (
+
+                        <div key={program.name}>
+
+                          <div className="mb-2 flex justify-between gap-3">
+
+                            <span className="text-xs font-medium text-slate-600">
+                              {program.name}
                             </span>
 
+                            <span className="text-xs font-semibold text-slate-900">
+                              {program.trainees}
+                            </span>
+
+                          </div>
+
+                          <div className="h-1 bg-slate-200">
+
                             <div
-                              className="w-full max-w-10 bg-blue-900 transition group-hover:bg-blue-950"
+                              className="h-1 bg-blue-900"
                               style={{
-                                height: `${Math.max(value * 2, 12)}px`,
+                                width: `${program.percentage * 4}%`,
                               }}
                             />
 
                           </div>
 
-                          <span className="mt-3 text-[10px] font-medium text-slate-400">
-                            {days[index]}
-                          </span>
-
                         </div>
-                      )
-                    })}
 
-                  </div>
-
-                  <div className="mt-5 flex items-center justify-between">
-
-                    <div className="flex items-center gap-2">
-
-                      <span className="h-2 w-2 bg-blue-900" />
-
-                      <span className="text-xs text-slate-500">
-                        New enrollments
-                      </span>
+                      ))}
 
                     </div>
-
-                    <span className="text-xs text-slate-400">
-                      {activePeriod}
-                    </span>
 
                   </div>
 
@@ -634,66 +693,217 @@ const AdminDashboard: React.FC = () => {
 
               </div>
 
-              {/* Programs */}
+            </div>
 
-              <div>
+          </section>
 
-                <div className="mb-8">
+          {/* =====================================================
+              BATCHES + ACTIVITY
+          ===================================================== */}
 
-                  <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
-                    Programs
-                  </p>
+          <section className="border-b border-slate-200 bg-white">
 
-                  <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                    Trainee distribution
-                  </h2>
+            <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
 
-                  <p className="mt-2 text-sm text-slate-500">
-                    Current active trainees by program.
-                  </p>
+              <div className="mb-12">
 
-                </div>
+                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
+                  Operations
+                </p>
 
-                <div className="border border-slate-200 bg-white p-6">
+                <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
+                  Training operations
+                </h2>
 
-                  <div className="mb-8 flex items-end gap-4">
+                <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+                  Keep track of active batches, schedules, trainee capacity,
+                  and the latest administrative activity.
+                </p>
 
-                    <span className="text-5xl font-bold tracking-tight text-slate-950">
-                      248
-                    </span>
+              </div>
 
-                    <span className="pb-2 text-sm text-slate-500">
-                      active trainees
-                    </span>
+              <div className="grid grid-cols-1 gap-12 xl:grid-cols-[1.35fr_0.65fr]">
+
+                {/* =================================================
+                    BATCH TABLE
+                ================================================= */}
+
+                <div>
+
+                  <div className="mb-6 flex items-end justify-between">
+
+                    <div>
+
+                      <h3 className="text-xl font-bold text-slate-900">
+                        Current batches
+                      </h3>
+
+                      <p className="mt-1 text-sm text-slate-500">
+                        Active and recently completed training batches.
+                      </p>
+
+                    </div>
+
+                    <button
+                      onClick={() => navigate('/admin/batches')}
+                      className="hidden text-xs font-semibold text-blue-900 sm:block"
+                    >
+                      View all
+                      <i className="fa-solid fa-arrow-right ml-2 text-[9px]" />
+                    </button>
 
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="overflow-x-auto border-y border-slate-200">
 
-                    {programs.map((program) => (
+                    <table className="w-full min-w-[700px]">
 
-                      <div key={program.name}>
+                      <thead>
 
-                        <div className="mb-2 flex justify-between gap-3">
+                        <tr className="border-b border-slate-200">
 
-                          <span className="text-xs font-medium text-slate-600">
-                            {program.name}
-                          </span>
+                          <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Batch
+                          </th>
 
-                          <span className="text-xs font-semibold text-slate-900">
-                            {program.trainees}
-                          </span>
+                          <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Program
+                          </th>
 
+                          <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Trainer
+                          </th>
+
+                          <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Trainees
+                          </th>
+
+                          <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Status
+                          </th>
+
+                        </tr>
+
+                      </thead>
+
+                      <tbody>
+
+                        {batches.map((batch) => (
+
+                          <tr
+                            key={batch.id}
+                            className="border-b border-slate-100 transition hover:bg-slate-50"
+                          >
+
+                            <td className="px-4 py-5">
+
+                              <span className="text-xs font-semibold text-blue-900">
+                                {batch.id}
+                              </span>
+
+                            </td>
+
+                            <td className="px-4 py-5">
+
+                              <p className="max-w-[230px] text-xs font-semibold text-slate-800">
+                                {batch.program}
+                              </p>
+
+                              <p className="mt-1 text-[10px] text-slate-400">
+                                {batch.schedule}
+                              </p>
+
+                            </td>
+
+                            <td className="px-4 py-5 text-xs text-slate-600">
+                              {batch.trainer}
+                            </td>
+
+                            <td className="px-4 py-5">
+
+                              <span className="text-xs font-semibold text-slate-800">
+                                {batch.trainees}
+                              </span>
+
+                              <span className="text-xs text-slate-400">
+                                {' '}
+                                / {batch.capacity}
+                              </span>
+
+                            </td>
+
+                            <td className="px-4 py-5">
+
+                              <span
+                                className={`text-xs font-semibold ${statusClass(
+                                  batch.status,
+                                )}`}
+                              >
+                                {batch.status}
+                              </span>
+
+                            </td>
+
+                          </tr>
+
+                        ))}
+
+                      </tbody>
+
+                    </table>
+
+                  </div>
+
+                </div>
+
+                {/* =================================================
+                    RECENT ACTIVITY
+                ================================================= */}
+
+                <div>
+
+                  <div className="mb-6">
+
+                    <h3 className="text-xl font-bold text-slate-900">
+                      Recent activity
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                      Latest updates across the portal.
+                    </p>
+
+                  </div>
+
+                  <div>
+
+                    {activities.map((activity) => (
+
+                      <div
+                        key={activity.id}
+                        className="flex gap-4 border-b border-slate-200 py-5 first:border-t"
+                      >
+
+                        <div
+                          className={`flex h-9 w-9 shrink-0 items-center justify-center ${activityIconClass(
+                            activity.type,
+                          )}`}
+                        >
+                          <i className={`${activity.icon} text-xs`} />
                         </div>
 
-                        <div className="h-1 bg-slate-200">
+                        <div className="min-w-0">
 
-                          <div
-                            className="h-1 bg-blue-900"
-                            style={{
-                              width: `${program.percentage * 4}%`,
-                            }}
-                          />
+                          <p className="text-xs font-semibold text-slate-900">
+                            {activity.title}
+                          </p>
+
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            {activity.description}
+                          </p>
+
+                          <p className="mt-2 text-[10px] font-medium text-slate-400">
+                            {activity.time}
+                          </p>
 
                         </div>
 
@@ -709,380 +919,100 @@ const AdminDashboard: React.FC = () => {
 
             </div>
 
-          </div>
+          </section>
 
-        </section>
+          {/* =====================================================
+              SYSTEM STATUS
+          ===================================================== */}
 
-        {/* =======================================================
-            BATCHES + ACTIVITY
-        ======================================================= */}
+          <section className="border-b border-slate-200 bg-slate-50">
 
-        <section className="border-b border-slate-200 bg-white">
+            <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
 
-          <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-
-            <div className="mb-12">
-
-              <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
-                Operations
-              </p>
-
-              <h2 className="text-3xl font-bold tracking-tight text-slate-900 md:text-4xl">
-                Training operations
-              </h2>
-
-              <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-                Keep track of active batches, schedules, trainee capacity,
-                and the latest administrative activity.
-              </p>
-
-            </div>
-
-            <div className="grid grid-cols-1 gap-12 xl:grid-cols-[1.35fr_0.65fr]">
-
-              {/* =================================================
-                  BATCH TABLE
-              ================================================= */}
-
-              <div>
-
-                <div className="mb-6 flex items-end justify-between">
-
-                  <div>
-
-                    <h3 className="text-xl font-bold text-slate-900">
-                      Current batches
-                    </h3>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      Active and recently completed training batches.
-                    </p>
-
-                  </div>
-
-                  <button
-                    onClick={() => navigate('/admin/batches')}
-                    className="hidden text-xs font-semibold text-blue-900 sm:block"
-                  >
-                    View all
-                    <i className="fa-solid fa-arrow-right ml-2 text-[9px]" />
-                  </button>
-
-                </div>
-
-                <div className="overflow-x-auto border-y border-slate-200">
-
-                  <table className="w-full min-w-[700px]">
-
-                    <thead>
-
-                      <tr className="border-b border-slate-200">
-
-                        <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                          Batch
-                        </th>
-
-                        <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                          Program
-                        </th>
-
-                        <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                          Trainer
-                        </th>
-
-                        <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                          Trainees
-                        </th>
-
-                        <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                          Status
-                        </th>
-
-                      </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                      {batches.map((batch) => (
-
-                        <tr
-                          key={batch.id}
-                          className="border-b border-slate-100 transition hover:bg-slate-50"
-                        >
-
-                          <td className="px-4 py-5">
-
-                            <span className="text-xs font-semibold text-blue-900">
-                              {batch.id}
-                            </span>
-
-                          </td>
-
-                          <td className="px-4 py-5">
-
-                            <p className="max-w-[230px] text-xs font-semibold text-slate-800">
-                              {batch.program}
-                            </p>
-
-                            <p className="mt-1 text-[10px] text-slate-400">
-                              {batch.schedule}
-                            </p>
-
-                          </td>
-
-                          <td className="px-4 py-5 text-xs text-slate-600">
-                            {batch.trainer}
-                          </td>
-
-                          <td className="px-4 py-5">
-
-                            <span className="text-xs font-semibold text-slate-800">
-                              {batch.trainees}
-                            </span>
-
-                            <span className="text-xs text-slate-400">
-                              {' '}
-                              / {batch.capacity}
-                            </span>
-
-                          </td>
-
-                          <td className="px-4 py-5">
-
-                            <span
-                              className={`text-xs font-semibold ${statusClass(
-                                batch.status,
-                              )}`}
-                            >
-                              {batch.status}
-                            </span>
-
-                          </td>
-
-                        </tr>
-
-                      ))}
-
-                    </tbody>
-
-                  </table>
-
-                </div>
-
-              </div>
-
-              {/* =================================================
-                  RECENT ACTIVITY
-              ================================================= */}
-
-              <div>
-
-                <div className="mb-6">
-
-                  <h3 className="text-xl font-bold text-slate-900">
-                    Recent activity
-                  </h3>
-
-                  <p className="mt-1 text-sm text-slate-500">
-                    Latest updates across the portal.
-                  </p>
-
-                </div>
-
-                <div>
-
-                  {activities.map((activity) => (
-
-                    <div
-                      key={activity.id}
-                      className="flex gap-4 border-b border-slate-200 py-5 first:border-t"
-                    >
-
-                      <div
-                        className={`flex h-9 w-9 shrink-0 items-center justify-center ${activityIconClass(
-                          activity.type,
-                        )}`}
-                      >
-                        <i className={`${activity.icon} text-xs`} />
-                      </div>
-
-                      <div className="min-w-0">
-
-                        <p className="text-xs font-semibold text-slate-900">
-                          {activity.title}
-                        </p>
-
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
-                          {activity.description}
-                        </p>
-
-                        <p className="mt-2 text-[10px] font-medium text-slate-400">
-                          {activity.time}
-                        </p>
-
-                      </div>
-
-                    </div>
-
-                  ))}
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
-
-        {/* =======================================================
-            SYSTEM STATUS
-        ======================================================= */}
-
-        <section className="border-b border-slate-200 bg-slate-50">
-
-          <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-
-            <div className="grid grid-cols-1 gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
-
-              <div>
-
-                <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
-                  System status
-                </p>
-
-                <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                  A quick look at operations.
-                </h2>
-
-                <p className="mt-5 max-w-md text-sm leading-7 text-slate-600">
-                  These indicators provide a quick overview of attendance,
-                  assessment, certification, and inventory activities.
-                </p>
-
-              </div>
-
-              <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
-
-                <div className="border-l-4 border-blue-900 bg-white p-6">
-
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Overall attendance
-                  </p>
-
-                  <p className="mt-3 text-3xl font-bold text-slate-950">
-                    91.4%
-                  </p>
-
-                  <div className="mt-4 h-1 bg-slate-200">
-                    <div className="h-1 w-[91.4%] bg-blue-900" />
-                  </div>
-
-                </div>
-
-                <div className="border-l-4 border-yellow-400 bg-white p-6">
-
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Assessment success
-                  </p>
-
-                  <p className="mt-3 text-3xl font-bold text-slate-950">
-                    86%
-                  </p>
-
-                  <div className="mt-4 h-1 bg-slate-200">
-                    <div className="h-1 w-[86%] bg-blue-900" />
-                  </div>
-
-                </div>
-
-                <div className="border-l-4 border-blue-900 bg-white p-6">
-
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Certificates
-                  </p>
-
-                  <p className="mt-3 text-3xl font-bold text-slate-950">
-                    34
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    28 released · 6 pending
-                  </p>
-
-                </div>
-
-                <div className="border-l-4 border-yellow-400 bg-white p-6">
-
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Inventory alerts
-                  </p>
-
-                  <p className="mt-3 text-3xl font-bold text-slate-950">
-                    7
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Items require attention
-                  </p>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </section>
-
-        {/* =======================================================
-            ADMINISTRATIVE ALERT
-        ======================================================= */}
-
-        <section className="bg-white">
-
-          <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
-
-            <div className="border border-slate-200 bg-slate-50 p-8 md:p-10">
-
-              <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_auto] md:items-center">
+              <div className="grid grid-cols-1 gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
 
                 <div>
 
                   <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
-                    Attention required
+                    System status
                   </p>
 
-                  <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-                    Some administrative tasks need your attention.
+                  <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                    A quick look at operations.
                   </h2>
 
-                  <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
-                    There are currently 23 pending applications, 6
-                    certificates awaiting processing, and 7 inventory
-                    items requiring attention.
+                  <p className="mt-5 max-w-md text-sm leading-7 text-slate-600">
+                    These indicators provide a quick overview of attendance,
+                    assessment, certification, and inventory activities.
                   </p>
 
                 </div>
 
-                <div className="flex flex-wrap gap-3">
+                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
 
-                  <button
-                    onClick={() => navigate('/admin/enrollment')}
-                    className="border border-blue-900 bg-white px-5 py-3 text-xs font-semibold text-blue-900 transition hover:bg-blue-900 hover:text-white"
-                  >
-                    Review Applications
-                  </button>
+                  <div className="border-l-4 border-blue-900 bg-white p-6">
 
-                  <button
-                    onClick={() => navigate('/admin/records')}
-                    className="bg-blue-900 px-5 py-3 text-xs font-semibold text-white transition hover:bg-blue-950"
-                  >
-                    Open Records
-                  </button>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Overall attendance
+                    </p>
+
+                    <p className="mt-3 text-3xl font-bold text-slate-950">
+                      91.4%
+                    </p>
+
+                    <div className="mt-4 h-1 bg-slate-200">
+                      <div className="h-1 w-[91.4%] bg-blue-900" />
+                    </div>
+
+                  </div>
+
+                  <div className="border-l-4 border-yellow-400 bg-white p-6">
+
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Assessment success
+                    </p>
+
+                    <p className="mt-3 text-3xl font-bold text-slate-950">
+                      86%
+                    </p>
+
+                    <div className="mt-4 h-1 bg-slate-200">
+                      <div className="h-1 w-[86%] bg-blue-900" />
+                    </div>
+
+                  </div>
+
+                  <div className="border-l-4 border-blue-900 bg-white p-6">
+
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Certificates
+                    </p>
+
+                    <p className="mt-3 text-3xl font-bold text-slate-950">
+                      34
+                    </p>
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      28 released · 6 pending
+                    </p>
+
+                  </div>
+
+                  <div className="border-l-4 border-yellow-400 bg-white p-6">
+
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Inventory alerts
+                    </p>
+
+                    <p className="mt-3 text-3xl font-bold text-slate-950">
+                      7
+                    </p>
+
+                    <p className="mt-2 text-xs text-slate-500">
+                      Items require attention
+                    </p>
+
+                  </div>
 
                 </div>
 
@@ -1090,35 +1020,90 @@ const AdminDashboard: React.FC = () => {
 
             </div>
 
-          </div>
+          </section>
 
-        </section>
+          {/* =====================================================
+              ADMINISTRATIVE ALERT
+          ===================================================== */}
 
-      </main>
+          <section className="bg-white">
 
-      {/* =========================================================
-          LANDING PAGE STYLE FOOTER
-      ========================================================= */}
+            <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8">
 
-      <footer className="border-t border-slate-200 bg-slate-900">
+              <div className="border border-slate-200 bg-slate-50 p-8 md:p-10">
 
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-slate-400 md:flex-row md:items-center md:justify-between lg:px-8">
+                <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_auto] md:items-center">
 
-          <p>
-            © {new Date().getFullYear()} MCCTEST Portal
-          </p>
+                  <div>
 
-          <p>
-            Training. Assessment. Certification.
-          </p>
+                    <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
+                      Attention required
+                    </p>
 
-        </div>
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-900">
+                      Some administrative tasks need your attention.
+                    </h2>
 
-      </footer>
+                    <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
+                      There are currently 23 pending applications, 6
+                      certificates awaiting processing, and 7 inventory
+                      items requiring attention.
+                    </p>
+
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+
+                    <button
+                      onClick={() => navigate('/admin/enrollment')}
+                      className="border border-blue-900 bg-white px-5 py-3 text-xs font-semibold text-blue-900 transition hover:bg-blue-900 hover:text-white"
+                    >
+                      Review Applications
+                    </button>
+
+                    <button
+                      onClick={() => navigate('/admin/records')}
+                      className="bg-blue-900 px-5 py-3 text-xs font-semibold text-white transition hover:bg-blue-950"
+                    >
+                      Open Records
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </section>
+
+          {/* =====================================================
+              FOOTER
+          ===================================================== */}
+
+          <footer className="border-t border-slate-200 bg-slate-900">
+
+            <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-8 text-sm text-slate-400 md:flex-row md:items-center md:justify-between lg:px-8">
+
+              <p>
+                © {new Date().getFullYear()} MCCTEST Portal
+              </p>
+
+              <p>
+                Training. Assessment. Certification.
+              </p>
+
+            </div>
+
+          </footer>
+
+        </main>
+
+      </div>
 
     </div>
   )
 }
 
 export default AdminDashboard
-
