@@ -4,13 +4,17 @@ import { useAuth } from '../../context/AuthContext'
 
 function LoginForm() {
   const { login } = useAuth()
+
   const [systemId, setSystemId] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+
   const navigate = useNavigate()
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault()
 
     setError('')
@@ -37,7 +41,44 @@ function LoginForm() {
         throw new Error(data.message || 'Invalid credentials')
       }
 
-      // Store authentication data
+      /*
+       * Make sure the backend returned all required
+       * authentication information.
+       */
+      if (
+        !data.accessToken ||
+        !data.sessionToken ||
+        !data.user
+      ) {
+        throw new Error(
+          'Invalid authentication response from server',
+        )
+      }
+
+      /*
+       * Validate the user's role before creating
+       * the authenticated frontend session.
+       */
+      if (
+        data.user.role !== 'ADMIN' &&
+        data.user.role !== 'TRAINER' &&
+        data.user.role !== 'TRAINEE'
+      ) {
+        throw new Error('Unknown user role')
+      }
+
+      /*
+       * Store authentication information through AuthContext.
+       *
+       * This updates:
+       * - user
+       * - accessToken
+       * - sessionToken
+       * - localStorage
+       *
+       * Header.tsx will immediately see the updated
+       * isAuthenticated state.
+       */
       login(
         data.accessToken,
         data.sessionToken,
@@ -46,22 +87,22 @@ function LoginForm() {
 
       console.log('Login successful:', data)
 
+      /*
+       * Redirect according to the authenticated role.
+       */
       switch (data.user.role) {
         case 'ADMIN':
-            console.log('Redirecting to /admin')
-            navigate('/admin', {replace: true})
-            break
+          console.log('Redirecting to /admin')
+          navigate('/admin', { replace: true })
+          break
 
         case 'TRAINER':
-            navigate('/trainer')
-            break
+          navigate('/trainer', { replace: true })
+          break
 
         case 'TRAINEE':
-            navigate('/trainee')
-            break
-
-        default:
-            throw new Error('Unknown user role')
+          navigate('/trainee', { replace: true })
+          break
       }
     } catch (error) {
       if (error instanceof Error) {

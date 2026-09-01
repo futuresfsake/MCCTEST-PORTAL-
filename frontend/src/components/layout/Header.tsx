@@ -1,6 +1,13 @@
+import { useAuth } from '../../context/AuthContext'
 import mcctestLogo from '../../assets/mcctest-logo.png'
 
 function Header() {
+  const { isAuthenticated, logout } = useAuth()
+
+  const handleSignOut = async () => {
+    await logout()
+  }
+
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
@@ -55,14 +62,23 @@ function Header() {
           </a>
         </nav>
 
-        {/* Sign In */}
-        <a
-          href="#home"
-          className="border border-blue-900 px-5 py-2.5 text-sm font-semibold text-blue-900 transition hover:bg-blue-900 hover:text-white"
-        >
-          Sign In
-        </a>
-
+        {/* Authentication */}
+        {isAuthenticated ? (
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="border border-blue-900 px-5 py-2.5 text-sm font-semibold text-blue-900 transition hover:bg-blue-900 hover:text-white"
+          >
+            Sign Out
+          </button>
+        ) : (
+          <a
+            href="#home"
+            className="border border-blue-900 px-5 py-2.5 text-sm font-semibold text-blue-900 transition hover:bg-blue-900 hover:text-white"
+          >
+            Sign In
+          </a>
+        )}
       </div>
     </header>
   )

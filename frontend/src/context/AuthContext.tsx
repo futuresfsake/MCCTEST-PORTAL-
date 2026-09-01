@@ -24,7 +24,7 @@ interface AuthContextType {
   login: (
     accessToken: string,
     sessionToken: string,
-    user: User
+    user: User,
   ) => void
   logout: () => Promise<void>
 }
@@ -37,21 +37,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  /*
+   * Restore the authentication state when the application starts.
+   */
   useEffect(() => {
-  const storedUser = localStorage.getItem('user')
-  const storedAccessToken = localStorage.getItem('accessToken')
-  const storedSessionToken = localStorage.getItem('sessionToken')
+    try {
+      const storedUser = localStorage.getItem('user')
+      const storedAccessToken = localStorage.getItem('accessToken')
+      const storedSessionToken = localStorage.getItem('sessionToken')
 
-  if (storedUser) {
-    setUser(JSON.parse(storedUser))
-  }
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser))
+        } catch {
+          // Remove corrupted user data.
+          localStorage.removeItem('user')
+          setUser(null)
+        }
+      }
 
-  setAccessToken(storedAccessToken)
-  setSessionToken(storedSessionToken)
+      setAccessToken(storedAccessToken)
+      setSessionToken(storedSessionToken)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
-  setIsLoading(false)
-}, [])
-
+  /*
+   * Establish an authenticated session.
+   */
   const login = (
     newAccessToken: string,
     newSessionToken: string,
@@ -66,6 +80,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(newUser)
   }
 
+  /*
+   * End the authenticated session.
+   */
   const logout = async () => {
     try {
       if (sessionToken) {
@@ -80,7 +97,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           },
         )
       }
+    } catch (error) {
+      console.error('Logout request failed:', error)
     } finally {
+      /*
+       * Always clear the local session even if the
+       * backend logout request fails.
+       */
       localStorage.removeItem('accessToken')
       localStorage.removeItem('sessionToken')
       localStorage.removeItem('user')
@@ -93,13 +116,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const isAuthenticated = !!user && !!accessToken
+
   return (
     <AuthContext.Provider
       value={{
         user,
         accessToken,
         sessionToken,
-        isAuthenticated: !!user && !!accessToken,
+        isAuthenticated,
         isLoading,
         login,
         logout,

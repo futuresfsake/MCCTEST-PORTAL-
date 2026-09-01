@@ -1,5 +1,6 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
+import mcctestLogo from '../../assets/mcctest-logo.png'
 
 export type SidebarVariant =
   | 'admin'
@@ -373,17 +374,38 @@ const sidebarConfig: Record<
   },
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
-  const config = sidebarConfig[variant]
+/* ==============================================================
+   SHARED SIDEBAR CONTENT
+   ============================================================== */
 
+type SidebarContentProps = {
+  config: (typeof sidebarConfig)[SidebarVariant]
+  onNavigate?: () => void
+}
+
+const SidebarContent: React.FC<SidebarContentProps> = ({
+  config,
+  onNavigate,
+}) => {
   return (
-    <aside className="hidden h-full w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
+    <div className="flex h-full min-h-0 flex-col">
 
-      {/* ==========================================================
+      {/* ========================================================
           NAVIGATION
-      ========================================================== */}
+      ======================================================== */}
 
-      <nav className="flex-1 px-4 py-7">
+      <nav 
+        className="min-h-0 flex-1 overflow-y-auto px-4 py-7"
+        style={{
+          scrollbarWidth: 'none',
+          msOverflowStyle: 'none',
+        }}
+      >
+        <style>{`
+          nav::-webkit-scrollbar {
+            display: none;
+          }
+        `}</style>
 
         {config.sections.map((section, sectionIndex) => (
           <div
@@ -401,6 +423,7 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
                 <NavLink
                   key={item.path}
                   to={item.path}
+                  onClick={onNavigate}
                   className={({ isActive }) =>
                     [
                       'group flex items-center gap-3 border-l-2 px-3 py-2.5 text-sm font-medium transition',
@@ -410,11 +433,13 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
                     ].join(' ')
                   }
                 >
+
                   <i
                     className={`${item.icon} w-4 text-center text-xs`}
                   />
 
                   <span>{item.label}</span>
+
                 </NavLink>
               ))}
 
@@ -424,39 +449,160 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
 
       </nav>
 
-      {/* ==========================================================
-          ROLE INFORMATION
-      ========================================================== */}
+    </div>
+  )
+}
 
-      <div className="border-t border-slate-200 p-4">
+/* ==============================================================
+   SIDEBAR
+   ============================================================== */
 
-        <div className="border-l-4 border-yellow-400 bg-slate-50 p-4">
+const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
+  const config = sidebarConfig[variant]
 
-          <div className="flex items-start gap-3">
+  const [isMobileOpen, setIsMobileOpen] = useState(false)
 
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-blue-900 text-white">
-              <i className={`${config.icon} text-xs`} />
-            </div>
+  /* ============================================================
+     PREVENT BODY SCROLL WHEN MOBILE MENU IS OPEN
+  ============================================================ */
 
-            <div className="min-w-0">
+  useEffect(() => {
+    if (!isMobileOpen) {
+      document.body.style.overflow = ''
+      return
+    }
 
-              <p className="text-xs font-semibold text-slate-900">
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [isMobileOpen])
+
+  /* ============================================================
+     CLOSE MOBILE MENU WHEN WINDOW BECOMES DESKTOP
+  ============================================================ */
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsMobileOpen(false)
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [])
+
+  return (
+    <>
+      {/* ========================================================
+          DESKTOP SIDEBAR
+          Visible on lg screens and above.
+      ======================================================== */}
+
+      <aside className="hidden h-full w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
+
+        <SidebarContent config={config} />
+
+      </aside>
+
+      {/* ========================================================
+          MOBILE MENU BUTTON
+          Visible below lg breakpoint.
+      ======================================================== */}
+
+      <button
+        type="button"
+        onClick={() => setIsMobileOpen(true)}
+        aria-label="Open navigation menu"
+        aria-expanded={isMobileOpen}
+        className="fixed bottom-5 left-5 z-40 flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow-md transition hover:shadow-lg focus:outline-none lg:hidden"
+      >
+        <div className="flex flex-col gap-1">
+          <div className="h-0.5 w-6 bg-black"></div>
+          <div className="h-0.5 w-6 bg-black"></div>
+          <div className="h-0.5 w-6 bg-black"></div>
+        </div>
+      </button>
+
+      {/* ========================================================
+          MOBILE OVERLAY
+      ======================================================== */}
+
+      {isMobileOpen && (
+        <button
+          type="button"
+          aria-label="Close navigation menu"
+          onClick={() => setIsMobileOpen(false)}
+          className="fixed inset-0 z-40 bg-slate-950/40 backdrop-blur-[1px] lg:hidden"
+        />
+      )}
+
+      {/* ========================================================
+          MOBILE SIDEBAR
+      ======================================================== */}
+
+      <aside
+        className={[
+          'fixed inset-y-0 left-0 z-50 w-[min(20rem,85vw)] border-r border-slate-200 bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden',
+          isMobileOpen
+            ? 'translate-x-0'
+            : '-translate-x-full',
+        ].join(' ')}
+      >
+
+        {/* ======================================================
+            MOBILE SIDEBAR HEADER
+        ====================================================== */}
+
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-5">
+
+          <div className="flex items-center gap-3">
+
+            <img src={mcctestLogo} alt="MCCTEST Logo" className="h-8 w-8" />
+
+            <div>
+              <p className="text-xs font-bold text-slate-900">
+                MCCTEST
+              </p>
+
+              <p className="text-[10px] text-slate-400">
                 {config.role}
               </p>
-
-              <p className="mt-1 text-[10px] leading-5 text-slate-500">
-                {config.description}
-              </p>
-
             </div>
 
           </div>
 
+          <button
+            type="button"
+            onClick={() => setIsMobileOpen(false)}
+            aria-label="Close navigation menu"
+            className="flex h-9 w-9 items-center justify-center text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          >
+            <i className="fa-solid fa-xmark text-sm" />
+          </button>
+
         </div>
 
-      </div>
+        {/* ======================================================
+            MOBILE SIDEBAR CONTENT
+        ====================================================== */}
 
-    </aside>
+        <div className="h-[calc(100vh-4rem)]">
+
+          <SidebarContent
+            config={config}
+            onNavigate={() => setIsMobileOpen(false)}
+          />
+
+        </div>
+
+      </aside>
+    </>
   )
 }
 
