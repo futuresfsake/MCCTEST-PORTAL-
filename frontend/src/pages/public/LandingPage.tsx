@@ -21,9 +21,9 @@ function LandingPage() {
             </p>
 
             <h1 className="max-w-2xl text-5xl font-bold leading-[1.05] tracking-tight text-slate-950 md:text-6xl lg:text-7xl">
-            Empowering Skills.
+            Empowering Skills
             <span className="mt-2 block text-blue-900">
-                Building Futures.
+                Building Futures
             </span>
             </h1>
 
