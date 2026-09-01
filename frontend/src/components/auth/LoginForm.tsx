@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
 function LoginForm() {
+  const { login } = useAuth()
   const [systemId, setSystemId] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -36,18 +38,18 @@ function LoginForm() {
       }
 
       // Store authentication data
-      localStorage.setItem('accessToken', data.accessToken)
-      localStorage.setItem('sessionToken', data.sessionToken)
-      localStorage.setItem('user', JSON.stringify(data.user))
+      login(
+        data.accessToken,
+        data.sessionToken,
+        data.user,
+      )
 
       console.log('Login successful:', data)
 
-      // Redirect based on role
       switch (data.user.role) {
         case 'ADMIN':
-            console.log(data.user.role)
             console.log('Redirecting to /admin')
-            navigate('/admin', { replace: true })
+            navigate('/admin', {replace: true})
             break
 
         case 'TRAINER':

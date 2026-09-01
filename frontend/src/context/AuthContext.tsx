@@ -21,6 +21,11 @@ interface AuthContextType {
   sessionToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  login: (
+    accessToken: string,
+    sessionToken: string,
+    user: User
+  ) => void
   logout: () => Promise<void>
 }
 
@@ -46,6 +51,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   setIsLoading(false)
 }, [])
+
+  const login = (
+    newAccessToken: string,
+    newSessionToken: string,
+    newUser: User,
+  ) => {
+    localStorage.setItem('accessToken', newAccessToken)
+    localStorage.setItem('sessionToken', newSessionToken)
+    localStorage.setItem('user', JSON.stringify(newUser))
+
+    setAccessToken(newAccessToken)
+    setSessionToken(newSessionToken)
+    setUser(newUser)
+  }
 
   const logout = async () => {
     try {
@@ -82,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionToken,
         isAuthenticated: !!user && !!accessToken,
         isLoading,
+        login,
         logout,
       }}
     >

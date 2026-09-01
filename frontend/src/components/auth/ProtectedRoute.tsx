@@ -30,6 +30,7 @@ function ProtectedRoute({
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     switch (user.role) {
       case 'ADMIN':
+        console.log('Redirecting to /admin')
         return <Navigate to="/admin" replace />
 
       case 'TRAINER':
