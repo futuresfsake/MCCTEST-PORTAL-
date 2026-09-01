@@ -271,7 +271,7 @@ const AdminDashboard: React.FC = () => {
                   <h1 className="max-w-3xl text-4xl font-bold leading-tight tracking-tight text-slate-950 md:text-5xl">
                     MCCTEST
                     <span className="block text-blue-900">
-                      Admin Dashboard.
+                      Admin Dashboard
                     </span>
                   </h1>
 
