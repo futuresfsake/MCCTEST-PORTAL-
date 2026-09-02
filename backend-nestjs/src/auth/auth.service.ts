@@ -47,8 +47,8 @@ export interface CreateAccountDto {
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
   private readonly SALT_ROUNDS = 12;
-  /** Sessions last 8 hours by default */
-  private readonly SESSION_TTL_MS = 8 * 60 * 60 * 1000;
+  /** Sessions last 1 hour by instruction */
+  private readonly SESSION_TTL_MS = 1 * 60 * 60 * 1000;
 
   constructor(
     private readonly prisma: PrismaService,

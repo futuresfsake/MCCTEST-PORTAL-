@@ -85,7 +85,7 @@ function LoginForm() {
         data.user,
       )
 
-      console.log('Login successful:', data)
+      console.log('Login successful:', data.user)
 
       /*
        * Redirect according to the authenticated role.
