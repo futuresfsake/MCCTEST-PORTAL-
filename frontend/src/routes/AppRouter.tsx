@@ -41,7 +41,7 @@ return ( <Routes>
   ========================================================== */}
 
   <Route
-    path="/admin"
+    path="/admin/AdminDashboard"
     element={
       <ProtectedRoute allowedRoles={['ADMIN']}>
         <AdminDashboard />

@@ -93,7 +93,7 @@ function LoginForm() {
       switch (data.user.role) {
         case 'ADMIN':
           console.log('Redirecting to /admin')
-          navigate('/admin', { replace: true })
+          navigate('/admin/AdminDashboard', { replace: true })
           break
 
         case 'TRAINER':

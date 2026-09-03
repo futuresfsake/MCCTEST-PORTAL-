@@ -9,7 +9,7 @@ children: ReactNode
 function getDashboardPath(role: string) {
 switch (role) {
 case 'ADMIN':
-return '/admin'
+return '/admin/AdminDashboard'
 
 case 'REGISTRAR':
   return '/registrar'
