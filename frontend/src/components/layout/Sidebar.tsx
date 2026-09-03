@@ -504,7 +504,7 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
           Visible on lg screens and above.
       ======================================================== */}
 
-      <aside className="hidden h-full w-64 shrink-0 border-r border-slate-200 bg-white lg:flex lg:flex-col">
+      <aside className="sticky top-20 hidden h-[calc(100vh-5rem)] w-64 shrink-0 self-start border-r border-slate-200 bg-white lg:flex lg:flex-col">
 
         <SidebarContent config={config} />
 
@@ -548,7 +548,7 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
 
       <aside
         className={[
-          'fixed inset-y-0 left-0 z-50 w-[min(20rem,85vw)] border-r border-slate-200 bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden',
+          'fixed inset-y-0 left-0 z-50 flex h-dvh w-[min(20rem,85vw)] flex-col border-r border-slate-200 bg-white shadow-2xl transition-transform duration-300 ease-out lg:hidden',
           isMobileOpen
             ? 'translate-x-0'
             : '-translate-x-full',
@@ -592,7 +592,7 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
             MOBILE SIDEBAR CONTENT
         ====================================================== */}
 
-        <div className="h-[calc(100vh-4rem)]">
+        <div className="min-h-0 flex-1">
 
           <SidebarContent
             config={config}
