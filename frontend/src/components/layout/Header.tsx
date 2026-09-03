@@ -32,35 +32,37 @@ function Header() {
         </a>
 
         {/* Navigation */}
-        <nav className="hidden items-center gap-8 md:flex">
-          <a
-            href="#about"
-            className="text-sm font-medium text-slate-600 transition hover:text-blue-900"
-          >
-            About
-          </a>
+        {!isAuthenticated && (
+          <nav className="hidden items-center gap-8 md:flex">
+            <a
+              href="#about"
+              className="text-sm font-medium text-slate-600 transition hover:text-blue-900"
+            >
+              About
+            </a>
 
-          <a
-            href="#programs"
-            className="text-sm font-medium text-slate-600 transition hover:text-blue-900"
-          >
-            Programs
-          </a>
+            <a
+              href="#programs"
+              className="text-sm font-medium text-slate-600 transition hover:text-blue-900"
+            >
+              Programs
+            </a>
 
-          <a
-            href="#verification"
-            className="text-sm font-medium text-slate-600 transition hover:text-blue-900"
-          >
-            Verify Certificate
-          </a>
+            <a
+              href="#verification"
+              className="text-sm font-medium text-slate-600 transition hover:text-blue-900"
+            >
+              Verify Certificate
+            </a>
 
-          <a
-            href="#contact"
-            className="text-sm font-medium text-slate-600 transition hover:text-blue-900"
-          >
-            Contact
-          </a>
-        </nav>
+            <a
+              href="#contact"
+              className="text-sm font-medium text-slate-600 transition hover:text-blue-900"
+            >
+              Contact
+            </a>
+          </nav>
+        )}
 
         {/* Authentication */}
         {isAuthenticated ? (

@@ -47,7 +47,7 @@ const sidebarConfig: Record<
         items: [
           {
             label: 'Dashboard',
-            path: '/admin/dashboard',
+            path: '/admin',
             icon: 'fa-solid fa-gauge-high',
           },
         ],
@@ -413,7 +413,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
             className={sectionIndex > 0 ? 'mt-8' : ''}
           >
 
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+            <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
               {section.title}
             </p>
 
@@ -426,7 +426,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
                   onClick={onNavigate}
                   className={({ isActive }) =>
                     [
-                      'group flex items-center gap-3 border-l-2 px-3 py-2.5 text-sm font-medium transition',
+                      'group flex items-center gap-2.5 border-l-2 px-2 py-1.5 text-sm font-medium transition',
                       isActive
                         ? 'border-blue-900 bg-slate-50 text-blue-900'
                         : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-blue-900',
