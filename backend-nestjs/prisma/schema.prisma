@@ -11,11 +11,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  
 }
-
-
-
 
 model User {
   id        Int      @id @default(autoincrement())
@@ -492,6 +488,7 @@ model user_role {
 
 model users {
   id                                  String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  system_id                           String?                   @unique @db.VarChar(30)
   first_name                          String                   @db.VarChar(100)
   last_name                           String                   @db.VarChar(100)
   middle_name                         String                   @db.VarChar(100)
