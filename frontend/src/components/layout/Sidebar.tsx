@@ -47,7 +47,7 @@ const sidebarConfig: Record<
         items: [
           {
             label: 'Dashboard',
-            path: '/admin/AdminDashboard',
+            path: '/admin/dashboard',
             icon: 'fa-solid fa-gauge-high',
           },
         ],

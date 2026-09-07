@@ -5,8 +5,13 @@ import LandingPage from '../pages/public/LandingPage'
 import AdminDashboard from '../pages/users/admin/AdminDashboard'
 import AdminRecords from '../pages/users/admin/AdminRecords'
 
+import RegistrarDashboard from '../pages/users/registrar/RegistrarDashboard'
+import RegistrarEnrollment from '../pages/users/registrar/RegistrarEnrollment'
+
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
+
 import TraineeDashboard from '../pages/users/trainee/TraineeDashboard'
+
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
@@ -41,7 +46,7 @@ return ( <Routes>
   ========================================================== */}
 
   <Route
-    path="/admin/AdminDashboard"
+    path="/admin/dashboard"
     element={
       <ProtectedRoute allowedRoles={['ADMIN']}>
         <AdminDashboard />
@@ -58,6 +63,26 @@ return ( <Routes>
     }
   />
 
+  {/* ==========================================================
+    REGISTRAR
+========================================================== */}
+
+<Route
+  path="/registrar/dashboard"
+  element={
+    <ProtectedRoute allowedRoles={['REGISTRAR']}>
+      <RegistrarDashboard />
+    </ProtectedRoute>
+  }
+/>
+  <Route
+    path="/registrar/enrollment"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <RegistrarEnrollment />
+      </ProtectedRoute>
+    }
+  />
   {/* ==========================================================
       TRAINER
   ========================================================== */}

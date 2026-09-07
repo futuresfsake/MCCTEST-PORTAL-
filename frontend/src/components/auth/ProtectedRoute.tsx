@@ -44,7 +44,7 @@ const location = useLocation()
   if (!isAuthenticated || !user) {
   return (
   <Navigate
-  to="/LandingPage"
+  to="/landing"
   replace
   state={{ from: location.pathname}}
   />

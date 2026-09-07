@@ -26,36 +26,93 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   const SALT_ROUNDS = 12;
 
-  const yy = String(new Date().getFullYear()).slice(-2); // '26' for 2026
-  const systemId = `MCCTP-${yy}-001`;
+  const yy = String(new Date().getFullYear()).slice(-2);
 
-  const existing = await prisma.users.findUnique({ where: { system_id: systemId } });
+  /*
+   * ============================================================
+   * ADMIN — MCCTP-26-001
+   * ============================================================
+   */
 
-  if (existing) {
-    console.log(`Admin account already exists: ${systemId} — skipping seed.`);
-    return;
-  }
+  const adminSystemId = `MCCTP-${yy}-001`;
 
-  const rawPassword = process.env.ADMIN_SEED_PASSWORD ?? 'Admin@1234!';
-  const passwordHash = await bcrypt.hash(rawPassword, SALT_ROUNDS);
-
-  const admin = await prisma.users.create({
-    data: {
-      system_id: systemId,
-      first_name: 'System',
-      last_name: 'Admin',
-      middle_name: '',
-      role: user_role_enum.ADMIN,
-      password_hash: passwordHash,
-      is_active: true,
-    },
+  const existingAdmin = await prisma.users.findUnique({
+    where: { system_id: adminSystemId },
   });
 
-  console.log('Admin account seeded:');
-  console.log(`   system_id : ${admin.system_id}`);
-  console.log(`   password  : ${rawPassword}`);
-  console.log(`   role      : ${admin.role}`);
-  console.log('\nChange the password immediately after first login!');
+  if (existingAdmin) {
+    console.log(`Admin account already exists: ${adminSystemId}`);
+  } else {
+    const rawAdminPassword =
+      process.env.ADMIN_SEED_PASSWORD ?? 'Admin@1234!';
+
+    const adminPasswordHash = await bcrypt.hash(
+      rawAdminPassword,
+      SALT_ROUNDS,
+    );
+
+    const admin = await prisma.users.create({
+      data: {
+        system_id: adminSystemId,
+        first_name: 'System',
+        last_name: 'Admin',
+        middle_name: '',
+        role: user_role_enum.ADMIN,
+        password_hash: adminPasswordHash,
+        is_active: true,
+      },
+    });
+
+    console.log('Admin account seeded:');
+    console.log(`   system_id : ${admin.system_id}`);
+    console.log(`   password  : ${rawAdminPassword}`);
+    console.log(`   role      : ${admin.role}`);
+  }
+
+  /*
+   * ============================================================
+   * REGISTRAR — MCCTP-26-002
+   * ============================================================
+   */
+
+  const registrarSystemId = `MCCTP-${yy}-002`;
+
+  const existingRegistrar = await prisma.users.findUnique({
+    where: { system_id: registrarSystemId },
+  });
+
+  if (existingRegistrar) {
+    console.log(
+      `Registrar account already exists: ${registrarSystemId}`,
+    );
+  } else {
+    const rawRegistrarPassword =
+      process.env.REGISTRAR_SEED_PASSWORD ?? 'Registrar@1234!';
+
+    const registrarPasswordHash = await bcrypt.hash(
+      rawRegistrarPassword,
+      SALT_ROUNDS,
+    );
+
+    const registrar = await prisma.users.create({
+      data: {
+        system_id: registrarSystemId,
+        first_name: 'System',
+        last_name: 'Registrar',
+        middle_name: '',
+        role: user_role_enum.REGISTRAR,
+        password_hash: registrarPasswordHash,
+        is_active: true,
+      },
+    });
+
+    console.log('Registrar account seeded:');
+    console.log(`   system_id : ${registrar.system_id}`);
+    console.log(`   password  : ${rawRegistrarPassword}`);
+    console.log(`   role      : ${registrar.role}`);
+  }
+
+  console.log('\nSeed completed successfully.');
 }
 
 main()

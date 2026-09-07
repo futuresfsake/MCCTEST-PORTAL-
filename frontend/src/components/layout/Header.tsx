@@ -1,12 +1,9 @@
 import { useAuth } from '../../context/AuthContext'
 import mcctestLogo from '../../assets/mcctest-logo.png'
+import SignOutButton from '../auth/SignOutButton'
 
 function Header() {
-  const { isAuthenticated, logout } = useAuth()
-
-  const handleSignOut = async () => {
-    await logout()
-  }
+  const { isAuthenticated } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
@@ -66,13 +63,7 @@ function Header() {
 
         {/* Authentication */}
         {isAuthenticated ? (
-          <button
-            type="button"
-            onClick={handleSignOut}
-            className="border border-blue-900 px-5 py-2.5 text-sm font-semibold text-blue-900 transition hover:bg-blue-900 hover:text-white"
-          >
-            Sign Out
-          </button>
+          <SignOutButton />
         ) : (
           <a
             href="#home"

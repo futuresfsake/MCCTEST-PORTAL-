@@ -111,8 +111,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       setAccessToken(null)
       setSessionToken(null)
-
-      window.location.href = '/'
     }
   }
 

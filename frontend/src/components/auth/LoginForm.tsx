@@ -60,12 +60,14 @@ function LoginForm() {
        * the authenticated frontend session.
        */
       if (
-        data.user.role !== 'ADMIN' &&
-        data.user.role !== 'TRAINER' &&
-        data.user.role !== 'TRAINEE'
-      ) {
-        throw new Error('Unknown user role')
-      }
+  data.user.role !== 'ADMIN' &&
+  data.user.role !== 'REGISTRAR' &&
+  data.user.role !== 'TRAINER' &&
+  data.user.role !== 'TRAINEE' &&
+  data.user.role !== 'ENCODER'
+) {
+  throw new Error('Unknown user role')
+}
 
       /*
        * Store authentication information through AuthContext.
@@ -91,19 +93,28 @@ function LoginForm() {
        * Redirect according to the authenticated role.
        */
       switch (data.user.role) {
-        case 'ADMIN':
-          console.log('Redirecting to /admin')
-          navigate('/admin/AdminDashboard', { replace: true })
-          break
+  case 'ADMIN':
+    console.log('Redirecting to /admin/dashboard')
+    navigate('/admin/dashboard', { replace: true })
+    break
 
-        case 'TRAINER':
-          navigate('/trainer', { replace: true })
-          break
+  case 'REGISTRAR':
+    console.log('Redirecting to /registrar/dashboard')
+    navigate('/registrar/dashboard', { replace: true })
+    break
 
-        case 'TRAINEE':
-          navigate('/trainee', { replace: true })
-          break
-      }
+  case 'TRAINER':
+    navigate('/trainer', { replace: true })
+    break
+
+  case 'TRAINEE':
+    navigate('/trainee', { replace: true })
+    break
+
+  case 'ENCODER':
+    navigate('/encoder/dashboard', { replace: true })
+    break
+}
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message)
