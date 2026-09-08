@@ -4,12 +4,14 @@ import LandingPage from '../pages/public/LandingPage'
 
 import AdminDashboard from '../pages/users/admin/AdminDashboard'
 import AdminRecords from '../pages/users/admin/AdminRecords'
+import { AdminStaffAccountsPage } from '../pages/users/admin/staff-accounts/AdminStaffAccountsPage'
 
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 import TraineeDashboard from '../pages/users/trainee/TraineeDashboard'
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
+//import path from 'path/win32';
 
 function AppRouter() {
 return ( <Routes>
@@ -54,6 +56,15 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['ADMIN']}>
         <AdminRecords />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/admin/staff-accounts/AdminStaffAccountsPage"
+    element={
+      <ProtectedRoute allowedRoles={['ADMIN']}>
+        <AdminStaffAccountsPage />
       </ProtectedRoute>
     }
   />
