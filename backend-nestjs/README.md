@@ -57,6 +57,28 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## Load enrollment demo data
+
+After configuring `DATABASE_URL` in `backend-nestjs/.env` and installing dependencies, run:
+
+```bash
+npx prisma db push --schema prisma/schema.prisma
+npm run db:seed
+npm run db:seed:demo
+```
+
+The schema sync adds the `N/A` and `Others` choices plus the nullable custom-text fields for trainee education and employment details. Use `db push` only against the development database unless you have reviewed the generated production migration.
+
+The demo seed creates an open AutoCAD program with morning, afternoon, and evening batches, an assigned trainer, starter training sessions for each batch, and ten uniform pieces for every size. Each uniform row is linked to the demo program, so enrollment with `uniformGiven: true` deducts stock from the correct program inventory.
+
+The demo seed is safe to rerun and restores the demo stock to ten per size. To remove the demo batch, any enrollments created in it, its sessions, uniforms, program, and demo trainer, run:
+
+```bash
+npm run db:clean:demo
+```
+
+The base admin and registrar records are not removed by demo cleanup.
+
 ## Deployment
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.

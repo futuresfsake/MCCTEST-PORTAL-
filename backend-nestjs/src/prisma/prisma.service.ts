@@ -1,5 +1,5 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
-import { PrismaClient } from '../generated/prisma/client'; 
+import { PrismaClient } from '../generated/prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { Pool } from 'pg';
 
@@ -17,6 +17,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
       console.log('Successfully connected to the database!');
     } catch (error) {
       console.error('Failed to connect to the database:', error);
+      throw error;
     }
   }
 }

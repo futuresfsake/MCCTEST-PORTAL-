@@ -11,6 +11,7 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
 
   const navigate = useNavigate()
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -22,7 +23,7 @@ function LoginForm() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/auth/login`,
+        `${apiUrl}/auth/login`,
         {
           method: 'POST',
           headers: {

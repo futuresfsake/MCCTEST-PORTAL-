@@ -26,7 +26,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const message =
       typeof exceptionResponse === 'string'
         ? exceptionResponse
-        : (exceptionResponse as any).message ?? 'An unexpected error occurred';
+        : ((exceptionResponse as any).message ??
+          'An unexpected error occurred');
 
     this.logger.error(
       `[${request.method}] ${request.url} → ${status}: ${JSON.stringify(message)}`,

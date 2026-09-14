@@ -4,13 +4,12 @@ import { PassportStrategy } from '@nestjs/passport';
 // installed without its optional DefinitelyTyped package.
 
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export interface JwtPayload {
-  sub: string;      // users.id (UUID)
+  sub: string; // users.id (UUID)
   systemId: string; // users.system_id e.g. MCCTP-26-001
-  role: string;     // user_role_enum
+  role: string; // user_role_enum
 }
 
 /**
@@ -23,14 +22,11 @@ export interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   private readonly logger = new Logger(JwtStrategy.name);
 
-  constructor(
-    private readonly config: ConfigService,
-    private readonly prisma: PrismaService,
-  ) {
+  constructor(private readonly prisma: PrismaService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
+      secretOrKey: process.env.JWT_SECRET || 'development-only-jwt-secret',
       // Pass the raw request so we can read the session token header
       passReqToCallback: true,
     });
@@ -50,12 +46,16 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
 
     if (!session) {
-      throw new UnauthorizedException('Session not found or already logged out');
+      throw new UnauthorizedException(
+        'Session not found or already logged out',
+      );
     }
 
     if (session.expires < new Date()) {
       // Clean up expired session
-      await this.prisma.sessions.delete({ where: { session_token: sessionToken } });
+      await this.prisma.sessions.delete({
+        where: { session_token: sessionToken },
+      });
       throw new UnauthorizedException('Session expired, please log in again');
     }
 

@@ -32,6 +32,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
   const [user, setUser] = useState<User | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
   const [sessionToken, setSessionToken] = useState<string | null>(null)
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (sessionToken) {
         await fetch(
-          `${import.meta.env.VITE_API_URL}/auth/logout`,
+          `${apiUrl}/auth/logout`,
           {
             method: 'POST',
             headers: {

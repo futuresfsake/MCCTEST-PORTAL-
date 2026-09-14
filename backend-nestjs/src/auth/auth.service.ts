@@ -16,7 +16,7 @@ import { user_role_enum } from '../generated/prisma/client';
 // ─── DTOs ────────────────────────────────────────────────────────────────────
 
 export interface LoginDto {
-  systemId: string;   // e.g. MCCTP-26-001
+  systemId: string; // e.g. MCCTP-26-001
   password: string;
 }
 
@@ -142,7 +142,9 @@ export class AuthService {
       return { message: 'Logged out successfully' };
     }
 
-    await this.prisma.sessions.delete({ where: { session_token: sessionToken } });
+    await this.prisma.sessions.delete({
+      where: { session_token: sessionToken },
+    });
     this.logger.log(`Session deleted for user ${session.user_id}`);
 
     return { message: 'Logged out successfully' };
@@ -178,7 +180,7 @@ export class AuthService {
         first_name: firstName,
         last_name: lastName,
         middle_name: middleName,
-        role: role as unknown as user_role_enum,
+        role: role,
         password_hash: passwordHash,
         is_active: true,
       },
