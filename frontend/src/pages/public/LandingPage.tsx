@@ -1,6 +1,7 @@
 import Header from '../../components/layout/Header'
 import Footer from '../../components/layout/Footer'
 import LoginForm from '../../components/auth/LoginForm'
+import ChatbotWidget from '../../components/ChatbotWidget'
 
 function LandingPage() {
   return (
@@ -278,6 +279,7 @@ function LandingPage() {
         </section>
       </main>
       <Footer />
+      <ChatbotWidget />
     </div>
   )
 }
