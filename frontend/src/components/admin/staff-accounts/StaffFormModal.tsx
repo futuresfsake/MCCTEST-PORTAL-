@@ -17,6 +17,9 @@ interface StaffFormModalProps {
   onSubmit: (
     payload: CreateStaffPayload | UpdateStaffPayload,
   ) => Promise<void>
+
+  // NEW
+  onDirtyChange?: (isDirty: boolean) => void
 }
 
 const ROLES: { value: StaffRole; label: string }[] = [
@@ -32,7 +35,7 @@ interface FormState {
   email: string
   role: StaffRole | ''
   password: string
-  employeeId: string // TODO: wire to schema field once confirmed
+  employeeId: string
 }
 
 const EMPTY: FormState = {
@@ -51,33 +54,65 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
   initial,
   onClose,
   onSubmit,
+  onDirtyChange,
 }) => {
   const [form, setForm] = useState<FormState>(EMPTY)
+
+  // NEW
+  const [initialForm, setInitialForm] = useState<FormState>(EMPTY)
+
   const [errors, setErrors] = useState<
     Partial<Record<keyof FormState, string>>
   >({})
+
   const [submitting, setSubmitting] = useState(false)
   const [apiError, setApiError] = useState('')
 
   // Populate fields when editing
   useEffect(() => {
+    let nextForm: FormState
+
     if (mode === 'edit' && initial) {
-      setForm({
+      nextForm = {
         firstName: initial.first_name,
         lastName: initial.last_name,
         middleName: initial.middle_name,
         email: initial.email ?? '',
         role: initial.role,
         password: '',
-        employeeId: '', // TODO: initial.employee_id
-      })
+        employeeId: '',
+      }
     } else {
-      setForm(EMPTY)
+      nextForm = EMPTY
     }
+
+    setForm(nextForm)
+
+    // NEW:
+    // Keep a snapshot of the original values.
+    setInitialForm(nextForm)
+
+    // NEW:
+    // A freshly opened form is never dirty.
+    onDirtyChange?.(false)
 
     setErrors({})
     setApiError('')
-  }, [open, mode, initial])
+  }, [open, mode, initial, onDirtyChange])
+
+  // NEW:
+  // Determine whether the user has changed anything.
+  useEffect(() => {
+    if (!open) {
+      onDirtyChange?.(false)
+      return
+    }
+
+    const dirty =
+      JSON.stringify(form) !== JSON.stringify(initialForm)
+
+    onDirtyChange?.(dirty)
+  }, [form, initialForm, open, onDirtyChange])
 
   const set =
     (field: keyof FormState) =>
@@ -148,18 +183,19 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
           email: form.email.trim(),
           role: form.role as StaffRole,
           password: form.password,
-          // TODO: employeeId: form.employeeId
         } satisfies CreateStaffPayload)
       } else {
         await onSubmit({
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
           middleName: form.middleName.trim(),
-          // TODO: employeeId: form.employeeId
         } satisfies UpdateStaffPayload)
       }
 
-      onClose()
+      // NEW:
+      // The save was successful, so there are no unsaved changes.
+      onDirtyChange?.(false)
+
     } catch (err: any) {
       setApiError(
         err.message ?? 'Something went wrong. Please try again.',
@@ -220,6 +256,7 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
             <p className="text-xs font-semibold text-red-700">
               Unable to save changes
             </p>
+
             <p className="mt-1 text-xs leading-5 text-red-600">
               {apiError}
             </p>
@@ -265,7 +302,6 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
               />
             </div>
 
-            {/* Email */}
             {mode === 'create' ? (
               <div className="sm:col-span-2">
                 <Field
@@ -295,19 +331,6 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
               </div>
             )}
 
-            {/* TODO: Employee ID
-            <div className="sm:col-span-2">
-              <Field
-                label="Employee ID"
-                value={form.employeeId}
-                onChange={set('employeeId')}
-                error={errors.employeeId}
-                placeholder="EMP-2026-001"
-              />
-            </div>
-            */}
-
-            {/* Role */}
             {mode === 'create' && (
               <div className="sm:col-span-2">
                 <label
@@ -344,7 +367,6 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
               </div>
             )}
 
-            {/* Password */}
             {mode === 'create' && (
               <div className="sm:col-span-2">
                 <Field
@@ -395,8 +417,6 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
     </div>
   )
 }
-
-// Internal field component 
 
 interface FieldProps {
   label: string

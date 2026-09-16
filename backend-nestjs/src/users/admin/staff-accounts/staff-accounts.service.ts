@@ -1,3 +1,4 @@
+// backend-nestjs\src\users\admin\staff-accounts\staff-accounts.service.ts
 import {
   Injectable,
   ConflictException,
@@ -57,6 +58,7 @@ export class StaffAccountsService {
       },
       select: {
         id: true,
+        email: true,
         system_id: true,
         first_name: true,
         last_name: true,
@@ -114,6 +116,9 @@ export class StaffAccountsService {
         password,
         email_confirm: true, // skip email verification — admin-created accounts are pre-confirmed
       });
+    this.logger.log(
+      `Supabase user created: ${authData.user?.id} / ${authData.user?.email}`,
+    );
 
     if (authError || !authData.user) {
       this.logger.error(`Supabase Auth createUser failed: ${authError?.message}`);
@@ -143,6 +148,7 @@ export class StaffAccountsService {
         data: {
           // Link to Supabase Auth user so the IDs match
           id: supabaseUserId,
+          email: email,
           system_id: systemId,
           first_name: firstName,
           last_name: lastName,
