@@ -50,6 +50,11 @@ const sidebarConfig: Record<
             path: '/admin/AdminDashboard',
             icon: 'fa-solid fa-gauge-high',
           },
+          {
+            label: 'Announcements',
+            path: '/admin/announcements',
+            icon: 'fa-solid fa-bullhorn',
+          },
         ],
       },
 

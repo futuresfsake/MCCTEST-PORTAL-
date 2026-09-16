@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ChatbotModule } from './chatbot/chatbot.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     }]),
     AuthModule,
     ChatbotModule,
+    AnnouncementsModule,
   ],
   controllers: [SessionsController, AppController],
   providers: [
