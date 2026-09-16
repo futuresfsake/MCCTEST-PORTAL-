@@ -4,6 +4,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import {
@@ -33,9 +34,6 @@ export class EnrollmentsService {
               },
             },
           },
-          { first_name: { contains: searchTerm, mode: 'insensitive' } },
-          { last_name: { contains: searchTerm, mode: 'insensitive' } },
-          { middle_name: { contains: searchTerm, mode: 'insensitive' } },
           {
             users: {
               last_name: {
@@ -69,9 +67,6 @@ export class EnrollmentsService {
             middle_name: true,
           },
         },
-        first_name: true,
-        middle_name: true,
-        last_name: true,
         contact_number: true,
         street_address: true,
         barangay: true,
@@ -96,13 +91,8 @@ export class EnrollmentsService {
         },
       },
       take: 10,
-    }).then((trainees) => trainees.map(({ insurance_coverage, users, ...trainee }) => ({
+    }).then((trainees) => trainees.map(({ insurance_coverage, ...trainee }) => ({
       ...trainee,
-      users: users || {
-        first_name: trainee.first_name || '',
-        middle_name: trainee.middle_name || '',
-        last_name: trainee.last_name || '',
-      },
       hasActiveInsurance: insurance_coverage.length > 0,
     })));
   }
@@ -125,9 +115,9 @@ export class EnrollmentsService {
                   select: {
                     id: true,
                     is_accredited: true,
-                    schedule: true,
-                    start_time: true,
-                    end_time: true,
+                    program_schedule: {
+                      select: { days: true, start_time: true, end_time: true },
+                    },
                   },
                 },
               },
@@ -155,16 +145,17 @@ export class EnrollmentsService {
           select: {
             id: true,
             name: true,
-            id_card_prefix: true,
             is_accredited: true,
-            schedule: true,
-            start_time: true,
-            end_time: true,
+            program_schedule: {
+              select: { days: true, start_time: true, end_time: true },
+            },
           },
         },
         _count: {
           select: {
-            enrollments: true,
+            enrollments: {
+              where: { enrollment_status: { in: ['PENDING', 'ENROLLED'] } },
+            },
           },
         },
       },
@@ -183,12 +174,17 @@ export class EnrollmentsService {
             const datesOverlap =
               existingBatch.start_date <= batch.end_date &&
               batch.start_date <= existingBatch.end_date;
-            const daysOverlap = existingBatch.programs.schedule.some((day) =>
-              batch.programs.schedule.includes(day),
+            const daysOverlap = existingBatch.programs.program_schedule.some((existingSchedule) =>
+              batch.programs.program_schedule.some((candidateSchedule) =>
+                existingSchedule.days.some((day) => candidateSchedule.days.includes(day)),
+              ),
             );
-            const timesOverlap =
-              existingBatch.programs.start_time < batch.programs.end_time &&
-              batch.programs.start_time < existingBatch.programs.end_time;
+            const timesOverlap = existingBatch.programs.program_schedule.some((existingSchedule) =>
+              batch.programs.program_schedule.some((candidateSchedule) =>
+                existingSchedule.start_time < candidateSchedule.end_time &&
+                candidateSchedule.start_time < existingSchedule.end_time,
+              ),
+            );
             return (
               !(
                 existingBatch.programs.is_accredited &&
@@ -210,7 +206,6 @@ export class EnrollmentsService {
       select: {
         id: true,
         name: true,
-        id_card_prefix: true,
         control_number_prefix: true,
       },
       orderBy: { name: 'asc' },
@@ -250,7 +245,9 @@ export class EnrollmentsService {
         capacity: true,
         _count: {
           select: {
-            enrollments: true,
+            enrollments: {
+              where: { enrollment_status: { in: ['PENDING', 'ENROLLED'] } },
+            },
           },
         },
       },
@@ -288,9 +285,9 @@ export class EnrollmentsService {
         programs: {
           select: {
             is_accredited: true,
-            schedule: true,
-            start_time: true,
-            end_time: true,
+            program_schedule: {
+              select: { days: true, start_time: true, end_time: true },
+            },
             name: true,
           },
         },
@@ -298,9 +295,20 @@ export class EnrollmentsService {
     });
     if (!selectedBatch) throw new NotFoundException('Batch not found.');
 
+    const selectedTrainee = await tx.trainee.findUnique({
+      where: { id: traineeId },
+      select: { users_id: true },
+    });
+    const personTraineeIds = selectedTrainee?.users_id
+      ? await tx.trainee.findMany({
+          where: { users_id: selectedTrainee.users_id },
+          select: { id: true },
+        })
+      : [{ id: traineeId }];
+
     const currentEnrollments = await tx.enrollments.findMany({
       where: {
-        trainee_id: traineeId,
+        trainee_id: { in: personTraineeIds.map(({ id }) => id) },
         enrollment_status: { in: ['PENDING', 'ENROLLED'] },
       },
       select: {
@@ -311,9 +319,9 @@ export class EnrollmentsService {
             programs: {
               select: {
                 is_accredited: true,
-                schedule: true,
-                start_time: true,
-                end_time: true,
+                program_schedule: {
+                  select: { days: true, start_time: true, end_time: true },
+                },
                 name: true,
               },
             },
@@ -336,12 +344,17 @@ export class EnrollmentsService {
       const datesOverlap =
         current.batch.start_date <= selectedBatch.end_date &&
         selectedBatch.start_date <= current.batch.end_date;
-      const daysOverlap = currentProgram.schedule.some((day) =>
-        selectedBatch.programs.schedule.includes(day),
+      const daysOverlap = currentProgram.program_schedule.some((currentSchedule) =>
+        selectedBatch.programs.program_schedule.some((selectedSchedule) =>
+          currentSchedule.days.some((day) => selectedSchedule.days.includes(day)),
+        ),
       );
-      const timesOverlap =
-        currentProgram.start_time < selectedBatch.programs.end_time &&
-        selectedBatch.programs.start_time < currentProgram.end_time;
+      const timesOverlap = currentProgram.program_schedule.some((currentSchedule) =>
+        selectedBatch.programs.program_schedule.some((selectedSchedule) =>
+          currentSchedule.start_time < selectedSchedule.end_time &&
+          selectedSchedule.start_time < currentSchedule.end_time,
+        ),
+      );
       if (datesOverlap && daysOverlap && timesOverlap) {
         throw new ConflictException(
           `Schedule conflict: ${currentProgram.name} overlaps the selected program.`,
@@ -358,7 +371,7 @@ export class EnrollmentsService {
 
     const program = await tx.programs.findUnique({
       where: { id: programId },
-      select: { id_card_prefix: true },
+      select: { control_number_prefix: true },
     });
 
     if (!program) {
@@ -387,18 +400,53 @@ export class EnrollmentsService {
       },
     });
 
-    return `${year}-${program.id_card_prefix}${String(updatedSeq.last_sequence).padStart(3, '0')}`;
+    return `${year}-${program.control_number_prefix}${String(updatedSeq.last_sequence).padStart(3, '0')}`;
   }
 
   private async createTrainee(
     tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
     traineeData: any,
+    userId?: string | null,
   ) {
+    const linkedUserId = userId ?? (await (async () => {
+      const firstNameInitials = String(traineeData.firstName || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((name: string) => name[0])
+        .join('')
+        .toUpperCase();
+      const lastName = String(traineeData.lastName || '')
+        .replace(/\s+/g, '')
+        .toUpperCase();
+      const systemId = `MCCTEST_${firstNameInitials}${lastName}`;
+
+      const existingUser = await tx.users.findUnique({
+        where: { system_id: systemId },
+        select: { id: true },
+      });
+      if (existingUser) {
+        throw new ConflictException(
+          `The trainee username ${systemId} is already in use. Please verify the trainee name or resolve the existing account.`,
+        );
+      }
+
+      return (await tx.users.create({
+        data: {
+          system_id: systemId,
+          first_name: traineeData.firstName,
+          middle_name: traineeData.middleName || '',
+          last_name: traineeData.lastName,
+          password_hash: await bcrypt.hash('traineedefault', 12),
+          role: 'TRAINEE',
+        },
+        select: { id: true },
+      })).id;
+    })());
+
     return tx.trainee.create({
       data: {
-        first_name: traineeData.firstName,
-        middle_name: traineeData.middleName || '',
-        last_name: traineeData.lastName,
+        users_id: linkedUserId,
         contact_number: traineeData.contactNumber,
         street_address: traineeData.streetAddress,
         barangay: traineeData.barangay,
@@ -420,42 +468,57 @@ export class EnrollmentsService {
     });
   }
 
-  private async updateTrainee(
+  private async getTraineeUserId(
     tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
     traineeId: string,
-    traineeData: any,
-  ) {
-    const existingTrainee = await tx.trainee.findUnique({
+  ): Promise<string> {
+    const trainee = await tx.trainee.findUnique({
       where: { id: traineeId },
       select: { users_id: true },
     });
+    if (!trainee) throw new NotFoundException('Trainee not found.');
+    if (!trainee.users_id) {
+      throw new BadRequestException('The selected trainee is not linked to a user.');
+    }
+    return trainee.users_id;
+  }
 
-    await tx.trainee.update({
-      where: { id: traineeId },
+  private async checkPersonDuplicateEnrollment(
+    tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
+    userId: string,
+    batchId: string,
+  ) {
+    const personTrainees = await tx.trainee.findMany({
+      where: { users_id: userId },
+      select: { id: true },
+    });
+    const existing = await tx.enrollments.findFirst({
+      where: {
+        trainee_id: { in: personTrainees.map(({ id }) => id) },
+        batch_id: batchId,
+      },
+      select: { id: true },
+    });
+    if (existing) {
+      throw new ConflictException(
+        'Enrollment rejected: this trainee is already enrolled in the selected batch.',
+      );
+    }
+  }
+
+  private async updateUser(
+    tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
+    userId: string,
+    traineeData: any,
+  ) {
+    await tx.users.update({
+      where: { id: userId },
       data: {
         first_name: traineeData.firstName,
         middle_name: traineeData.middleName || '',
         last_name: traineeData.lastName,
-        contact_number: traineeData.contactNumber,
-        street_address: traineeData.streetAddress,
-        barangay: traineeData.barangay,
-        municipality: traineeData.municipality,
-        district: traineeData.district,
-        province: traineeData.province,
-        gender: traineeData.gender,
-        date_of_birth: new Date(traineeData.dateOfBirth),
-        place_of_birth: traineeData.placeOfBirth,
-        citizenship: traineeData.citizenship || 'FILIPINO',
-        mother_name: traineeData.motherName,
-        father_name: traineeData.fatherName,
-        civil_status: traineeData.civilStatus,
-        highest_education: traineeData.highestEducation,
-        pwd: traineeData.pwd,
-        employment_status: traineeData.employmentStatus,
-        employment_type: traineeData.employmentType,
       },
     });
-
   }
 
   async createEnrollment(
@@ -478,17 +541,10 @@ export class EnrollmentsService {
       let traineeId: string;
 
       if (traineeData.isExistingTrainee && traineeData.id) {
-        const existingTrainee = await tx.trainee.findUnique({
-          where: { id: traineeData.id },
-        });
-
-        if (!existingTrainee) {
-          throw new NotFoundException('Trainee not found.');
-        }
-
-        await this.checkDuplicateEnrollment(tx, traineeData.id, batchId);
-        await this.updateTrainee(tx, traineeData.id, traineeData);
-        traineeId = traineeData.id;
+        const userId = await this.getTraineeUserId(tx, traineeData.id);
+        await this.checkPersonDuplicateEnrollment(tx, userId, batchId);
+        await this.updateUser(tx, userId, traineeData);
+        traineeId = (await this.createTrainee(tx, traineeData, userId)).id;
       } else {
         const duplicateTrainee = await tx.trainee.findFirst({
           where: { contact_number: traineeData.contactNumber },
@@ -575,7 +631,7 @@ export class EnrollmentsService {
           one_by_one_pic: requirementChecklist.oneByOnePic,
           two_by_two_pic: requirementChecklist.twoByTwoPic,
           passport_size: requirementChecklist.passportSize,
-          commitment_fee: false,
+          commitment_fee: payment.processPayment,
           remarks: requirementChecklist.remarks,
         },
       });
@@ -635,7 +691,7 @@ export class EnrollmentsService {
         idCardNumber,
         orNumber,
       };
-    });
+    }, { isolationLevel: 'Serializable' });
   }
 
   async getEnrollments(filters: EnrollmentFilterDto) {
@@ -735,6 +791,7 @@ export class EnrollmentsService {
           },
           official_receipts: {
             select: { or_number: true },
+            orderBy: { created_at: 'desc' },
             take: 1,
           },
         },
@@ -835,6 +892,7 @@ export class EnrollmentsService {
             payment_date: true,
             payment_method: true,
           },
+          orderBy: { created_at: 'desc' },
           take: 1,
         },
         users: {

@@ -487,7 +487,6 @@ const Step2BatchSelection: React.FC<{
             fallbackPrograms.push({
               id: batch.programId,
               name: batch.programName,
-              id_card_prefix: '',
               control_number_prefix: '',
             });
           }

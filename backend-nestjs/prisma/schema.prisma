@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider     = "prisma-client"
   output       = "../src/generated/prisma"
@@ -325,28 +320,27 @@ model official_receipts {
 }
 
 model programs {
-  id                               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                             String          @unique @db.VarChar(50)
-  is_accredited                    Boolean         @default(false)
-  schedule                         day_enum[]
-  start_time                       DateTime        @db.Time(6)
-  end_time                         DateTime        @db.Time(6)
-  is_active                        Boolean         @default(true)
-  total_training_hours             Decimal?        @db.Decimal(6, 2)
-  approx_months                    String?         @db.VarChar(50)
-  control_number_prefix            String          @db.VarChar(20)
-  id_card_prefix                   String          @db.VarChar(20)
-  created_at                       DateTime        @default(now()) @db.Timestamptz(6)
-  created_by                       String          @db.Uuid
-  updated_by                       String          @db.Uuid
+  id                               String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                             String             @unique @db.VarChar(50)
+  is_accredited                    Boolean            @default(false)
+  is_active                        Boolean            @default(true)
+  total_training_hours             Decimal?           @db.Decimal(6, 2)
+  approx_months                    String?            @db.VarChar(50)
+  control_number_prefix            String             @db.VarChar(20)
+  created_at                       DateTime           @default(now()) @db.Timestamptz(6)
+  created_by                       String             @db.Uuid
+  updated_by                       String             @db.Uuid
+  description                      String?
+  program_code                     String             @db.VarChar(20)
   announcements                    announcements[]
   batch                            batch[]
   batch_seq                        batch_seq[]
   competency                       competency[]
   ctrl_num_seq                     ctrl_num_seq[]
   inventory                        inventory[]
-  users_programs_created_byTousers users           @relation("programs_created_byTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users_programs_updated_byTousers users           @relation("programs_updated_byTousers", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  program_schedule                 program_schedule[]
+  users_programs_created_byTousers users              @relation("programs_created_byTousers", fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_programs_updated_byTousers users              @relation("programs_updated_byTousers", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([is_active], map: "idx_programs_active")
 }
@@ -399,9 +393,6 @@ model sessions {
 model trainee {
   id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   users_id              String?                 @db.Uuid
-  first_name            String?                 @db.VarChar(50)
-  middle_name           String?                 @db.VarChar(50)
-  last_name             String?                 @db.VarChar(50)
   contact_number        String                  @db.VarChar(15)
   street_address        String                  @db.VarChar(100)
   barangay              String                  @db.VarChar(100)
@@ -416,12 +407,9 @@ model trainee {
   father_name           String                  @db.VarChar(100)
   civil_status          civil_status_enum
   highest_education     highest_education_enum
-  highest_education_other String?              @db.VarChar(100)
   pwd                   Boolean                 @default(false)
   employment_status     employment_status_enum
-  employment_status_other String?              @db.VarChar(100)
   employment_type       employment_type_enum
-  employment_type_other String?                @db.VarChar(100)
   enrollments           enrollments[]
   insurance_coverage    insurance_coverage[]
   users                 users?                  @relation(fields: [users_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -494,7 +482,6 @@ model user_role {
 
 model users {
   id                                  String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  system_id                           String?                   @unique @db.VarChar(30)
   first_name                          String                   @db.VarChar(100)
   last_name                           String                   @db.VarChar(100)
   middle_name                         String                   @db.VarChar(100)
@@ -504,6 +491,8 @@ model users {
   is_active                           Boolean                  @default(true)
   created_at                          DateTime                 @default(now()) @db.Timestamptz(6)
   updated_at                          DateTime                 @default(now()) @db.Timestamptz(6)
+  system_id                           String?                  @unique @db.VarChar(30)
+  email                               String?                  @unique
   announcements                       announcements[]
   attendance                          attendance[]
   batch                               batch[]
@@ -541,6 +530,18 @@ model withdrawal_request {
   users                 users?              @relation(fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@index([enrollment_id], map: "idx_withdrawal_enrollment")
+}
+
+model program_schedule {
+  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  program_id    String     @db.Uuid
+  schedule_name String     @db.VarChar(50)
+  days          day_enum[]
+  start_time    DateTime   @db.Time(6)
+  end_time      DateTime   @db.Time(6)
+  programs      programs   @relation(fields: [program_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([program_id], map: "idx_program_schedule_program")
 }
 
 enum announcement_scope_enum {
@@ -609,20 +610,18 @@ enum day_enum {
 enum employment_status_enum {
   EMPLOYED
   UNEMPLOYED
-  SELF_EMPLOYED
+  SELF_EMPLOYED @map("SELF EMPLOYED")
   STUDENT
   NA
-  OTHER
 }
 
 enum employment_type_enum {
-  FULL_TIME
-  PART_TIME
+  FULL_TIME   @map("FULL TIME")
+  PART_TIME   @map("PART TIME")
   CASUAL
   CONTRACTUAL
   SEASONAL
   NA
-  OTHER
 }
 
 enum enrollment_status_enum {
@@ -641,12 +640,11 @@ enum gender_enum {
 
 enum highest_education_enum {
   ELEMENTARY
-  HIGH_SCHOOL
+  HIGH_SCHOOL   @map("HIGH SCHOOL")
   VOCATIONAL
   COLLEGE
-  POST_GRADUATE
+  POST_GRADUATE @map("POST GRADUATE")
   NA
-  OTHER
 }
 
 enum outcome_status_enum {

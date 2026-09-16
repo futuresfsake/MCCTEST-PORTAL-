@@ -20,13 +20,10 @@ export interface TraineeData {
   motherName: string;
   fatherName: string;
   civilStatus: '' | 'SINGLE' | 'MARRIED' | 'WIDOWED' | 'SEPARATED' | 'DIVORCED';
-  highestEducation: '' | 'ELEMENTARY' | 'HIGH_SCHOOL' | 'VOCATIONAL' | 'COLLEGE' | 'POST_GRADUATE' | 'NA' | 'OTHER';
-  highestEducationOther?: string;
+  highestEducation: '' | 'ELEMENTARY' | 'HIGH_SCHOOL' | 'VOCATIONAL' | 'COLLEGE' | 'POST_GRADUATE' | 'NA';
   pwd: boolean;
-  employmentStatus: '' | 'EMPLOYED' | 'UNEMPLOYED' | 'SELF_EMPLOYED' | 'STUDENT' | 'NA' | 'OTHER';
-  employmentStatusOther?: string;
-  employmentType: '' | 'FULL_TIME' | 'PART_TIME' | 'CASUAL' | 'CONTRACTUAL' | 'SEASONAL' | 'NA' | 'OTHER';
-  employmentTypeOther?: string;
+  employmentStatus: '' | 'EMPLOYED' | 'UNEMPLOYED' | 'SELF_EMPLOYED' | 'STUDENT' | 'NA';
+  employmentType: '' | 'FULL_TIME' | 'PART_TIME' | 'CASUAL' | 'CONTRACTUAL' | 'SEASONAL' | 'NA';
   isExistingTrainee: boolean;
   hasActiveInsurance?: boolean;
 }
@@ -86,7 +83,6 @@ export interface SearchedTrainee {
 export interface Program {
   id: string;
   name: string;
-  id_card_prefix: string;
   control_number_prefix: string;
 }
 
