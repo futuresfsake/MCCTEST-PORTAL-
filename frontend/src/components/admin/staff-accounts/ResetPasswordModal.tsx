@@ -1,12 +1,14 @@
 // src/components/admin/staff-accounts/ResetPasswordModal.tsx
-import React, { useState } from 'react';
-import type { StaffMember } from '../../../api/users/admin.api';
+
+import React, { useState } from 'react'
+
+import type { StaffMember } from '../../../api/users/admin.api'
 
 interface ResetPasswordModalProps {
-  open: boolean;
-  member: StaffMember | null;
-  onClose: () => void;
-  onConfirm: () => Promise<void>;
+  open: boolean
+  member: StaffMember | null
+  onClose: () => void
+  onConfirm: () => Promise<void>
 }
 
 export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
@@ -15,97 +17,195 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
   onClose,
   onConfirm,
 }) => {
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false)
+  const [done, setDone] = useState(false)
+  const [error, setError] = useState('')
 
   const handleConfirm = async () => {
-    setLoading(true);
-    setError('');
+    setLoading(true)
+    setError('')
+
     try {
-      await onConfirm();
-      setDone(true);
+      await onConfirm()
+      setDone(true)
     } catch (err: any) {
-      setError(err.message ?? 'Failed to send reset email. Try again.');
+      setError(
+        err.message ?? 'Failed to send reset email. Try again.',
+      )
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleClose = () => {
-    setDone(false);
-    setError('');
-    onClose();
-  };
+    setDone(false)
+    setError('')
+    onClose()
+  }
 
-  if (!open || !member) return null;
+  if (!open || !member) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={handleClose} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-slate-950/40"
+        onClick={handleClose}
+      />
 
-      <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+      {/* Modal */}
+      <div className="relative z-10 w-full max-w-md border border-slate-200 bg-white shadow-2xl">
         {done ? (
           // ── Success state ──
-          <div className="flex flex-col items-center gap-4 py-2 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
-              <svg className="h-6 w-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">Reset email sent</p>
-              <p className="mt-1 text-sm text-gray-500">
-                A password reset link was sent to{' '}
-                <span className="font-medium text-gray-700">
-                  {member.first_name} {member.last_name}
-                </span>
-                .
+          <div>
+            {/* Header */}
+            <div className="border-b border-slate-200 px-6 py-6">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-blue-800">
+                Staff accounts
               </p>
+
+              <h2 className="text-xl font-bold tracking-tight text-slate-950">
+                Reset email sent
+              </h2>
             </div>
-            <button
-              onClick={handleClose}
-              className="w-full rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-            >
-              Done
-            </button>
+
+            {/* Content */}
+            <div className="px-6 py-6">
+              <div className="border-l-4 border-green-600 bg-green-50 px-4 py-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center bg-green-100 text-green-700">
+                    <i className="fa-solid fa-check text-xs" />
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-green-800">
+                      Password reset link sent
+                    </p>
+
+                    <p className="mt-1 text-xs leading-5 text-green-700">
+                      A password reset link was sent to{' '}
+                      <span className="font-semibold">
+                        {member.first_name} {member.last_name}
+                      </span>
+                      .
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-200 bg-slate-50 px-6 py-4">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="w-full bg-blue-900 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-950"
+              >
+                Done
+              </button>
+            </div>
           </div>
         ) : (
           // ── Confirmation state ──
           <>
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
-              <svg className="h-5 w-5 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-              </svg>
+            {/* Header */}
+            <div className="border-b border-slate-200 px-6 py-6">
+              <div className="flex items-start justify-between gap-6">
+                <div>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-blue-800">
+                    Account security
+                  </p>
+
+                  <h2 className="text-xl font-bold tracking-tight text-slate-950">
+                    Send password reset?
+                  </h2>
+
+                  <p className="mt-2 text-sm leading-6 text-slate-500">
+                    Send a password reset link to this staff member's
+                    registered email address.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleClose}
+                  disabled={loading}
+                  aria-label="Close modal"
+                  className="flex h-8 w-8 shrink-0 items-center justify-center text-slate-400 transition hover:bg-slate-100 hover:text-blue-900 disabled:opacity-50"
+                >
+                  <i className="fa-solid fa-xmark text-sm" />
+                </button>
+              </div>
             </div>
 
-            <h2 className="text-base font-semibold text-gray-900">Send password reset?</h2>
-            <p className="mt-1 text-sm text-gray-500">
-              This will email a reset link to{' '}
-              <span className="font-medium text-gray-800">
-                {member.first_name} {member.last_name}
-              </span>
-              . Their current password stays active until they reset it.
-            </p>
+            {/* Content */}
+            <div className="px-6 py-6">
+              {/* Staff member */}
+              <div className="border border-slate-200 bg-slate-50 p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                  Staff member
+                </p>
 
-            {error && (
-              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {error}
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center bg-blue-50 text-[10px] font-bold text-blue-900">
+                    {member.first_name[0]}
+                    {member.last_name[0]}
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {member.first_name} {member.last_name}
+                    </p>
+
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      {member.email ?? 'No email address available'}
+                    </p>
+                  </div>
+                </div>
               </div>
-            )}
 
-            <div className="mt-5 flex justify-end gap-2">
+              {/* Warning / information */}
+              <div className="mt-5 border-l-4 border-yellow-400 bg-yellow-50 px-4 py-3">
+                <p className="text-xs font-semibold text-yellow-800">
+                  Important
+                </p>
+
+                <p className="mt-1 text-xs leading-5 text-yellow-700">
+                  Their current password remains active until they
+                  complete the password reset.
+                </p>
+              </div>
+
+              {/* Error */}
+              {error && (
+                <div className="mt-5 border-l-4 border-red-500 bg-red-50 px-4 py-3">
+                  <p className="text-xs font-semibold text-red-700">
+                    Unable to send reset email
+                  </p>
+
+                  <p className="mt-1 text-xs leading-5 text-red-600">
+                    {error}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex flex-col-reverse gap-3 border-t border-slate-200 bg-slate-50 px-6 py-4 sm:flex-row sm:justify-end">
               <button
+                type="button"
                 onClick={handleClose}
                 disabled={loading}
-                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                className="border border-slate-200 bg-white px-5 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-slate-300 hover:text-blue-900 disabled:opacity-50"
               >
                 Cancel
               </button>
+
               <button
+                type="button"
                 onClick={handleConfirm}
                 disabled={loading}
-                className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white hover:bg-amber-600 disabled:opacity-60"
+                className="bg-blue-900 px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-950 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {loading ? 'Sending…' : 'Send reset link'}
               </button>
@@ -114,5 +214,5 @@ export const ResetPasswordModal: React.FC<ResetPasswordModalProps> = ({
         )}
       </div>
     </div>
-  );
-};
+  )
+}
