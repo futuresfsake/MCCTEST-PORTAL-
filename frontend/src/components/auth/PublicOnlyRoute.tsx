@@ -15,13 +15,13 @@ case 'REGISTRAR':
   return '/registrar/dashboard'
 
 case 'TRAINER':
-  return '/trainer'
+return '/trainer/dashboard'
 
 case 'TRAINEE':
-  return '/trainee'
+return '/trainee/dashboard'
 
 case 'ENCODER':
-  return '/encoder'
+  return '/encoder/dashboard'
 
 default:
   return '/landing'

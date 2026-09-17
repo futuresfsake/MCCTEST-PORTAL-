@@ -105,11 +105,11 @@ function LoginForm() {
     break
 
   case 'TRAINER':
-    navigate('/trainer', { replace: true })
+    navigate('/trainer/dashboard', { replace: true })
     break
 
   case 'TRAINEE':
-    navigate('/trainee', { replace: true })
+    navigate('/trainee/dashboard', { replace: true })
     break
 
   case 'ENCODER':

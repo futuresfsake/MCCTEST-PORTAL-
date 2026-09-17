@@ -11,6 +11,7 @@ import RegistrarEnrollment from '../pages/users/registrar/RegistrarEnrollment'
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 
 import TraineeDashboard from '../pages/users/trainee/TraineeDashboard'
+import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
@@ -88,7 +89,7 @@ return ( <Routes>
   ========================================================== */}
 
   <Route
-    path="/trainer"
+    path="/trainer/dashboard"
     element={
       <ProtectedRoute allowedRoles={['TRAINER']}>
         <TrainerDashboard />
@@ -101,10 +102,23 @@ return ( <Routes>
   ========================================================== */}
 
   <Route
-    path="/trainee"
+    path="/trainee/dashboard"
     element={
       <ProtectedRoute allowedRoles={['TRAINEE']}>
         <TraineeDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  {/* ==========================================================
+      ENCODER
+  ========================================================== */}
+
+  <Route
+    path="/encoder/dashboard"
+    element={
+      <ProtectedRoute allowedRoles={['ENCODER']}>
+        <EncoderDashboard />
       </ProtectedRoute>
     }
   />
