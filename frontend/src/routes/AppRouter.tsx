@@ -8,6 +8,8 @@ import { AdminStaffAccountsPage } from '../pages/users/admin/staff-accounts/Admi
 
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 import TraineeDashboard from '../pages/users/trainee/TraineeDashboard'
+import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
+import RegistrarDashboard from '../pages/users/registrar/RegistrarDashboard'
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
@@ -91,6 +93,42 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['TRAINEE']}>
         <TraineeDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/registrar"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <RegistrarDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/registrar/dashboard"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <RegistrarDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/encoder"
+    element={
+      <ProtectedRoute allowedRoles={['ENCODER']}>
+        <EncoderDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/encoder/dashboard"
+    element={
+      <ProtectedRoute allowedRoles={['ENCODER']}>
+        <EncoderDashboard />
       </ProtectedRoute>
     }
   />
