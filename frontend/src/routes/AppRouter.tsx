@@ -4,6 +4,7 @@ import LandingPage from '../pages/public/LandingPage'
 
 import AdminDashboard from '../pages/users/admin/AdminDashboard'
 import AdminRecords from '../pages/users/admin/AdminRecords'
+import AdminPrograms from '../pages/users/admin/programs/AdminProgramsPage'
 
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 import TraineeDashboard from '../pages/users/trainee/TraineeDashboard'
@@ -54,6 +55,15 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['ADMIN']}>
         <AdminRecords />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/admin/programs"
+    element={
+      <ProtectedRoute allowedRoles={['ADMIN']}>
+        <AdminPrograms />
       </ProtectedRoute>
     }
   />
