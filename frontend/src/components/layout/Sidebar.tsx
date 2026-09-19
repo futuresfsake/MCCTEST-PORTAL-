@@ -62,6 +62,11 @@ const sidebarConfig: Record<
             icon: 'fa-solid fa-users',
           },
           {
+            label: 'Staff Accounts',
+            path: '/admin/staff-accounts/AdminStaffAccountsPage',
+            icon: 'fa-solid fa-users',
+          },          
+          {
             label: 'Enrollment',
             path: '/admin/enrollment',
             icon: 'fa-solid fa-user-check',

@@ -6,6 +6,7 @@ import { PrismaService } from './prisma/prisma.service';
 import { SessionsController } from './sessions/sessions.controller';
 import { SessionsService } from './sessions/sessions.service';
 import { AuthModule } from './auth/auth.module';
+import { StaffAccountsModule } from './users/admin/staff-accounts/staff-accounts.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { ChatbotModule } from './chatbot/chatbot.module';
@@ -21,6 +22,7 @@ import { ChatbotModule } from './chatbot/chatbot.module';
     }]),
     AuthModule,
     ChatbotModule,
+    StaffAccountsModule,
   ],
   controllers: [SessionsController, AppController],
   providers: [

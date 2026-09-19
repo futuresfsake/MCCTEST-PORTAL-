@@ -22,7 +22,7 @@ function LoginForm() {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/auth/login`,
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
         {
           method: 'POST',
           headers: {
@@ -60,12 +60,14 @@ function LoginForm() {
        * the authenticated frontend session.
        */
       if (
-        data.user.role !== 'ADMIN' &&
-        data.user.role !== 'TRAINER' &&
-        data.user.role !== 'TRAINEE'
-      ) {
-        throw new Error('Unknown user role')
-      }
+  data.user.role !== 'ADMIN' &&
+  data.user.role !== 'TRAINER' &&
+  data.user.role !== 'TRAINEE' && // <-- Added &&
+  data.user.role !== 'REGISTRAR' && // <-- Added &&
+  data.user.role !== 'ENCODER'
+) {
+  throw new Error('Unknown user role')
+}
 
       /*
        * Store authentication information through AuthContext.
