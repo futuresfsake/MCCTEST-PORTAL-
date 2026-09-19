@@ -1,6 +1,4 @@
-import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -11,12 +9,11 @@ async function bootstrap() {
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true }));
-
   app.enableCors({
     origin: allowedOrigins,
   });
-
+  
+  app.setGlobalPrefix('api');  
   await app.listen(process.env.PORT ?? 3000);
 }
-void bootstrap();
+bootstrap();

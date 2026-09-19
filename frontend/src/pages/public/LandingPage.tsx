@@ -1,6 +1,7 @@
 import Header from '../../components/layout/Header'
 import Footer from '../../components/layout/Footer'
 import LoginForm from '../../components/auth/LoginForm'
+import ChatbotWidget from '../../components/ChatbotWidget'
 
 function LandingPage() {
   return (
@@ -30,7 +31,7 @@ function LandingPage() {
 
             <p className="mt-6 max-w-lg text-lg leading-8 text-slate-600">
               A training and certification portal designed to help
-              trainees manage their learning, assessment, and
+              trainees manage their learning, progress, and
               certification journey.
             </p>
 
@@ -40,7 +41,7 @@ function LandingPage() {
                 </span>
 
                 <span className="border-l-4 border-yellow-400 pl-4 text-sm font-semibold text-slate-700">
-                    Assessment
+                    Tracking
                 </span>
 
                 <span className="border-l-4 border-yellow-400 pl-4 text-sm font-semibold text-slate-700">
@@ -79,7 +80,7 @@ function LandingPage() {
               </p>
 
               <p className="mt-4 text-base leading-7 text-slate-600">
-                The MCCTEST Portal brings training, assessment,
+                The MCCTEST Portal brings training, tracking,
                 and certification information together in one place.
               </p>
             </div>
@@ -145,7 +146,7 @@ function LandingPage() {
                 </h3>
 
                 <p className="mt-3 text-sm leading-6 text-slate-600">
-                  Track assessment and certification progress through the
+                  Track training and certification progress through the
                   training portal.
                 </p>
               </div>
@@ -278,6 +279,7 @@ function LandingPage() {
         </section>
       </main>
       <Footer />
+      <ChatbotWidget />
     </div>
   )
 }

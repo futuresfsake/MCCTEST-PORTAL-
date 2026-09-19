@@ -11,7 +11,6 @@ function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
 
   const navigate = useNavigate()
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
   const handleSubmit = async (
     event: React.FormEvent<HTMLFormElement>,
@@ -23,7 +22,7 @@ function LoginForm() {
 
     try {
       const response = await fetch(
-        `${apiUrl}/auth/login`,
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
         {
           method: 'POST',
           headers: {
@@ -62,9 +61,9 @@ function LoginForm() {
        */
       if (
   data.user.role !== 'ADMIN' &&
-  data.user.role !== 'REGISTRAR' &&
   data.user.role !== 'TRAINER' &&
-  data.user.role !== 'TRAINEE' &&
+  data.user.role !== 'TRAINEE' && // <-- Added &&
+  data.user.role !== 'REGISTRAR' && // <-- Added &&
   data.user.role !== 'ENCODER'
 ) {
   throw new Error('Unknown user role')
@@ -94,28 +93,19 @@ function LoginForm() {
        * Redirect according to the authenticated role.
        */
       switch (data.user.role) {
-  case 'ADMIN':
-    console.log('Redirecting to /admin/dashboard')
-    navigate('/admin/dashboard', { replace: true })
-    break
+        case 'ADMIN':
+          console.log('Redirecting to /admin')
+          navigate('/admin/AdminDashboard', { replace: true })
+          break
 
-  case 'REGISTRAR':
-    console.log('Redirecting to /registrar/dashboard')
-    navigate('/registrar/dashboard', { replace: true })
-    break
+        case 'TRAINER':
+          navigate('/trainer', { replace: true })
+          break
 
-  case 'TRAINER':
-    navigate('/trainer/dashboard', { replace: true })
-    break
-
-  case 'TRAINEE':
-    navigate('/trainee/dashboard', { replace: true })
-    break
-
-  case 'ENCODER':
-    navigate('/encoder/dashboard', { replace: true })
-    break
-}
+        case 'TRAINEE':
+          navigate('/trainee', { replace: true })
+          break
+      }
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message)

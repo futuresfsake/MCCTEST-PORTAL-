@@ -1,0 +1,34 @@
+{
+  "institution": "MCC Test Portal",
+  "description": "An institutional training and management portal.",
+  "programs": [
+    "Hilot Wellness Massage NC II",
+    "Bread & Pastry Production NC II",
+    "Cookery",
+    "AUTO-CAD (Community Based)",
+    "Computer Systems Servicing",
+    "Automotive Servicing",
+    "Refrigeration and Air Conditioning Servicing (DOMRAC)",
+    "Shielded Metal Arc Welding",
+    "Electrical Installation & Maintenance NC III (Community Based)",
+    "Barbering",
+    "Beauty Care (Nail Care)",
+    "Hairdressing",
+    "Driving",
+    "Dressmaking",
+    "Draperies & Curtains Making (Community Based)",
+    "Industrial Sewing Machine Operation",
+    "Food & Meat Processing (Community Based)",
+    "Pipefitting",
+    "Computer Literacy"
+  ],
+  "enrollment_fee": "PHP 450",
+  "location": "J.M. Ceniza Street, near the old BJMP Female Dormitory, Looc Superior, Mandaue City, Cebu",
+  "faqs": [
+    { "q": "How do I enroll?", "a": "Enrollment is processed onsite or through the registrar office." },
+    {
+      "q": "What are the requirements?",
+      "a": "Photocopy of Birth Certificate (NSO); Diploma (ALS, High School, Senior High School, or College); TOR. If TOR is not available for undergraduates, Form 137 or School Certification is accepted; Barangay Residency or Clearance; and 3 pieces of ID picture each (1x1, 2x2, and passport size)."
+    }
+  ]
+}

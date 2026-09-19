@@ -7,7 +7,7 @@ function Footer() {
         </p>
 
         <p>
-          Training. Assessment. Certification.
+          Training. Tracking. Certification.
         </p>
       </div>
     </footer>
