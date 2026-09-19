@@ -4,7 +4,7 @@ import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 const registrarApi: AxiosInstance = axios.create({
-  baseURL: `${API_BASE_URL}/registrar`,
+  baseURL: `${API_BASE_URL}/api/registrar`,
 });
 
 registrarApi.interceptors.request.use((config: InternalAxiosRequestConfig) => {
