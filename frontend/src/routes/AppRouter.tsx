@@ -4,6 +4,7 @@ import LandingPage from '../pages/public/LandingPage'
 
 import AdminDashboard from '../pages/users/admin/AdminDashboard'
 import AdminRecords from '../pages/users/admin/AdminRecords'
+import AdminPrograms from '../pages/users/admin/programs/AdminProgramsPage'
 import { AdminStaffAccountsPage } from '../pages/users/admin/staff-accounts/AdminStaffAccountsPage'
 
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
@@ -63,13 +64,31 @@ return ( <Routes>
   />
 
   <Route
-    path="/admin/staff-accounts/AdminStaffAccountsPage"
-    element={
-      <ProtectedRoute allowedRoles={['ADMIN']}>
-        <AdminStaffAccountsPage />
-      </ProtectedRoute>
-    }
-  />
+  path="/admin/records"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <AdminRecords />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/programs"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <AdminPrograms />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/staff-accounts/AdminStaffAccountsPage"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <AdminStaffAccountsPage />
+    </ProtectedRoute>
+  }
+/>
 
   {/* ==========================================================
       TRAINER
