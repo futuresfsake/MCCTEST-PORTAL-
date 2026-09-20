@@ -1,3 +1,4 @@
+// frontend\src\components\layout\Header.tsx
 import { useAuth } from '../../context/AuthContext'
 import mcctestLogo from '../../assets/mcctest-logo.png'
 
@@ -9,7 +10,7 @@ function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
       <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6 lg:px-8">
 
         {/* Logo */}
