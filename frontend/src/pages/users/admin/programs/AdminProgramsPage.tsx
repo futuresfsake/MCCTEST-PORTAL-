@@ -88,7 +88,12 @@ async function apiFetch(
 function AdminProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>([])
 
+  // Search input value
   const [search, setSearch] = useState('')
+
+  // Debounced search value used for API requests
+  const [searchQuery, setSearchQuery] = useState('')
+
   const [status, setStatus] = useState('')
 
   const [page, setPage] = useState(1)
@@ -125,8 +130,8 @@ function AdminProgramsPage() {
         limit: String(limit),
       })
 
-      if (search.trim()) {
-        params.set('search', search.trim())
+      if (searchQuery.trim()) {
+        params.set('search', searchQuery.trim())
       }
 
       if (status) {
@@ -150,12 +155,16 @@ function AdminProgramsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [page, search, status])
+  }, [page, searchQuery, status])
 
   useEffect(() => {
     fetchPrograms()
   }, [fetchPrograms])
 
+  /*
+   * Clean up the search timeout when the component
+   * is unmounted.
+   */
   useEffect(() => {
     return () => {
       if (searchTimeoutRef.current) {
@@ -164,6 +173,9 @@ function AdminProgramsPage() {
     }
   }, [])
 
+  /*
+   * Automatically hide success messages after 4 seconds.
+   */
   useEffect(() => {
     if (!successMessage) return
 
@@ -174,6 +186,12 @@ function AdminProgramsPage() {
     return () => clearTimeout(timeout)
   }, [successMessage])
 
+  /*
+   * Debounced search.
+   *
+   * The input updates immediately, but the API query
+   * only updates after the user stops typing for 400ms.
+   */
   const handleSearch = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -187,7 +205,7 @@ function AdminProgramsPage() {
     }
 
     searchTimeoutRef.current = setTimeout(() => {
-      setSearch(value)
+      setSearchQuery(value)
     }, 400)
   }
 
@@ -197,6 +215,7 @@ function AdminProgramsPage() {
     }
 
     setSearch('')
+    setSearchQuery('')
     setPage(1)
   }
 
