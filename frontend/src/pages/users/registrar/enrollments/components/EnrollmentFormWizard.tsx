@@ -384,14 +384,14 @@ const Step1TraineeInfo: React.FC<{
       {searchQuery && searchResults.length === 0 && !isSearching && <p className="text-xs text-slate-500">No trainees found.</p>}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Field label="First Name *"><input type="text" placeholder="First name" value={traineeData.firstName} onChange={(e) => onTraineeChange({ firstName: e.target.value })} className={fieldClass(missingFields.has('First Name'))} /></Field>
+        <Field label="First Name "><input type="text" placeholder="First name" value={traineeData.firstName} onChange={(e) => onTraineeChange({ firstName: e.target.value })} className={fieldClass(missingFields.has('First Name'))} /></Field>
         <Field label="Middle Name"><input type="text" placeholder="Middle name" value={traineeData.middleName} onChange={(e) => onTraineeChange({ middleName: e.target.value })} className={inputClass} /></Field>
-        <Field label="Last Name *"><input type="text" placeholder="Last name" value={traineeData.lastName} onChange={(e) => onTraineeChange({ lastName: e.target.value })} className={fieldClass(missingFields.has('Last Name'))} /></Field>
+        <Field label="Last Name "><input type="text" placeholder="Last name" value={traineeData.lastName} onChange={(e) => onTraineeChange({ lastName: e.target.value })} className={fieldClass(missingFields.has('Last Name'))} /></Field>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Field label="Date of Birth *"><input type="date" value={traineeData.dateOfBirth} onChange={(e) => onTraineeChange({ dateOfBirth: e.target.value })} className={fieldClass(missingFields.has('Date of Birth'))} /></Field>
-        <Field label="Gender *"><select value={traineeData.gender} onChange={(e) => onTraineeChange({ gender: e.target.value as TraineeData['gender'] })} className={inputClass}><option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHER">Other</option></select></Field>
-        <Field label="Contact Number *">
+        <Field label="Date of Birth "><input type="date" value={traineeData.dateOfBirth} onChange={(e) => onTraineeChange({ dateOfBirth: e.target.value })} className={fieldClass(missingFields.has('Date of Birth'))} /></Field>
+        <Field label="Gender "><select value={traineeData.gender} onChange={(e) => onTraineeChange({ gender: e.target.value as TraineeData['gender'] })} className={inputClass}><option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHER">Other</option></select></Field>
+        <Field label="Contact Number ">
           <div className={`${fieldClass(missingFields.has('Contact Number'))} flex items-center px-0`}>
             <span className="border-r border-slate-300 px-3 text-sm text-slate-500">+63</span>
             <input type="tel" inputMode="numeric" maxLength={10} placeholder="9171234567" value={traineeData.contactNumber.replace(/^\+63\s?/, '')} onChange={(e) => onTraineeChange({ contactNumber: `+63${e.target.value.replace(/\D/g, '').slice(0, 10)}` })} className="h-full min-w-0 flex-1 bg-transparent px-3 text-sm text-slate-900 outline-none placeholder:text-slate-400" />
@@ -400,27 +400,27 @@ const Step1TraineeInfo: React.FC<{
       </div>
 
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <Field label="Street Address *"><input type="text" placeholder="Purok / street name" value={traineeData.streetAddress} onChange={(e) => onTraineeChange({ streetAddress: e.target.value })} className={inputClass} /></Field>
-          <Field label="Barangay *"><input type="text" placeholder="Barangay" value={traineeData.barangay} onChange={(e) => onTraineeChange({ barangay: e.target.value })} className={fieldClass(missingFields.has('Barangay'))} /></Field>
-          <Field label="Municipality *"><input type="text" placeholder="Municipality" value={traineeData.municipality} onChange={(e) => onTraineeChange({ municipality: e.target.value })} className={fieldClass(missingFields.has('Municipality'))} /></Field>
+          <Field label="Street Address "><input type="text" placeholder="Purok / street name" value={traineeData.streetAddress} onChange={(e) => onTraineeChange({ streetAddress: e.target.value })} className={inputClass} /></Field>
+          <Field label="Barangay "><input type="text" placeholder="Barangay" value={traineeData.barangay} onChange={(e) => onTraineeChange({ barangay: e.target.value })} className={fieldClass(missingFields.has('Barangay'))} /></Field>
+          <Field label="Municipality "><input type="text" placeholder="Municipality" value={traineeData.municipality} onChange={(e) => onTraineeChange({ municipality: e.target.value })} className={fieldClass(missingFields.has('Municipality'))} /></Field>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <Field label="District *"><input type="text" placeholder="District" value={traineeData.district} onChange={(e) => onTraineeChange({ district: e.target.value })} className={inputClass} /></Field>
-          <Field label="Province *"><input type="text" placeholder="Province" value={traineeData.province} onChange={(e) => onTraineeChange({ province: e.target.value })} className={fieldClass(missingFields.has('Province'))} /></Field>
-          <Field label="Place of Birth *"><input type="text" placeholder="City / municipality" value={traineeData.placeOfBirth} onChange={(e) => onTraineeChange({ placeOfBirth: e.target.value })} className={fieldClass(missingFields.has('Place of Birth'))} /></Field>
+          <Field label="District "><input type="text" placeholder="District" value={traineeData.district} onChange={(e) => onTraineeChange({ district: e.target.value })} className={inputClass} /></Field>
+          <Field label="Province "><input type="text" placeholder="Province" value={traineeData.province} onChange={(e) => onTraineeChange({ province: e.target.value })} className={fieldClass(missingFields.has('Province'))} /></Field>
+          <Field label="Place of Birth "><input type="text" placeholder="City / municipality" value={traineeData.placeOfBirth} onChange={(e) => onTraineeChange({ placeOfBirth: e.target.value })} className={fieldClass(missingFields.has('Place of Birth'))} /></Field>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <Field label="Citizenship *"><input type="text" placeholder="Filipino" value={traineeData.citizenship || ''} onChange={(e) => onTraineeChange({ citizenship: e.target.value })} className={inputClass} /></Field>
-          <Field label="Mother's Name *"><input type="text" placeholder="Full maiden name" value={traineeData.motherName} onChange={(e) => onTraineeChange({ motherName: e.target.value })} className={inputClass} /></Field>
-          <Field label="Father's Name *"><input type="text" placeholder="Full name" value={traineeData.fatherName} onChange={(e) => onTraineeChange({ fatherName: e.target.value })} className={inputClass} /></Field>
+          <Field label="Citizenship "><input type="text" placeholder="Filipino" value={traineeData.citizenship || ''} onChange={(e) => onTraineeChange({ citizenship: e.target.value })} className={inputClass} /></Field>
+          <Field label="Mother's Name "><input type="text" placeholder="Full maiden name" value={traineeData.motherName} onChange={(e) => onTraineeChange({ motherName: e.target.value })} className={inputClass} /></Field>
+          <Field label="Father's Name "><input type="text" placeholder="Full name" value={traineeData.fatherName} onChange={(e) => onTraineeChange({ fatherName: e.target.value })} className={inputClass} /></Field>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3 ">
-          <Field label="Civil Status *"><select value={traineeData.civilStatus} onChange={(e) => onTraineeChange({ civilStatus: e.target.value as TraineeData['civilStatus'] })} className={fieldClass(missingFields.has('Civil Status'))}><option value="" disabled>Civil Status</option><option value="SINGLE">Single</option><option value="MARRIED">Married</option><option value="WIDOWED">Widowed</option><option value="SEPARATED">Separated</option><option value="DIVORCED">Divorced</option></select></Field>
-          <SelectField label="Highest Education *" value={traineeData.highestEducation} invalid={missingFields.has('Highest Education')} onChange={(value) => onTraineeChange({ highestEducation: value as TraineeData['highestEducation'] })} options={[['ELEMENTARY', 'Elementary'], ['HIGH_SCHOOL', 'High School'], ['VOCATIONAL', 'Vocational'], ['COLLEGE', 'College'], ['POST_GRADUATE', 'Post Graduate'], ['NA', 'N/A']]} />
-          <SelectField label="Employment Status *" value={traineeData.employmentStatus} invalid={missingFields.has('Employment Status')} onChange={(value) => onTraineeChange({ employmentStatus: value as TraineeData['employmentStatus'] })} options={[['EMPLOYED', 'Employed'], ['UNEMPLOYED', 'Unemployed'], ['SELF_EMPLOYED', 'Self Employed'], ['STUDENT', 'Student'], ['NA', 'N/A']]} />
+          <Field label="Civil Status "><select value={traineeData.civilStatus} onChange={(e) => onTraineeChange({ civilStatus: e.target.value as TraineeData['civilStatus'] })} className={fieldClass(missingFields.has('Civil Status'))}><option value="" disabled>Civil Status</option><option value="SINGLE">Single</option><option value="MARRIED">Married</option><option value="WIDOWED">Widowed</option><option value="SEPARATED">Separated</option><option value="DIVORCED">Divorced</option></select></Field>
+          <SelectField label="Highest Education " value={traineeData.highestEducation} invalid={missingFields.has('Highest Education')} onChange={(value) => onTraineeChange({ highestEducation: value as TraineeData['highestEducation'] })} options={[['ELEMENTARY', 'Elementary'], ['HIGH_SCHOOL', 'High School'], ['VOCATIONAL', 'Vocational'], ['COLLEGE', 'College'], ['POST_GRADUATE', 'Post Graduate'], ['NA', 'N/A']]} />
+          <SelectField label="Employment Status " value={traineeData.employmentStatus} invalid={missingFields.has('Employment Status')} onChange={(value) => onTraineeChange({ employmentStatus: value as TraineeData['employmentStatus'] })} options={[['EMPLOYED', 'Employed'], ['UNEMPLOYED', 'Unemployed'], ['SELF_EMPLOYED', 'Self Employed'], ['STUDENT', 'Student'], ['NA', 'N/A']]} />
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-          <SelectField label="Employment Type *" value={traineeData.employmentType} invalid={missingFields.has('Employment Type')} onChange={(value) => onTraineeChange({ employmentType: value as TraineeData['employmentType'] })} options={[['FULL_TIME', 'Full Time'], ['PART_TIME', 'Part Time'], ['CASUAL', 'Casual'], ['CONTRACTUAL', 'Contractual'], ['SEASONAL', 'Seasonal'], ['NA', 'N/A']]} />
+          <SelectField label="Employment Type " value={traineeData.employmentType} invalid={missingFields.has('Employment Type')} onChange={(value) => onTraineeChange({ employmentType: value as TraineeData['employmentType'] })} options={[['FULL_TIME', 'Full Time'], ['PART_TIME', 'Part Time'], ['CASUAL', 'Casual'], ['CONTRACTUAL', 'Contractual'], ['SEASONAL', 'Seasonal'], ['NA', 'N/A']]} />
           <label className="flex h-10 items-center gap-2 self-end text-xs font-medium text-slate-700"><input type="checkbox" checked={traineeData.pwd} onChange={(e) => onTraineeChange({ pwd: e.target.checked })} className="h-4 w-4 rounded border-slate-300" /> PWD (Person with Disability)</label>
         </div>
     </div>

@@ -345,18 +345,7 @@ model programs {
   @@index([is_active], map: "idx_programs_active")
 }
 
-model program_schedule {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  program_id    String    @db.Uuid
-  schedule_name String    @db.VarChar(50)
-  days          day_enum[]
-  start_time    DateTime  @db.Time(6)
-  end_time      DateTime  @db.Time(6)
 
-  program       programs  @relation(fields: [program_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([program_id], map: "idx_program_schedule_program")
-}
 
 model request_form {
   id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
