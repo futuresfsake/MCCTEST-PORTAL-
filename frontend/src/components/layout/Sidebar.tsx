@@ -77,6 +77,11 @@ const sidebarConfig: Record<
             icon: 'fa-solid fa-layer-group',
           },
           {
+            label: 'Programs',
+            path: '/admin/programs',
+            icon: 'fa-solid fa-book-open',
+          },
+          {
             label: 'Records',
             path: '/admin/records',
             icon: 'fa-solid fa-folder-open',
