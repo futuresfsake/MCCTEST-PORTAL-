@@ -144,29 +144,37 @@ export class StaffAccountsService {
     const passwordHash = await bcrypt.hash(password, this.SALT_ROUNDS);
 
     try {
-      const newUser = await this.prisma.users.create({
+    const newUser = await this.prisma.users.create({
+      data: {
+        id: supabaseUserId,
+        email,
+        system_id: systemId,
+        first_name: firstName,
+        last_name: lastName,
+        middle_name: middleName,
+        role: role as unknown as user_role_enum,
+        password_hash: passwordHash,
+        is_active: true,
+      },
+      select: {
+        id: true,
+        system_id: true,
+        first_name: true,
+        last_name: true,
+        role: true,
+        is_active: true,
+        created_at: true,
+      },
+    });
+
+    // Create trainer profile when the staff role is TRAINER
+    if (role === user_role_enum.TRAINER) {
+      await this.prisma.trainer.create({
         data: {
-          // Link to Supabase Auth user so the IDs match
-          id: supabaseUserId,
-          email: email,
-          system_id: systemId,
-          first_name: firstName,
-          last_name: lastName,
-          middle_name: middleName,
-          role: role as unknown as user_role_enum,
-          password_hash: passwordHash,
-          is_active: true,
-        },
-        select: {
-          id: true,
-          system_id: true,
-          first_name: true,
-          last_name: true,
-          role: true,
-          is_active: true,
-          created_at: true,
+          user_id: newUser.id,
         },
       });
+    }
 
       this.logger.log(
         `Admin ${createdByAdminId} created staff account ${newUser.system_id} (${role})`,
@@ -194,33 +202,73 @@ export class StaffAccountsService {
     }
   }
 
-  // ── Update staff profile ────────────────────────────────────────────────────
+// ── Update staff profile ────────────────────────────────────────────────────
 
-  async update(id: string, dto: UpdateStaffDto) {
-    await this.findOne(id); // throws 404 if not found or not a staff role
+async update(id: string, dto: UpdateStaffDto) {
+  await this.findOne(id); // throws 404 if not found or not a staff role
 
-    const updated = await this.prisma.users.update({
-      where: { id },
-      data: {
-        ...(dto.firstName && { first_name: dto.firstName }),
-        ...(dto.lastName && { last_name: dto.lastName }),
-        ...(dto.middleName && { middle_name: dto.middleName }),
-        updated_at: new Date(),
-      },
-      select: {
-        id: true,
-        system_id: true,
-        first_name: true,
-        last_name: true,
-        middle_name: true,
-        role: true,
-        is_active: true,
-        updated_at: true,
-      },
-    });
+  // ── Update Supabase Auth email first ─────────────────────────────────────
+  if (dto.email) {
+    const { error: authError } =
+      await this.supabaseAdmin.auth.admin.updateUserById(id, {
+        email: dto.email,
+        email_confirm: true,
+      });
 
-    return updated;
+    if (authError) {
+      this.logger.error(
+        `Supabase Auth email update failed for user ${id}: ${authError.message}`,
+      );
+
+      if (
+        authError.message
+          ?.toLowerCase()
+          .includes('already registered')
+      ) {
+        throw new ConflictException(
+          `An account with the email "${dto.email}" already exists`,
+        );
+      }
+
+      throw new BadRequestException(
+        'Failed to update email address. Please try again.',
+      );
+    }
   }
+
+  // ── Update our users table ───────────────────────────────────────────────
+  const updated = await this.prisma.users.update({
+    where: { id },
+    data: {
+      ...(dto.firstName !== undefined && {
+        first_name: dto.firstName,
+      }),
+      ...(dto.lastName !== undefined && {
+        last_name: dto.lastName,
+      }),
+      ...(dto.middleName !== undefined && {
+        middle_name: dto.middleName,
+      }),
+      ...(dto.email !== undefined && {
+        email: dto.email,
+      }),
+      updated_at: new Date(),
+    },
+    select: {
+      id: true,
+      system_id: true,
+      first_name: true,
+      last_name: true,
+      middle_name: true,
+      email: true,
+      role: true,
+      is_active: true,
+      updated_at: true,
+    },
+  });
+
+  return updated;
+}
 
   // ── Deactivate / Reactivate ─────────────────────────────────────────────────
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import mcctestLogo from '../../assets/mcctest-logo.png'
+import { useAuth } from '../../context/AuthContext'
 
 export type SidebarVariant =
   | 'admin'
@@ -21,7 +22,16 @@ type SidebarSection = {
 }
 
 type SidebarProps = {
-  variant: SidebarVariant
+  /**
+   * Optional.
+   *
+   * If omitted, the sidebar automatically uses the
+   * currently authenticated user's role.
+   *
+   * You can still pass a variant explicitly if a page
+   * genuinely needs to override the normal role-based sidebar.
+   */
+  variant?: SidebarVariant
 }
 
 const sidebarConfig: Record<
@@ -65,7 +75,7 @@ const sidebarConfig: Record<
             label: 'Staff Accounts',
             path: '/admin/staff-accounts/AdminStaffAccountsPage',
             icon: 'fa-solid fa-users',
-          },          
+          },
           {
             label: 'Enrollment',
             path: '/admin/enrollment',
@@ -73,7 +83,7 @@ const sidebarConfig: Record<
           },
           {
             label: 'Training & Batches',
-            path: '/admin/batches',
+            path: '/registrar/batches/BatchManagement',
             icon: 'fa-solid fa-layer-group',
           },
           {
@@ -328,7 +338,7 @@ const sidebarConfig: Record<
         items: [
           {
             label: 'Dashboard',
-            path: '/registrar/dashboard',
+            path: '/registrar',
             icon: 'fa-solid fa-gauge-high',
           },
         ],
@@ -354,7 +364,7 @@ const sidebarConfig: Record<
           },
           {
             label: 'Batches & Schedules',
-            path: '/registrar/batches',
+            path: '/registrar/batches/BatchManagement',
             icon: 'fa-solid fa-layer-group',
           },
         ],
@@ -385,6 +395,32 @@ const sidebarConfig: Record<
 }
 
 /* ==============================================================
+   ROLE → SIDEBAR VARIANT
+   ============================================================== */
+
+function getSidebarVariant(role?: string): SidebarVariant {
+  switch (role?.toUpperCase()) {
+    case 'ADMIN':
+      return 'admin'
+
+    case 'TRAINER':
+      return 'trainer'
+
+    case 'TRAINEE':
+      return 'trainee'
+
+    case 'ENCODER':
+      return 'encoder'
+
+    case 'REGISTRAR':
+      return 'registrar'
+
+    default:
+      return 'admin'
+  }
+}
+
+/* ==============================================================
    SHARED SIDEBAR CONTENT
    ============================================================== */
 
@@ -399,12 +435,7 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
 }) => {
   return (
     <div className="flex h-full min-h-0 flex-col">
-
-      {/* ========================================================
-          NAVIGATION
-      ======================================================== */}
-
-      <nav 
+      <nav
         className="min-h-0 flex-1 overflow-y-auto px-4 py-7"
         style={{
           scrollbarWidth: 'none',
@@ -422,43 +453,40 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
             key={section.title}
             className={sectionIndex > 0 ? 'mt-8' : ''}
           >
-
             <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
               {section.title}
             </p>
 
             <div className="space-y-1">
+              {section.items.map((item) => {
+                // Determine if this item is a root dashboard link that needs exact matching
+                // (You can check by label, path structure, or if it ends up being a base route)
+                const isDashboard = item.label.toLowerCase() === 'dashboard';
 
-              {section.items.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={onNavigate}
-                  className={({ isActive }) =>
-                    [
-                      'group flex items-center gap-2.5 border-l-2 px-2 py-1.5 text-sm font-medium transition',
-                      isActive
-                        ? 'border-blue-900 bg-slate-50 text-blue-900'
-                        : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-blue-900',
-                    ].join(' ')
-                  }
-                >
-
-                  <i
-                    className={`${item.icon} w-4 text-center text-xs`}
-                  />
-
-                  <span>{item.label}</span>
-
-                </NavLink>
-              ))}
-
+                return (
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
+                    end={isDashboard}
+                    onClick={onNavigate}
+                    className={({ isActive }) =>
+                      [
+                        'group flex items-center gap-2.5 border-l-2 px-2 py-1.5 text-sm font-medium transition',
+                        isActive
+                          ? 'border-blue-900 bg-slate-50 text-blue-900'
+                          : 'border-transparent text-slate-600 hover:border-slate-300 hover:bg-slate-50 hover:text-blue-900',
+                      ].join(' ')
+                    }
+                  >
+                    <i className={`${item.icon} w-4 text-center text-xs`} />
+                    <span>{item.label}</span>
+                  </NavLink>
+                );
+              })}
             </div>
           </div>
         ))}
-
       </nav>
-
     </div>
   )
 }
@@ -468,7 +496,22 @@ const SidebarContent: React.FC<SidebarContentProps> = ({
    ============================================================== */
 
 const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
-  const config = sidebarConfig[variant]
+  const { user } = useAuth()
+
+  /*
+   * Prefer the authenticated user's actual role.
+   *
+   * This prevents an ADMIN visiting a registrar-owned page
+   * from accidentally receiving the registrar sidebar.
+   *
+   * `variant` is only used as a fallback if there is no
+   * authenticated user yet.
+   */
+  const effectiveVariant = user
+    ? getSidebarVariant(user.role)
+    : variant ?? 'admin'
+
+  const config = sidebarConfig[effectiveVariant]
 
   const [isMobileOpen, setIsMobileOpen] = useState(false)
 
@@ -511,18 +554,14 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
     <>
       {/* ========================================================
           DESKTOP SIDEBAR
-          Visible on lg screens and above.
       ======================================================== */}
 
       <aside className="sticky top-20 hidden h-[calc(100vh-5rem)] w-64 shrink-0 self-start border-r border-slate-200 bg-white lg:flex lg:flex-col">
-
         <SidebarContent config={config} />
-
       </aside>
 
       {/* ========================================================
           MOBILE MENU BUTTON
-          Visible below lg breakpoint.
       ======================================================== */}
 
       <button
@@ -533,9 +572,9 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
         className="fixed bottom-5 left-5 z-40 flex h-12 w-12 items-center justify-center rounded-lg bg-white shadow-md transition hover:shadow-lg focus:outline-none lg:hidden"
       >
         <div className="flex flex-col gap-1">
-          <div className="h-0.5 w-6 bg-black"></div>
-          <div className="h-0.5 w-6 bg-black"></div>
-          <div className="h-0.5 w-6 bg-black"></div>
+          <div className="h-0.5 w-6 bg-black" />
+          <div className="h-0.5 w-6 bg-black" />
+          <div className="h-0.5 w-6 bg-black" />
         </div>
       </button>
 
@@ -564,16 +603,17 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
             : '-translate-x-full',
         ].join(' ')}
       >
-
         {/* ======================================================
             MOBILE SIDEBAR HEADER
         ====================================================== */}
 
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 px-5">
-
           <div className="flex items-center gap-3">
-
-            <img src={mcctestLogo} alt="MCCTEST Logo" className="h-8 w-8" />
+            <img
+              src={mcctestLogo}
+              alt="MCCTEST Logo"
+              className="h-8 w-8"
+            />
 
             <div>
               <p className="text-xs font-bold text-slate-900">
@@ -584,7 +624,6 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
                 {config.role}
               </p>
             </div>
-
           </div>
 
           <button
@@ -595,7 +634,6 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
           >
             <i className="fa-solid fa-xmark text-sm" />
           </button>
-
         </div>
 
         {/* ======================================================
@@ -603,14 +641,11 @@ const Sidebar: React.FC<SidebarProps> = ({ variant }) => {
         ====================================================== */}
 
         <div className="min-h-0 flex-1">
-
           <SidebarContent
             config={config}
             onNavigate={() => setIsMobileOpen(false)}
           />
-
         </div>
-
       </aside>
     </>
   )

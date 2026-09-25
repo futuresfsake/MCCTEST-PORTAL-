@@ -6,11 +6,14 @@ import { PrismaService } from './prisma/prisma.service';
 import { SessionsController } from './sessions/sessions.controller';
 import { SessionsService } from './sessions/sessions.service';
 import { AuthModule } from './auth/auth.module';
-import { StaffAccountsModule } from './users/admin/staff-accounts/staff-accounts.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+
+// * --- MODULES --- *
 import { ChatbotModule } from './chatbot/chatbot.module';
 import { ProgramsModule } from './users/admin/programs/programs.module';
+import { StaffAccountsModule } from './users/admin/staff-accounts/staff-accounts.module';
+import { BatchesModule } from './users/registrar/batches/batches.module';
 
 @Module({
   imports: [
@@ -29,6 +32,7 @@ import { ProgramsModule } from './users/admin/programs/programs.module';
     ChatbotModule,
     ProgramsModule,
     StaffAccountsModule,
+    BatchesModule,
   ],
 
   controllers: [

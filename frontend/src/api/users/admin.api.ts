@@ -1,16 +1,9 @@
 // src/api/users/admin.api.ts
 
-const BASE = '/api/admin/staff-accounts';
+import { authHeaders } from '../auth.api';
 
-function authHeaders(): HeadersInit {
-  const token = localStorage.getItem('accessToken');
-  const session = localStorage.getItem('sessionToken');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    ...(session ? { 'X-Session-Token': session } : {}),
-  };
-}
+
+const BASE = '/api/admin/staff-accounts';
 
 async function handleResponse<T>(res: Response): Promise<T> {
   const text = await res.text();
@@ -68,14 +61,13 @@ export interface CreateStaffPayload {
   email: string;
   role: StaffRole;
   password: string;
-  // TODO: employeeId: string — add once schema field is confirmed
 }
 
 export interface UpdateStaffPayload {
   firstName?: string;
   lastName?: string;
   middleName?: string;
-  // TODO: employeeId?: string — add once schema field is confirmed
+  email?: string;
 }
 
 export interface StaffListFilters {

@@ -14,6 +14,7 @@ import RegistrarDashboard from '../pages/users/registrar/RegistrarDashboard'
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
+import BatchManagement from '../pages/users/registrar/batches/BatchManagement'
 //import path from 'path/win32';
 
 function AppRouter() {
@@ -90,6 +91,7 @@ return ( <Routes>
   }
 />
 
+
   {/* ==========================================================
       TRAINER
   ========================================================== */}
@@ -116,6 +118,10 @@ return ( <Routes>
     }
   />
 
+  {/* ==========================================================
+      REGISTRAR
+  ========================================================== */}
+
   <Route
     path="/registrar"
     element={
@@ -133,6 +139,15 @@ return ( <Routes>
       </ProtectedRoute>
     }
   />
+  
+  <Route
+    path="/registrar/batches/BatchManagement"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR', 'ADMIN']}>
+        <BatchManagement />
+      </ProtectedRoute>
+    }
+  />  
 
   <Route
     path="/encoder"

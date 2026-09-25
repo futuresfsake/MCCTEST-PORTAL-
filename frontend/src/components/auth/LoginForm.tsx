@@ -105,6 +105,11 @@ function LoginForm() {
         case 'TRAINEE':
           navigate('/trainee', { replace: true })
           break
+
+        case 'REGISTRAR':
+          console.log('Redirecting to /registrar')
+          navigate('/registrar', { replace: true })
+          break
       }
     } catch (error) {
       if (error instanceof Error) {
