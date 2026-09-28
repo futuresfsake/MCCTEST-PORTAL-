@@ -1,6 +1,7 @@
 import Header from '../../../components/layout/Header'
 import Sidebar from '../../../components/layout/Sidebar'
 import Footer from '../../../components/layout/Footer'
+import AnnouncementWidget from '../../../components/Announcements/AnnouncementWidget'
 
 function RegistrarDashboard() {
   return (
@@ -9,6 +10,7 @@ function RegistrarDashboard() {
       <div className="flex flex-1">
         <Sidebar variant="registrar" />
         <main className="flex-1 p-8">
+          <AnnouncementWidget />
           <h1 className="text-3xl font-bold text-slate-900">
             Registrar Dashboard
           </h1>
