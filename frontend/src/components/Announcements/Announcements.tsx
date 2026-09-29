@@ -459,8 +459,10 @@ export default function Announcements({
                         Edit
                       </button>
                     )}
-                    {canDeleteAnnouncements &&
-                      (role === 'ADMIN' || announcement.posted_by === user?.id) && (
+
+                      //! // this is where the user roles can only delete the announcements they personally created or posted
+                    {canDeleteAnnouncements &&  
+                      announcement.posted_by === user?.id && (
                       <button
                         type="button"
                         onClick={() => void deleteAnnouncement(announcement.id)}

@@ -139,7 +139,8 @@ export class AnnouncementsService {
     });
   }
 
-  async findAll(query: AnnouncementListQuery) {
+  //! FETCH ALL FILTERED ANNOUNCEMENTS PAGINATED LISTS OF ANNOUNCEMENTS
+  async findAll(query: AnnouncementListQuery, user: AuthenticatedUser) {
     const page = Number(query.page ?? 1);
     const limit = Number(query.limit ?? 10);
     if (!Number.isInteger(page) || page < 1) {
@@ -170,6 +171,7 @@ export class AnnouncementsService {
     }
 
     const where = {
+      posted_by: user.id,
       ...(scope ? { scope } : {}),
       ...(query.search?.trim()
         ? {
@@ -215,7 +217,6 @@ export class AnnouncementsService {
     const scopes: Array<Record<string, unknown>> = [
       { scope: announcement_scope_enum.GLOBAL },
     ];
-
     if (user.role === Role.TRAINEE) {
       const trainee = await this.prisma.trainee.findFirst({
         where: { users_id: user.id },
@@ -256,7 +257,7 @@ export class AnnouncementsService {
       select: { posted_by: true },
     });
     if (!announcement) throw new NotFoundException('Announcement not found');
-    if (user.role !== Role.ADMIN && announcement.posted_by !== user.id) {
+    if (announcement.posted_by !== user.id) {
       throw new ForbiddenException('You can only edit announcements you posted');
     }
 
@@ -276,7 +277,7 @@ export class AnnouncementsService {
       select: { id: true, posted_by: true },
     });
     if (!announcement) throw new NotFoundException('Announcement not found');
-    if (user.role !== Role.ADMIN && announcement.posted_by !== user.id) {
+    if (announcement.posted_by !== user.id) {
       throw new ForbiddenException('You can only delete announcements you posted');
     }
     await this.prisma.announcements.delete({ where: { id } });
