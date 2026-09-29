@@ -460,8 +460,7 @@ export default function Announcements({
                       </button>
                     )}
 
-                      //! // this is where the user roles can only delete the announcements they personally created or posted
-                    {canDeleteAnnouncements &&  
+                    {canDeleteAnnouncements &&
                       announcement.posted_by === user?.id && (
                       <button
                         type="button"
