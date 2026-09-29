@@ -347,6 +347,11 @@ const sidebarConfig: Record<
             path: '/registrar',
             icon: 'fa-solid fa-gauge-high',
           },
+          {
+            label: 'Announcements',
+            path: '/registrar/announcements',
+            icon: 'fa-solid fa-bullhorn',
+          },
         ],
       },
 

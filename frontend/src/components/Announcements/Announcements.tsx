@@ -32,11 +32,14 @@ export default function Announcements({
   const { accessToken, sessionToken, user } = useAuth()
   const role = user?.role
   const allowedGlobal = canPostGlobal ?? ['ADMIN', 'REGISTRAR', 'ENCODER'].includes(role ?? '')
-  const allowedProgram = canPostProgram ?? ['ADMIN', 'ENCODER', 'TRAINER'].includes(role ?? '')
-  const allowedBatch = canPostBatch ?? ['ADMIN', 'ENCODER', 'TRAINER'].includes(role ?? '')
+  const allowedProgram =
+    canPostProgram ?? ['ADMIN', 'REGISTRAR', 'ENCODER', 'TRAINER'].includes(role ?? '')
+  const allowedBatch =
+    canPostBatch ?? ['ADMIN', 'REGISTRAR', 'ENCODER', 'TRAINER'].includes(role ?? '')
   const canManageAllAnnouncements = manageAll ?? role === 'ADMIN'
-  const canEditAnnouncements = canEdit ?? ['ADMIN', 'ENCODER', 'TRAINER'].includes(role ?? '')
-  const canDeleteAnnouncements = canDelete ?? role === 'ADMIN'
+  const canEditAnnouncements =
+    canEdit ?? ['ADMIN', 'REGISTRAR', 'ENCODER', 'TRAINER'].includes(role ?? '')
+  const canDeleteAnnouncements = canDelete ?? ['ADMIN', 'REGISTRAR'].includes(role ?? '')
   const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [programs, setPrograms] = useState<Program[]>([])
   const [batches, setBatches] = useState<Batch[]>([])
@@ -446,7 +449,8 @@ export default function Announcements({
                     )}
                   </div>
                   <div className="flex shrink-0 gap-3">
-                    {canEditAnnouncements && (
+                    {canEditAnnouncements &&
+                      (role === 'ADMIN' || announcement.posted_by === user?.id) && (
                       <button
                         type="button"
                         onClick={() => startEditing(announcement)}
@@ -455,7 +459,8 @@ export default function Announcements({
                         Edit
                       </button>
                     )}
-                    {canDeleteAnnouncements && (
+                    {canDeleteAnnouncements &&
+                      (role === 'ADMIN' || announcement.posted_by === user?.id) && (
                       <button
                         type="button"
                         onClick={() => void deleteAnnouncement(announcement.id)}

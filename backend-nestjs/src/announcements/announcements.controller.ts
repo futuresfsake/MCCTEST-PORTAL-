@@ -36,10 +36,8 @@ export class AnnouncementsController {
   }
 
   @Get()
-  @Roles(Role.ADMIN)
-  findAll(
-    @Req() req: any,
-  ) {
+  @Roles(Role.ADMIN, Role.REGISTRAR)
+  findAll(@Req() req: any) {
     return this.announcementsService.findAll(req.query);
   }
 
@@ -49,6 +47,7 @@ export class AnnouncementsController {
   }
 
   @Patch(':id')
+  @Roles(Role.ADMIN, Role.REGISTRAR, Role.ENCODER, Role.TRAINER)
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateAnnouncementDto,
@@ -58,8 +57,8 @@ export class AnnouncementsController {
   }
 
   @Delete(':id')
-  @Roles(Role.ADMIN)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.announcementsService.remove(id);
+  @Roles(Role.ADMIN, Role.REGISTRAR)
+  remove(@Param('id', ParseUUIDPipe) id: string, @Req() req: any) {
+    return this.announcementsService.remove(id, req.user);
   }
 }

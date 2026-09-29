@@ -58,7 +58,11 @@ export class AnnouncementsService {
         announcement_scope_enum.PROGRAM,
         announcement_scope_enum.BATCH,
       ],
-      [Role.REGISTRAR]: [announcement_scope_enum.GLOBAL],
+      [Role.REGISTRAR]: [
+        announcement_scope_enum.GLOBAL,
+        announcement_scope_enum.PROGRAM,
+        announcement_scope_enum.BATCH,
+      ],
       [Role.ENCODER]: [
         announcement_scope_enum.GLOBAL,
         announcement_scope_enum.PROGRAM,
@@ -266,12 +270,15 @@ export class AnnouncementsService {
     });
   }
 
-  async remove(id: string) {
+  async remove(id: string, user: AuthenticatedUser) {
     const announcement = await this.prisma.announcements.findUnique({
       where: { id },
-      select: { id: true },
+      select: { id: true, posted_by: true },
     });
     if (!announcement) throw new NotFoundException('Announcement not found');
+    if (user.role !== Role.ADMIN && announcement.posted_by !== user.id) {
+      throw new ForbiddenException('You can only delete announcements you posted');
+    }
     await this.prisma.announcements.delete({ where: { id } });
     return { message: 'Announcement deleted successfully' };
   }
