@@ -4,7 +4,7 @@ import LandingPage from '../pages/public/LandingPage'
 
 import AdminDashboard from '../pages/users/admin/AdminDashboard'
 import AdminRecords from '../pages/users/admin/AdminRecords'
-
+import AdminStaffAccountsPage from '../pages/users/admin/staff-accounts/AdminStaffAccountsPage'
 import RegistrarDashboard from '../pages/users/registrar/RegistrarDashboard'
 import RegistrarEnrollment from '../pages/users/registrar/RegistrarEnrollment'
 import AdminBatchConfiguration from '../pages/users/admin/batches/AdminBatchConfiguration'
@@ -80,6 +80,22 @@ return ( <Routes>
     </ProtectedRoute>
   }
 />
+<Route
+    path="/registrar/announcements"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <RegistrarAnnouncementsPage />
+      </ProtectedRoute>
+    }
+  />
+  <Route
+    path="/registrar/batches/BatchManagement"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <BatchManagement />
+      </ProtectedRoute>
+    }
+  />  
 
 <Route
   path="/admin/batches"
@@ -165,24 +181,6 @@ return ( <Routes>
       </ProtectedRoute>
     }
   />
-
-  <Route
-    path="/registrar/announcements"
-    element={
-      <ProtectedRoute allowedRoles={['REGISTRAR']}>
-        <RegistrarAnnouncementsPage />
-      </ProtectedRoute>
-    }
-  />
-  
-  <Route
-    path="/registrar/batches/BatchManagement"
-    element={
-      <ProtectedRoute allowedRoles={['REGISTRAR']}>
-        <BatchManagement />
-      </ProtectedRoute>
-    }
-  />  
 
   <Route
     path="/encoder"
