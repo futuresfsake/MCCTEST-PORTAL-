@@ -95,7 +95,7 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
 
   if (error) {
     return (
-      <div className="border border-red-200 bg-red-50 p-4 rounded-lg">
+      <div className="border-y border-red-200 bg-red-50 p-4">
         <p className="text-red-700">{error}</p>
         <button
           onClick={() => loadEnrollments()}
@@ -108,12 +108,19 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filters */}
-      <div className="border border-slate-200 rounded-lg p-4 bg-white">
+      <div className="border-y border-slate-200 bg-white px-4 py-5">
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-[0.2em] text-blue-800">Find a Record</p>
+            <h3 className="text-lg font-bold text-slate-900">Search and filter enrollments</h3>
+          </div>
+          <span className="hidden text-xs font-medium text-slate-400 sm:block">{total} records</span>
+        </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Search Enrollment
             </label>
             <input
@@ -121,11 +128,11 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPageNumber(1); }}
               placeholder="Name, ID card, batch, or program"
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+              className="w-full border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-900 focus:ring-1 focus:ring-blue-900"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Filter by Program
             </label>
             <select
@@ -134,7 +141,7 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
                 setProgramIdFilter(e.target.value);
                 setPageNumber(1);
               }}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+              className="w-full border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-900 focus:ring-1 focus:ring-blue-900"
             >
               <option value="">All Programs</option>
               {programs.map((program) => (
@@ -146,17 +153,17 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Submitted From</label>
-            <input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPageNumber(1); }} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Submitted From</label>
+            <input type="date" value={startDate} onChange={(e) => { setStartDate(e.target.value); setPageNumber(1); }} className="w-full border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-900 focus:ring-1 focus:ring-blue-900" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Submitted To</label>
-            <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPageNumber(1); }} className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm" />
+            <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">Submitted To</label>
+            <input type="date" value={endDate} onChange={(e) => { setEndDate(e.target.value); setPageNumber(1); }} className="w-full border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-900 focus:ring-1 focus:ring-blue-900" />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Filter by Status
             </label>
             <select
@@ -165,7 +172,7 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
                 setStatusFilter(e.target.value);
                 setPageNumber(1);
               }}
-              className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-900 focus:border-transparent"
+              className="w-full border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition focus:border-blue-900 focus:ring-1 focus:ring-blue-900"
             >
               <option value="">All Statuses</option>
               <option value="PENDING">Pending</option>
@@ -179,7 +186,7 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
           <div className="flex items-end">
             <button
               onClick={handleResetFilters}
-              className="w-full px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition"
+              className="w-full border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 transition hover:border-blue-900 hover:text-blue-900"
             >
               Reset Filters
             </button>
@@ -188,39 +195,39 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
       </div>
 
       {enrollments.length === 0 && !isLoading ? (
-        <div className="text-center py-12 border border-slate-200 rounded-lg bg-slate-50">
+        <div className="border-y border-slate-200 bg-white py-14 text-center">
           <p className="text-slate-600 mb-4">No enrollments found</p>
-          <button onClick={handleResetFilters} className="text-sm text-blue-900 hover:underline font-medium">Clear filters</button>
+          <button onClick={handleResetFilters} className="text-xs font-semibold text-blue-900 hover:underline">Clear filters</button>
         </div>
       ) : (
         <>
 
       {/* Table */}
-      <div className="overflow-x-auto border border-slate-200 rounded-lg">
-        <table className="w-full">
-          <thead className="bg-slate-50 border-b border-slate-200">
+      <div className="overflow-x-auto border-y border-slate-200 bg-white">
+        <table className="min-w-[900px] w-full">
+          <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-700">
+              <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 Trainee Name
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-700">
+              <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 Program
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-700">
+              <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 ID Card Number
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-700">
+              <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-700">
+              <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 Enrolled Date
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-700">
+              <th className="px-4 py-4 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                 Action
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-200 bg-white">
+          <tbody className="divide-y divide-slate-100 bg-white">
             {enrollments.map((enrollment) => {
               const traineeFirstName = enrollment.trainee.users?.first_name || 'Trainee';
               const traineeLastName = enrollment.trainee.users?.last_name || '';
@@ -228,22 +235,22 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
               const enrolledDate = new Date(enrollment.enrolledAt).toLocaleDateString();
 
               return (
-                <tr key={enrollment.id} className="hover:bg-slate-50 transition">
-                  <td className="px-6 py-4 text-sm text-slate-900">{traineeName}</td>
-                  <td className="px-6 py-4 text-sm text-slate-600">
+                <tr key={enrollment.id} className="transition-colors hover:bg-slate-50">
+                  <td className="px-4 py-4 text-sm font-semibold text-slate-800">{traineeName}</td>
+                  <td className="px-4 py-4 text-sm text-slate-600">
                     {enrollment.batch.programs.name}
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-900 font-mono">
+                  <td className="px-4 py-4 font-mono text-xs text-slate-700">
                     {enrollment.idCardNumber || 'N/A'}
                   </td>
-                  <td className="px-6 py-4 text-sm">
+                  <td className="px-4 py-4 text-sm">
                     <EnrollmentStatusBadge status={enrollment.enrollmentStatus} />
                   </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{enrolledDate}</td>
-                  <td className="px-6 py-4 text-sm">
+                  <td className="px-4 py-4 text-xs text-slate-600">{enrolledDate}</td>
+                  <td className="px-4 py-4 text-sm">
                     <button
                       onClick={() => onSelectEnrollment(enrollment.id)}
-                      className="text-blue-900 hover:text-blue-700 hover:underline font-medium"
+                      className="text-xs font-semibold text-blue-900 transition hover:text-blue-950 hover:underline"
                     >
                       View Details
                     </button>
@@ -256,22 +263,22 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between border-t border-slate-200 pt-4">
-        <div className="text-sm text-slate-600">
+      <div className="flex flex-col justify-between gap-4 border-t border-slate-200 pt-4 sm:flex-row sm:items-center">
+        <div className="text-xs text-slate-500">
           Showing {Math.min((pageNumber - 1) * pageSize + 1, total)}-{Math.min(pageNumber * pageSize, total)} of {total}
         </div>
         <div className="flex gap-2">
           <button
             onClick={() => setPageNumber(Math.max(1, pageNumber - 1))}
             disabled={pageNumber === 1}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition"
+            className="border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-900 hover:text-blue-900 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Previous
           </button>
           <button
             onClick={() => setPageNumber(pageNumber + 1)}
             disabled={pageNumber * pageSize >= total}
-            className="px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition"
+            className="border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-900 hover:text-blue-900 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next
           </button>

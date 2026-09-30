@@ -137,24 +137,24 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
   // Render success screen
   if (submitSuccess) {
     return (
-      <div className="bg-white border border-slate-200 rounded-lg p-8 max-w-2xl mx-auto">
+      <div className="mx-auto max-w-2xl border-y border-slate-200 bg-white p-8">
         <div className="text-center">
           <div className="mb-4 flex justify-center">
-            <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center">
+            <div className="flex h-16 w-16 items-center justify-center border border-green-200 bg-green-50">
               <i className="fas fa-check text-green-600 text-2xl"></i>
             </div>
           </div>
 
-          <h2 className="text-2xl font-bold text-slate-900 mb-2">
+          <h2 className="mb-2 text-2xl font-bold text-slate-900">
             Enrollment Created Successfully!
           </h2>
 
-          <p className="text-slate-600 mb-6">
+          <p className="mb-6 text-sm leading-6 text-slate-600">
             The enrollment has been successfully processed and committed to the database.
           </p>
 
           {successResult && (
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 mb-6 text-left">
+            <div className="mb-6 border-y border-slate-200 bg-slate-50 p-6 text-left">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">
@@ -192,7 +192,7 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
             </div>
           )}
 
-          <button type="button" onClick={() => onSuccess(successResult)} className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-900 hover:bg-blue-800 rounded-md transition">
+          <button type="button" onClick={() => onSuccess(successResult)} className="border border-blue-900 bg-blue-900 px-5 py-2.5 text-xs font-semibold text-white transition hover:bg-blue-950">
             Return to Enrollment Module
           </button>
         </div>
@@ -205,28 +205,28 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
     <div className="space-y-4">
       {/* Error display */}
       {submitError && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <div className="border-y border-red-200 bg-red-50 p-4">
           <p className="text-sm text-red-700 font-medium">Error:</p>
           <p className="text-sm text-red-600">{submitError}</p>
         </div>
       )}
 
-      <section className="bg-white border border-slate-200 rounded-lg p-5">
+      <section className="border-y border-slate-200 bg-white p-5">
         <SectionHeading step="1" title="Trainee Encoding Form" subtitle="Personal and demographic details saved to the trainee record." tone="blue" />
         <Step1TraineeInfo traineeData={formData.trainee} onTraineeChange={handleTraineeChange} missingFields={new Set(missingFields)} />
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-lg p-5">
+      <section className="border-y border-slate-200 bg-white p-5">
         <SectionHeading step="2" title="Training Batch Selection" subtitle="Choose an available batch." tone="indigo" />
         <Step2BatchSelection traineeId={formData.trainee.id} batchId={formData.batchId} onBatchChange={(batchId) => setFormData((prev) => ({ ...prev, batchId }))} />
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-lg p-5">
+      <section className="border-y border-slate-200 bg-white p-5">
         <SectionHeading step="3" title="Requirements Checklist" subtitle="Record the documents received." tone="amber" />
         <Step3DocumentChecklist checklistData={formData.requirementChecklist} onChecklistChange={handleChecklistChange} />
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-lg p-5">
+      <section className="border-y border-slate-200 bg-white p-5">
         <SectionHeading step="4" title="Uniform Size and Distribution" subtitle="The selected size and handover decision are committed with the enrollment." tone="emerald" />
         <Step4UniformId
           uniformSize={formData.uniformSize}
@@ -236,7 +236,7 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
         />
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-lg p-5">
+      <section className="border-y border-slate-200 bg-white p-5">
         <SectionHeading step="5" title="Payment" subtitle="Process the official receipt and annual insurance coverage when payment is received." tone="blue" />
         <Step5Payment
           payment={formData.payment}
@@ -245,14 +245,14 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
         />
       </section>
 
-      <section className="bg-white border border-slate-200 rounded-lg p-5">
+      <section className="border-y border-slate-200 bg-white p-5">
         <SectionHeading step="6" title="Review and Database Commit" subtitle="Verify the complete record before creating the enrollment." tone="slate" />
         <Step5Review formData={formData} />
-        <div className="mt-6 flex items-center justify-between border-t border-slate-200 pt-6">
-          <button onClick={onCancel} className="px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-100 transition">Cancel</button>
+        <div className="mt-6 flex flex-col items-start justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center">
+          <button onClick={onCancel} className="border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-900 hover:text-blue-900">Cancel</button>
           <div className="flex items-center gap-4">
             {missingFields.length > 0 && <p className="text-xs font-semibold text-blue-900">Complete the highlighted fields before committing: {formatMissingFields(missingFields)}.</p>}
-            <button onClick={handleSubmit} disabled={isSubmitting} className="px-6 py-3 text-sm font-semibold text-white bg-blue-900 hover:bg-blue-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg shadow transition">
+            <button onClick={handleSubmit} disabled={isSubmitting} className="border border-blue-900 bg-blue-900 px-6 py-3 text-xs font-semibold text-white transition hover:bg-blue-950 disabled:cursor-not-allowed disabled:opacity-50">
             <i className="fas fa-database mr-2"></i>{isSubmitting ? 'Committing...' : 'Commit to Database'}
             </button>
           </div>
@@ -264,17 +264,17 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
 
 const SectionHeading: React.FC<{ step: string; title: string; subtitle: string; tone: string }> = ({ step, title, subtitle, tone }) => {
   const toneClass = {
-    blue: 'bg-blue-50 text-blue-700',
-    indigo: 'bg-indigo-50 text-indigo-700',
-    amber: 'bg-amber-50 text-amber-700',
-    emerald: 'bg-emerald-50 text-emerald-700',
-    slate: 'bg-slate-100 text-slate-700',
+    blue: 'bg-blue-900 text-white',
+    indigo: 'bg-blue-900 text-white',
+    amber: 'bg-blue-900 text-white',
+    emerald: 'bg-blue-900 text-white',
+    slate: 'bg-blue-900 text-white',
   }[tone] || 'bg-slate-100 text-slate-700';
 
   return (
-  <div className="border-b border-slate-200 pb-3 mb-4 flex items-center justify-between gap-4">
-    <div><h3 className="text-sm font-bold text-slate-900">{step}. {title}</h3><p className="text-[11px] text-slate-500 mt-1">{subtitle}</p></div>
-    <span className={`px-2.5 py-1 ${toneClass} text-[10px] font-bold rounded`}>STEP {step}</span>
+  <div className="mb-5 flex items-center justify-between gap-4 border-b border-slate-200 pb-4">
+    <div><h3 className="text-base font-bold text-slate-900">{step}. {title}</h3><p className="mt-1 text-xs leading-5 text-slate-500">{subtitle}</p></div>
+    <span className={`shrink-0 px-2.5 py-1 ${toneClass} text-[10px] font-bold`}>STEP {step}</span>
   </div>
   );
 };
@@ -376,11 +376,11 @@ const Step1TraineeInfo: React.FC<{
         <Field label="Search Existing Trainee">
           <input type="search" placeholder="Name or contact number" value={searchQuery} onChange={(e) => handleSearch(e.target.value)} className={inputClass} />
         </Field>
-        <button type="button" onClick={handleCreateNewTrainee} className="h-10 px-4 text-xs font-semibold text-blue-900 border border-blue-900 rounded-md hover:bg-blue-50 transition">Create New Trainee</button>
+        <button type="button" onClick={handleCreateNewTrainee} className="h-10 border border-blue-900 px-4 text-xs font-semibold text-blue-900 transition hover:bg-blue-50">Create New Trainee</button>
       </div>
 
       {isSearching && <p className="text-xs text-slate-500">Searching trainees...</p>}
-      {searchResults.length > 0 && <div className="grid gap-2 md:grid-cols-2">{searchResults.map((trainee) => <button type="button" key={trainee.id} className="text-left border border-slate-200 rounded-md px-3 py-2 hover:bg-slate-50" onClick={() => handleSelectExistingTrainee(trainee)}><span className="block text-sm font-semibold text-slate-900">{trainee.users?.first_name} {trainee.users?.last_name}</span><span className="text-xs text-slate-500">{trainee.contact_number}</span></button>)}</div>}
+      {searchResults.length > 0 && <div className="grid gap-2 md:grid-cols-2">{searchResults.map((trainee) => <button type="button" key={trainee.id} className="border border-slate-200 px-3 py-2 text-left transition hover:bg-slate-50" onClick={() => handleSelectExistingTrainee(trainee)}><span className="block text-sm font-semibold text-slate-900">{trainee.users?.first_name} {trainee.users?.last_name}</span><span className="text-xs text-slate-500">{trainee.contact_number}</span></button>)}</div>}
       {searchQuery && searchResults.length === 0 && !isSearching && <p className="text-xs text-slate-500">No trainees found.</p>}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -421,21 +421,21 @@ const Step1TraineeInfo: React.FC<{
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <SelectField label="Employment Type " value={traineeData.employmentType} invalid={missingFields.has('Employment Type')} onChange={(value) => onTraineeChange({ employmentType: value as TraineeData['employmentType'] })} options={[['FULL_TIME', 'Full Time'], ['PART_TIME', 'Part Time'], ['CASUAL', 'Casual'], ['CONTRACTUAL', 'Contractual'], ['SEASONAL', 'Seasonal'], ['NA', 'N/A']]} />
-          <label className="flex h-10 items-center gap-2 self-end text-xs font-medium text-slate-700"><input type="checkbox" checked={traineeData.pwd} onChange={(e) => onTraineeChange({ pwd: e.target.checked })} className="h-4 w-4 rounded border-slate-300" /> PWD (Person with Disability)</label>
+          <label className="flex h-10 items-center gap-2 self-end text-xs font-medium text-slate-700"><input type="checkbox" checked={traineeData.pwd} onChange={(e) => onTraineeChange({ pwd: e.target.checked })} className="h-4 w-4 accent-blue-900" /> PWD (Person with Disability)</label>
         </div>
     </div>
   );
 };
 
-const inputClass = 'w-full h-10 rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-700 focus:ring-1 focus:ring-blue-700 disabled:bg-slate-100 disabled:text-slate-500';
-const fieldClass = (invalid: boolean) => `${inputClass} ${invalid ? 'border-blue-900 bg-blue-50 ring-1 ring-blue-900' : ''}`;
+const inputClass = 'h-10 w-full border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-900 focus:ring-1 focus:ring-blue-900 disabled:bg-slate-100 disabled:text-slate-500';
+const fieldClass = (invalid: boolean) => `${inputClass} ${invalid ? 'border-red-700 bg-red-50 ring-1 ring-red-700' : ''}`;
 const formatMissingFields = (fields: string[]) => fields.length === 1
   ? fields[0]
   : `${fields.slice(0, -1).join(', ')}, and ${fields[fields.length - 1]}`;
 
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <label className="block text-xs font-semibold text-slate-700">
-    <span className="mb-1.5 block">{label}</span>
+    <span className="mb-1.5 block text-[10px] uppercase tracking-wider text-slate-500">{label}</span>
     {children}
   </label>
 );
@@ -526,7 +526,7 @@ const Step2BatchSelection: React.FC<{
 
   if (error) {
     return (
-      <div className="text-center py-12 bg-red-50 border border-red-200 rounded-lg">
+      <div className="border-y border-red-200 bg-red-50 py-12 text-center">
         <p className="text-red-700">{error}</p>
         <button
           onClick={loadBatches}
@@ -541,7 +541,7 @@ const Step2BatchSelection: React.FC<{
   return (
     <div className="space-y-3">
       {batches.length === 0 ? (
-        <div className="text-center py-6 bg-slate-50 border border-slate-200 rounded-md">
+        <div className="border-y border-slate-200 bg-slate-50 py-6 text-center">
           <p className="text-slate-600">No available batches at this time</p>
         </div>
       ) : (
@@ -549,16 +549,16 @@ const Step2BatchSelection: React.FC<{
           <div className="mb-3">
             <input type="search" value={programQuery} onChange={(event) => { setProgramQuery(event.target.value); setShowAllPrograms(true); }} placeholder="Search program name" aria-label="Search program name" className={inputClass} />
           </div>
-          <div className="divide-y divide-slate-200 border-y border-slate-200">
+            <div className="divide-y divide-slate-200 border-y border-slate-200 bg-white">
             {visiblePrograms.map((program) => (
               <React.Fragment key={program.id}>
-                <button type="button" onClick={() => { setSelectedProgramId(selectedProgramId === program.id ? '' : program.id); onBatchChange(''); }} className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition hover:bg-slate-50">
-                  <span className="font-medium text-slate-900">{program.name}</span>
+                <button type="button" onClick={() => { setSelectedProgramId(selectedProgramId === program.id ? '' : program.id); onBatchChange(''); }} className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition hover:bg-slate-50">
+                  <span className="text-sm font-semibold text-slate-800">{program.name}</span>
                   <span className="text-xs text-slate-500">({batches.filter((batch) => batch.programId === program.id).length} available batches)</span>
                 </button>
-                {selectedProgramId === program.id && <div className="bg-slate-50 px-3 pb-3 pl-8">
+                {selectedProgramId === program.id && <div className="border-t border-slate-200 bg-slate-50 px-3 pb-3 pl-8">
                   {selectedBatches.map((batch) => (
-                    <label key={batch.id} className={`flex cursor-pointer items-center gap-3 border-b border-slate-200 py-2 text-sm last:border-b-0 ${batchId === batch.id ? 'text-blue-900' : 'text-slate-700'}`}>
+                    <label key={batch.id} className={`flex cursor-pointer items-center gap-3 border-b border-slate-200 py-3 text-sm last:border-b-0 ${batchId === batch.id ? 'font-semibold text-blue-900' : 'text-slate-700'}`}>
                       
                       <input type="radio" name="batch" value={batch.id} checked={batchId === batch.id} onChange={(event) => onBatchChange(event.target.value)} className="h-3.5 w-3.5" />
                       <span className="min-w-0 flex-1 font-medium">{batch.batchName}</span>
@@ -597,14 +597,14 @@ const Step3DocumentChecklist: React.FC<{
     <div className="space-y-3">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
         {requirements.map(({ key, label }) => (
-          <label key={key} className="flex items-center gap-2 p-2.5 border border-slate-200 rounded-md hover:bg-slate-50 cursor-pointer">
+          <label key={key} className="flex cursor-pointer items-center gap-2 border border-slate-200 p-2.5 transition hover:bg-slate-50">
             <input
               type="checkbox"
               checked={(checklistData as any)[key] || false}
               onChange={(e) =>
                 onChecklistChange({ [key]: e.target.checked })
               }
-              className="w-4 h-4 rounded"
+              className="h-4 w-4 accent-blue-900"
             />
             <span className="text-xs font-medium text-slate-900">{label}</span>
           </label>
@@ -640,10 +640,10 @@ const Step4UniformId: React.FC<{
               key={size}
               type="button"
               onClick={() => onUniformChange(size)}
-                className={`h-10 rounded-md font-semibold text-xs transition ${
+                className={`h-10 border font-semibold text-xs transition ${
                 uniformSize === size
-                  ? 'bg-blue-900 text-white border-2 border-blue-900'
-                  : 'bg-white border-2 border-slate-300 text-slate-900 hover:border-slate-400'
+                    ? 'border-blue-900 bg-blue-900 text-white'
+                    : 'border-slate-300 bg-white text-slate-900 hover:border-blue-900'
               }`}
             >
               {size}
@@ -653,11 +653,11 @@ const Step4UniformId: React.FC<{
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className={`flex items-start gap-3 border rounded-md p-3 cursor-pointer ${uniformGiven ? 'border-emerald-600 bg-emerald-50' : 'border-slate-200'}`}>
+        <label className={`flex cursor-pointer items-start gap-3 border p-3 ${uniformGiven ? 'border-blue-900 bg-blue-50' : 'border-slate-200 bg-white'}`}>
           <input type="radio" name="uniformGiven" checked={uniformGiven} onChange={() => onUniformGivenChange(true)} className="mt-1" />
           <span><strong className="block text-sm text-slate-900">Distributed now</strong><span className="text-xs text-slate-600">The uniform is in stock and handed to the trainee during enrollment.</span></span>
         </label>
-        <label className={`flex items-start gap-3 border rounded-md p-3 cursor-pointer ${!uniformGiven ? 'border-slate-600 bg-slate-50' : 'border-slate-200'}`}>
+        <label className={`flex cursor-pointer items-start gap-3 border p-3 ${!uniformGiven ? 'border-blue-900 bg-blue-50' : 'border-slate-200 bg-white'}`}>
           <input type="radio" name="uniformGiven" checked={!uniformGiven} onChange={() => onUniformGivenChange(false)} className="mt-1" />
           <span><strong className="block text-sm text-slate-900">Not distributed</strong><span className="text-xs text-slate-600">Keep the requested size on the enrollment for later distribution.</span></span>
         </label>
@@ -675,7 +675,7 @@ const Step5Payment: React.FC<{
 
   return (
     <div className="space-y-4">
-      <label className={`flex items-start gap-3 border rounded-md p-3 cursor-pointer ${payment.processPayment ? 'border-blue-900 bg-blue-50' : 'border-slate-200'}`}>
+      <label className={`flex cursor-pointer items-start gap-3 border p-3 ${payment.processPayment ? 'border-blue-900 bg-blue-50' : 'border-slate-200 bg-white'}`}>
         <input type="checkbox" checked={payment.processPayment} onChange={(event) => onPaymentChange({ ...payment, processPayment: event.target.checked })} className="mt-1 h-4 w-4" />
         <span><strong className="block text-sm text-slate-900">Process Payment</strong><span className="text-xs text-slate-600">Create the official receipt and insurance record for this enrollment.</span></span>
       </label>
@@ -714,8 +714,8 @@ const Step5Review: React.FC<{
     <div className="space-y-4">
       <div className="space-y-3">
         {/* Trainee Section */}
-        <div className="border border-slate-200 rounded-md p-3">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600 mb-2">Trainee Information</h4>
+        <div className="border-y border-slate-200 bg-white p-3">
+          <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Trainee Information</h4>
           <div className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
             <div>
               <p className="font-medium text-slate-600">Name</p>
@@ -739,8 +739,8 @@ const Step5Review: React.FC<{
         </div>
 
         {/* Document Checklist Summary */}
-        <div className="border border-slate-200 rounded-md p-3">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600 mb-2">Documents Submitted</h4>
+        <div className="border-y border-slate-200 bg-white p-3">
+          <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Documents Submitted</h4>
           <div className="grid grid-cols-1 gap-1.5 text-xs md:grid-cols-3">
             {Object.entries(formData.requirementChecklist).map(([key, value]) => {
               if (key === 'remarks') return null;
@@ -764,14 +764,14 @@ const Step5Review: React.FC<{
         </div>
 
         {/* Uniform Size */}
-        <div className="border border-slate-200 rounded-md p-3">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600 mb-1">Uniform</h4>
+        <div className="border-y border-slate-200 bg-white p-3">
+          <h4 className="mb-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">Uniform</h4>
           <p className="text-slate-900 font-mono">{formData.uniformSize} - {formData.uniformGiven ? 'Distributed' : 'Not distributed'}</p>
         </div>
 
         {/* ID & OR Information */}
-        <div className="border border-blue-200 rounded-md p-3 bg-blue-50">
-          <h4 className="text-xs font-bold uppercase tracking-wide text-blue-800 mb-2">Generated Information</h4>
+        <div className="border-y border-blue-200 bg-blue-50 p-3">
+          <h4 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-blue-800">Generated Information</h4>
           <div className="grid grid-cols-1 gap-2 text-xs md:grid-cols-2">
             <div>
               <p className="font-medium text-blue-800">ID Card Number</p>
@@ -789,8 +789,8 @@ const Step5Review: React.FC<{
         </div>
       </div>
 
-      <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
-        <p className="text-xs text-yellow-900 font-medium">
+      <div className="border-y border-amber-200 bg-amber-50 p-3">
+        <p className="text-xs font-medium text-amber-900">
           Please review all information carefully before submitting. Changes cannot be made after submission.
         </p>
       </div>

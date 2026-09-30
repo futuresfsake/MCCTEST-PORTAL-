@@ -41,7 +41,7 @@ const EnrollmentStatusBadge: React.FC<EnrollmentStatusBadgeProps> = ({ status })
 
   return (
     <span
-      className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${getStatusStyles()}`}
+      className={`inline-flex items-center border px-2 py-1 text-[10px] font-semibold uppercase tracking-wide ${getStatusStyles()}`}
     >
       {getStatusLabel()}
     </span>
