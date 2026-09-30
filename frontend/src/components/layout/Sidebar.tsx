@@ -60,6 +60,11 @@ const sidebarConfig: Record<
             path: '/admin/AdminDashboard',
             icon: 'fa-solid fa-gauge-high',
           },
+          {
+            label: 'Announcements',
+            path: '/admin/announcements',
+            icon: 'fa-solid fa-bullhorn',
+          },
         ],
       },
 
@@ -96,12 +101,6 @@ const sidebarConfig: Record<
             path: '/admin/records',
             icon: 'fa-solid fa-folder-open',
           },
-          {
-            label: 'Announcements',
-            path: '/admin/announcements',
-            icon: 'fa-solid fa-bullhorn',
-          },
-          
           {
             label: 'Payments',
             path: '/admin/payments',
@@ -346,6 +345,11 @@ const sidebarConfig: Record<
             label: 'Dashboard',
             path: '/registrar',
             icon: 'fa-solid fa-gauge-high',
+          },
+          {
+            label: 'Announcements',
+            path: '/registrar/announcements',
+            icon: 'fa-solid fa-bullhorn',
           },
         ],
       },

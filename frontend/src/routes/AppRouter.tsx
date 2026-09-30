@@ -13,6 +13,7 @@ import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 import TraineeDashboard from '../pages/users/trainee/TraineeDashboard'
 import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 import RegistrarDashboard from '../pages/users/registrar/RegistrarDashboard'
+import RegistrarAnnouncementsPage from '../pages/users/registrar/announcements/RegistrarAnnouncementsPage'
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
@@ -157,6 +158,15 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['REGISTRAR']}>
         <RegistrarDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/registrar/announcements"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <RegistrarAnnouncementsPage />
       </ProtectedRoute>
     }
   />
