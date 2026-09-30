@@ -36,6 +36,7 @@ export class AnnouncementsController {
   }
 
   @Get()
+  // Admins and registrars may fetch the full paginated management list.
   @Roles(Role.ADMIN, Role.REGISTRAR)
   findAll(@Req() req: any) {
     return this.announcementsService.findAll(req.query, req.user);

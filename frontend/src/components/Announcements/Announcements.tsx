@@ -36,6 +36,8 @@ export default function Announcements({
     canPostProgram ?? ['ADMIN', 'REGISTRAR', 'ENCODER', 'TRAINER'].includes(role ?? '')
   const allowedBatch =
     canPostBatch ?? ['ADMIN', 'REGISTRAR', 'ENCODER', 'TRAINER'].includes(role ?? '')
+  // Management pages load the full, searchable announcement list.
+  // Other users only load announcements that are currently active for them.
   const canManageAllAnnouncements = manageAll ?? role === 'ADMIN'
   const canEditAnnouncements =
     canEdit ?? ['ADMIN', 'REGISTRAR', 'ENCODER', 'TRAINER'].includes(role ?? '')
@@ -80,6 +82,8 @@ export default function Announcements({
         params.set('date_to', `${postedDate}T23:59:59.999Z`)
       }
 
+      // This endpoint is used by Admin and Registrar management pages.
+      // The active endpoint is used for role-specific announcement feeds.
       if (canManageAllAnnouncements) {
         const response = await announcementsApi.list(`?${params.toString()}`)
         setAnnouncements(response.data)
