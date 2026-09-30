@@ -18,7 +18,7 @@ import {
 
 type StatusFilter = 'all' | 'active' | 'inactive';
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 10;
 
 export const AdminStaffAccountsPage: React.FC = () => {
   // ── Data ──────────────────────────────────────────────────────────────
@@ -135,26 +135,8 @@ export const AdminStaffAccountsPage: React.FC = () => {
     currentPage * PAGE_SIZE
   );
 
-  // Helper to generate dynamic page numbers with ellipsis if there are many pages
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    const maxVisiblePages = 5;
-
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, '...', totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-      } else {
-        pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
-      }
-    }
-    return pages;
-  };
+  const firstItem = staff.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1;
+  const lastItem = Math.min(currentPage * PAGE_SIZE, staff.length);
 
   // ── Handlers ──────────────────────────────────────────────────────────
   const handleCreate = () => {
@@ -242,139 +224,127 @@ export const AdminStaffAccountsPage: React.FC = () => {
   // ── Render ────────────────────────────────────────────────────────────
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-900">
-      {/* ── Header ─────────────────────────────────────────────────────── */}
       <Header />
 
-      {/* ── Main application area ──────────────────────────────────────── */}
       <div className="relative flex min-h-0 flex-1">
-        {/* ── Sidebar ─────────────────────────────────────────────────── */}
         <Sidebar variant="admin" />
 
-        {/* ── Main content ─────────────────────────────────────────────── */}
-        <main className="min-w-0 flex-1 bg-slate-50">
+        <main className="min-w-0 flex-1">
           <section className="border-b border-slate-200 bg-white">
-            <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">
-              {/* ── Page header ───────────────────────────────────────── */}
-              <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+            <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+              <div className="flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
                 <div>
                   <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
                     Administration
                   </p>
 
-                  <h1 className="text-3xl font-bold tracking-tight text-slate-950 md:text-4xl">
+                  <h1 className="text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
                     Staff accounts
                   </h1>
 
-                  <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-500 md:text-base">
+                  <p className="mt-5 max-w-2xl text-base leading-7 text-slate-600">
                     Manage registrar, trainer, and encoder accounts,
                     including their access status and password resets.
                   </p>
                 </div>
 
                 <button
+                  type="button"
                   onClick={handleCreate}
-                  className="inline-flex shrink-0 items-center justify-center gap-2 bg-blue-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-950 active:bg-blue-950"
+                  className="shrink-0 bg-blue-900 px-5 py-3 text-xs font-semibold text-white transition hover:bg-blue-950"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path d="M10.75 4.75a.75.75 0 0 0-1.5 0v4.5h-4.5a.75.75 0 0 0 0 1.5h4.5v4.5a.75.75 0 0 0 1.5 0v-4.5h4.5a.75.75 0 0 0 0-1.5h-4.5v-4.5Z" />
-                  </svg>
-
+                  <i className="fa-solid fa-plus mr-2 text-[9px]" />
                   Add staff
                 </button>
               </div>
             </div>
           </section>
 
-          {/* ── Staff management ──────────────────────────────────────── */}
           <section className="border-b border-slate-200 bg-slate-50">
-            <div className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-              {/* ── Fetch error ───────────────────────────────────────── */}
-              {error && (
-                <div className="mb-6 flex flex-col gap-2 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
-                  <span>{error}</span>
+            <div className="mx-auto max-w-7xl px-6 py-14 lg:px-8">
+              <div className="mb-8">
+                <p className="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-blue-800">
+                  Staff Management
+                </p>
+                <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                  System users
+                </h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  {staff.length} staff account{staff.length === 1 ? '' : 's'} in total.
+                </p>
+              </div>
 
-                  <button
-                    onClick={fetchStaff}
-                    className="self-start font-semibold underline underline-offset-2 hover:text-red-900 sm:self-auto"
-                  >
-                    Try again
-                  </button>
+              {error && (
+                <div className="mb-6 border-l-4 border-red-600 bg-red-50 px-4 py-4">
+                  <p className="text-xs font-semibold text-red-800">Unable to complete request</p>
+                  <p className="mt-1 text-xs text-red-700">{error}</p>
                 </div>
               )}
 
-              {/* ── Staff table ────────────────────────────────────────── */}
-              <StaffTable
-                staff={paginatedStaff}
-                loading={loading}
-                roleFilter={roleFilter}
-                statusFilter={statusFilter}
-                onRoleFilterChange={setRoleFilter}
-                onStatusFilterChange={setStatusFilter}
-                onEdit={handleEdit}
-                onToggleStatus={handleToggleStatus}
-                onResetPassword={handleResetPassword}
-              />
+              <div className="bg-white">
+                <StaffTable
+                  staff={paginatedStaff}
+                  loading={loading}
+                  roleFilter={roleFilter}
+                  statusFilter={statusFilter}
+                  onRoleFilterChange={setRoleFilter}
+                  onStatusFilterChange={setStatusFilter}
+                  onEdit={handleEdit}
+                  onToggleStatus={handleToggleStatus}
+                  onResetPassword={handleResetPassword}
+                />
+              </div>
 
-              {/* ── Sequential Pagination Controls ────────────────────── */}
-              {!loading && staff.length > 0 && (
-                <div className="mt-4 flex flex-col items-center justify-between gap-4 border-t border-slate-200 bg-white px-4 py-3 sm:flex-row sm:px-6 shadow-sm">
-                  <div className="text-sm text-slate-700">
-                    Showing <span className="font-medium">{(currentPage - 1) * PAGE_SIZE + 1}</span> to{' '}
-                    <span className="font-medium">
-                      {Math.min(currentPage * PAGE_SIZE, staff.length)}
-                    </span>{' '}
-                    of <span className="font-medium">{staff.length}</span> results
-                  </div>
+              {!loading && (
+                <div className="mt-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+                  <p className="text-xs text-slate-400">
+                    {staff.length > 0 ? (
+                      <>
+                        Showing{' '}
+                        <span className="font-semibold text-slate-600">
+                          {firstItem}–{lastItem}
+                        </span>{' '}
+                        of{' '}
+                        <span className="font-semibold text-slate-600">
+                          {staff.length}
+                        </span>{' '}
+                        staff member{staff.length === 1 ? '' : 's'}
+                      </>
+                    ) : (
+                      'No staff accounts to display'
+                    )}
+                  </p>
 
-                  <div className="flex items-center gap-1.5">
-                    {/* Previous Button */}
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-                      disabled={currentPage === 1}
-                      className="inline-flex h-9 items-center justify-center border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() =>
+                        setCurrentPage((current) =>
+                          Math.max(1, current - 1),
+                        )
+                      }
+                      className="border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-900 hover:text-blue-900 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      Prev
+                      <i className="fa-solid fa-arrow-left mr-2 text-[9px]" />
+                      Previous
                     </button>
 
-                    {/* Sequential Page Numbers (Equal Sized W/H) */}
-                    {getPageNumbers().map((page, index) => {
-                      if (page === '...') {
-                        return (
-                          <span key={`ellipsis-${index}`} className="inline-flex h-9 w-9 items-center justify-center text-sm text-slate-400">
-                            ...
-                          </span>
-                        );
-                      }
-
-                      const pageNum = page as number;
-                      const isActive = currentPage === pageNum;
-
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => setCurrentPage(pageNum)}
-                          className={`inline-flex h-9 w-9 items-center justify-center border text-sm font-medium transition ${
-                            isActive
-                              ? 'border-blue-900 bg-blue-900 text-white shadow-sm'
-                              : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
-
-                    {/* Next Button */}
                     <button
-                      onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-                      disabled={currentPage === totalPages}
-                      className="inline-flex h-9 items-center justify-center border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                      type="button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() =>
+                        setCurrentPage((current) =>
+                          Math.min(
+                            totalPages,
+                            current + 1,
+                          ),
+                        )
+                      }
+                      className="border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-900 hover:text-blue-900 disabled:cursor-not-allowed disabled:opacity-40"
                     >
                       Next
+                      <i className="fa-solid fa-arrow-right ml-2 text-[9px]" />
                     </button>
                   </div>
                 </div>
@@ -384,10 +354,8 @@ export const AdminStaffAccountsPage: React.FC = () => {
         </main>
       </div>
 
-      {/* ── Footer ─────────────────────────────────────────────────────── */}
       <Footer />
 
-      {/* ── Modals ─────────────────────────────────────────────────────── */}
       <StaffFormModal
         open={formModal.open}
         mode={formModal.mode}
@@ -426,7 +394,6 @@ export const AdminStaffAccountsPage: React.FC = () => {
         onConfirm={handleResetConfirm}
       />
 
-      {/* ── Toast ──────────────────────────────────────────────────────── */}
       {toast && (
         <div
           className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 text-sm font-medium shadow-lg ${
@@ -435,30 +402,6 @@ export const AdminStaffAccountsPage: React.FC = () => {
               : 'bg-red-600 text-white'
           }`}
         >
-          {toast.type === 'success' ? (
-            <svg
-              className="h-4 w-4 shrink-0 text-emerald-400"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 0 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
-              />
-            </svg>
-          ) : (
-            <svg
-              className="h-4 w-4 shrink-0 text-red-200"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-            >
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0 2 1 1 0 0 0 0-2Z"
-              />
-            </svg>
-          )}
-
           {toast.message}
         </div>
       )}

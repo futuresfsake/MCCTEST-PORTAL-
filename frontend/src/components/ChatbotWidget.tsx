@@ -53,7 +53,12 @@ function ChatbotWidget() {
         throw new Error('The chatbot service is not configured.')
       }
 
-      const response = await fetch(`${apiUrl}/chatbot/ask`, {
+      const normalizedApiUrl = apiUrl.replace(/\/+$/, '')
+      const chatbotEndpoint = normalizedApiUrl.endsWith('/api')
+        ? `${normalizedApiUrl}/chatbot/ask`
+        : `${normalizedApiUrl}/api/chatbot/ask`
+
+      const response = await fetch(chatbotEndpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +149,7 @@ function ChatbotWidget() {
                     message.role === 'user'
                       ? 'bg-blue-900 text-white'
                       : 'border border-slate-200 bg-white text-slate-700'
-                  }`}
+                  } whitespace-pre-wrap`}
                 >
                   {message.text}
                 </p>

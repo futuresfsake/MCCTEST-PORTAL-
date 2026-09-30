@@ -5,6 +5,7 @@ import {
   IsString,
   MaxLength,
   MinLength,
+  Matches,
 } from 'class-validator';
 console.log('CreateStaffDto loaded');
 // Staff roles only — ADMIN and TRAINEE cannot be created from this endpoint
@@ -18,16 +19,22 @@ export class CreateStaffDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
+  @Matches(/^[\p{L}\p{M}]+(?:[\s'-][\p{L}\p{M}]+)*$/u, {
+  message: 'First name can only contain letters, spaces, hyphens, and apostrophes',})
   firstName!: string;
 
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
+  @Matches(/^[\p{L}\p{M}]+(?:[\s'-][\p{L}\p{M}]+)*$/u, {
+  message: 'Last name can only contain letters, spaces, hyphens, and apostrophes',})  
   lastName!: string;
 
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
+  @Matches(/^[\p{L}\p{M}]+(?:[\s'-][\p{L}\p{M}]+)*$/u, {
+  message: 'Middle name can only contain letters, spaces, hyphens, and apostrophes',})
   middleName!: string;
 
   @IsEmail()

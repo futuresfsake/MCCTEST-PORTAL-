@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Header from '../../../components/layout/Header'
 import Sidebar from '../../../components/layout/Sidebar'
 import Footer from '../../../components/layout/Footer'
+import AnnouncementWidget from '../../../components/Announcements/AnnouncementWidget'
 
 
 type Activity = {
@@ -263,6 +264,9 @@ const AdminDashboard: React.FC = () => {
         ======================================================= */}
 
         <main className="min-w-0 flex-1">
+          <div className="mx-auto max-w-7xl px-6 pt-8 lg:px-8">
+            <AnnouncementWidget />
+          </div>
 
           {/* =====================================================
               ADMIN INTRO

@@ -4,33 +4,51 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaService } from './prisma/prisma.service';
 import { SessionsController } from './sessions/sessions.controller';
-import { SessionsService } from './sessions/sessions.service'
+import { SessionsService } from './sessions/sessions.service';
 import { AuthModule } from './auth/auth.module';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+
+// * --- MODULES --- *
 import { ChatbotModule } from './chatbot/chatbot.module';
-import { UsersModule } from './users/users.module';
+import { ProgramsModule } from './users/admin/programs/programs.module';
+import { StaffAccountsModule } from './users/admin/staff-accounts/staff-accounts.module';
+import { BatchesModule } from './users/registrar/batches/batches.module';
+import { AdminBatchesModule } from './users/admin/batches/batches.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
     ThrottlerModule.forRoot([
       {
-        ttl: 60000, // 1 minute window
-        limit: 15, // Max 15 requests per minute per IP
+        ttl: 60000,
+        limit: 15,
       },
     ]),
+
     AuthModule,
     ChatbotModule,
-    UsersModule,
+    ProgramsModule,
+    StaffAccountsModule,
+    BatchesModule,
+    AdminBatchesModule,
+    AnnouncementsModule,
   ],
-  controllers: [SessionsController, AppController],
+
+  controllers: [
+    SessionsController,
+    AppController,
+  ],
+
   providers: [
     AppService,
     PrismaService,
     SessionsService,
+
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

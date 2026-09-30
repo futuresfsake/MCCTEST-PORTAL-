@@ -325,7 +325,7 @@ function ProgramFormModal({
                       )
                     }
                     className="mt-2 w-full border border-slate-300 bg-white px-3 py-2.5 text-sm uppercase outline-none transition focus:border-blue-900"
-                    placeholder="e.g. SMAW"
+                    placeholder="e.g. SW"
                   />
 
                 </label>

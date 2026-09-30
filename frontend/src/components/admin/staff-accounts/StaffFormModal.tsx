@@ -119,9 +119,19 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
     (
       e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     ) => {
+      let value = e.target.value
+
+      if (
+        field === 'firstName' ||
+        field === 'lastName' ||
+        field === 'middleName'
+      ) {
+        value = value.replace(/[0-9]/g, '')
+      }
+
       setForm((current) => ({
         ...current,
-        [field]: e.target.value,
+        [field]: value,
       }))
 
       setErrors((current) => ({
@@ -130,19 +140,27 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
       }))
     }
 
+
   const validate = (): boolean => {
     const next: typeof errors = {}
+    const NAME_REGEX = /^[\p{L}\p{M}]+(?:[\s'-][\p{L}\p{M}]+)*$/u
 
     if (!form.firstName.trim()) {
       next.firstName = 'First name is required'
+    } else if (!NAME_REGEX.test(form.firstName.trim())) {
+      next.firstName = 'First name can only contain letters'
     }
 
     if (!form.lastName.trim()) {
       next.lastName = 'Last name is required'
+    } else if (!NAME_REGEX.test(form.lastName.trim())) {
+      next.lastName = 'Last name can only contain letters'
     }
 
     if (!form.middleName.trim()) {
       next.middleName = 'Middle name is required'
+    } else if (!NAME_REGEX.test(form.middleName.trim())) {
+      next.middleName = 'Middle name can only contain letters'
     }
 
     if (mode === 'create') {
@@ -189,6 +207,7 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
           middleName: form.middleName.trim(),
+          email: form.email.trim(),
         } satisfies UpdateStaffPayload)
       }
 
@@ -304,7 +323,7 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
 
             {mode === 'create' ? (
               <div className="sm:col-span-2">
-                <Field
+                <Field 
                   label="Email"
                   type="email"
                   value={form.email}
@@ -315,19 +334,18 @@ export const StaffFormModal: React.FC<StaffFormModalProps> = ({
               </div>
             ) : (
               <div className="sm:col-span-2">
-                <label className="mb-2 block text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                  Email
-                </label>
+                <Field
+                  label="Email"
+                  type="email"
+                  value={form.email}
+                  onChange={set('email')}
+                  error={errors.email}
+                  placeholder="juan.delacruz@gmail.com"
+                />
 
-                <div className="border border-slate-200 bg-slate-50 px-3 py-2.5">
-                  <p className="text-sm text-slate-600">
-                    {initial?.email ?? '—'}
-                  </p>
-
-                  <p className="mt-1 text-[10px] text-slate-400">
-                    Managed via Supabase Auth
-                  </p>
-                </div>
+                <p className="mt-2 text-[10px] leading-5 text-slate-400">
+                  This email is used for the staff member’s Supabase Auth login.
+                </p>
               </div>
             )}
 

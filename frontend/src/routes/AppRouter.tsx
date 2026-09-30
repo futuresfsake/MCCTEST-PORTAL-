@@ -7,15 +7,19 @@ import AdminRecords from '../pages/users/admin/AdminRecords'
 
 import RegistrarDashboard from '../pages/users/registrar/RegistrarDashboard'
 import RegistrarEnrollment from '../pages/users/registrar/RegistrarEnrollment'
+import AdminBatchConfiguration from '../pages/users/admin/batches/AdminBatchConfiguration'
+import AdminAnnouncementsPage from '../pages/users/admin/announcements/AdminAnnouncementsPage'
 
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 
 import TraineeDashboard from '../pages/users/trainee/TraineeDashboard'
 import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 
+import RegistrarAnnouncementsPage from '../pages/users/registrar/announcements/RegistrarAnnouncementsPage'
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
+import BatchManagement from '../pages/users/registrar/batches/BatchManagement'
 
 function AppRouter() {
 return ( <Routes>
@@ -76,6 +80,36 @@ return ( <Routes>
     </ProtectedRoute>
   }
 />
+
+<Route
+  path="/admin/batches"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <AdminBatchConfiguration />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/announcements"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <AdminAnnouncementsPage />
+    </ProtectedRoute>
+  }
+/>
+
+
+<Route
+  path="/admin/staff-accounts/AdminStaffAccountsPage"
+  element={
+    <ProtectedRoute allowedRoles={['ADMIN']}>
+      <AdminStaffAccountsPage />
+    </ProtectedRoute>
+  }
+/>
+
+
   <Route
     path="/registrar/enrollment"
     element={
@@ -111,8 +145,53 @@ return ( <Routes>
   />
 
   {/* ==========================================================
-      ENCODER
+      REGISTRAR
   ========================================================== */}
+
+  <Route
+    path="/registrar"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <RegistrarDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/registrar/dashboard"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <RegistrarDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/registrar/announcements"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <RegistrarAnnouncementsPage />
+      </ProtectedRoute>
+    }
+  />
+  
+  <Route
+    path="/registrar/batches/BatchManagement"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <BatchManagement />
+      </ProtectedRoute>
+    }
+  />  
+
+  <Route
+    path="/encoder"
+    element={
+      <ProtectedRoute allowedRoles={['ENCODER']}>
+        <EncoderDashboard />
+      </ProtectedRoute>
+    }
+  />
 
   <Route
     path="/encoder/dashboard"
