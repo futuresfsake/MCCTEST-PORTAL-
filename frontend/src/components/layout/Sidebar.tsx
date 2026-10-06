@@ -102,6 +102,11 @@ const sidebarConfig: Record<
             icon: 'fa-solid fa-folder-open',
           },
           {
+            label: 'Announcements',
+            path: '/admin/announcements',
+            icon: 'fa-solid fa-bullhorn',
+          },
+          {
             label: 'Payments',
             path: '/admin/payments',
             icon: 'fa-solid fa-peso-sign',
