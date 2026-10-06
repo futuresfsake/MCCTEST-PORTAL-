@@ -47,35 +47,33 @@ export class BatchesController {
     });
   }
 
-    @Get('programs')
-    getPrograms() {
+  @Get('programs')
+  getPrograms() {
     return this.batchesService.getPrograms();
-    }
+  }
 
-    @Get('trainers')
-    getTrainers() {
+  @Get('trainers')
+  getTrainers() {
     return this.batchesService.getTrainers();
-    }
+  }
 
-    @Get('dropdown-data')
-    getDropdownData() {
+  @Get('dropdown-data')
+  getDropdownData() {
     return this.batchesService.getDropdownData();
-    }
+  }
 
-    @Get(':id')
-    findOne(@Param('id', ParseUUIDPipe) id: string) {
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.batchesService.findOne(id);
-    }
+  }
 
   /**
    * POST /api/registrar/batches
    */
-    @Post()
-    create(@Body() dto: CreateBatchDto, @Request() req: any) {
-    
+  @Post()
+  create(@Body() dto: CreateBatchDto, @Request() req: any) {
     return this.batchesService.create(dto, req.user?.id);
-    }
-
+  }
 
   /**
    * PATCH /api/registrar/batches/:id

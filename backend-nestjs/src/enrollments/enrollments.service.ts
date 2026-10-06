@@ -23,78 +23,82 @@ export class EnrollmentsService {
 
     const searchTerm = query.trim();
 
-    return this.prisma.trainee.findMany({
-      where: {
-        OR: [
-          {
-            users: {
-              first_name: {
+    return this.prisma.trainee
+      .findMany({
+        where: {
+          OR: [
+            {
+              users: {
+                first_name: {
+                  contains: searchTerm,
+                  mode: 'insensitive',
+                },
+              },
+            },
+            {
+              users: {
+                last_name: {
+                  contains: searchTerm,
+                  mode: 'insensitive',
+                },
+              },
+            },
+            {
+              users: {
+                middle_name: {
+                  contains: searchTerm,
+                  mode: 'insensitive',
+                },
+              },
+            },
+            {
+              contact_number: {
                 contains: searchTerm,
                 mode: 'insensitive',
               },
             },
-          },
-          {
-            users: {
-              last_name: {
-                contains: searchTerm,
-                mode: 'insensitive',
-              },
+          ],
+        },
+        select: {
+          id: true,
+          users: {
+            select: {
+              first_name: true,
+              last_name: true,
+              middle_name: true,
             },
           },
-          {
-            users: {
-              middle_name: {
-                contains: searchTerm,
-                mode: 'insensitive',
-              },
-            },
-          },
-          {
-            contact_number: {
-              contains: searchTerm,
-              mode: 'insensitive',
-            },
-          },
-        ],
-      },
-      select: {
-        id: true,
-        users: {
-          select: {
-            first_name: true,
-            last_name: true,
-            middle_name: true,
+          contact_number: true,
+          street_address: true,
+          barangay: true,
+          municipality: true,
+          district: true,
+          province: true,
+          date_of_birth: true,
+          place_of_birth: true,
+          citizenship: true,
+          mother_name: true,
+          father_name: true,
+          civil_status: true,
+          highest_education: true,
+          employment_status: true,
+          employment_type: true,
+          pwd: true,
+          gender: true,
+          insurance_coverage: {
+            where: { expiry_date: { gte: new Date() } },
+            select: { coverage_id: true },
+            take: 1,
           },
         },
-        contact_number: true,
-        street_address: true,
-        barangay: true,
-        municipality: true,
-        district: true,
-        province: true,
-        date_of_birth: true,
-        place_of_birth: true,
-        citizenship: true,
-        mother_name: true,
-        father_name: true,
-        civil_status: true,
-        highest_education: true,
-        employment_status: true,
-        employment_type: true,
-        pwd: true,
-        gender: true,
-        insurance_coverage: {
-          where: { expiry_date: { gte: new Date() } },
-          select: { coverage_id: true },
-          take: 1,
-        },
-      },
-      take: 10,
-    }).then((trainees) => trainees.map(({ insurance_coverage, ...trainee }) => ({
-      ...trainee,
-      hasActiveInsurance: insurance_coverage.length > 0,
-    })));
+        take: 10,
+      })
+      .then((trainees) =>
+        trainees.map(({ insurance_coverage, ...trainee }) => ({
+          ...trainee,
+          hasActiveInsurance: insurance_coverage.length > 0,
+        })),
+      );
   }
 
   async getAvailableBatches(traineeId?: string) {
@@ -175,16 +179,21 @@ export class EnrollmentsService {
             const datesOverlap =
               existingBatch.start_date <= batch.end_date &&
               batch.start_date <= existingBatch.end_date;
-            const daysOverlap = existingBatch.programs.program_schedule.some((existingSchedule) =>
-              batch.programs.program_schedule.some((candidateSchedule) =>
-                existingSchedule.days.some((day) => candidateSchedule.days.includes(day)),
-              ),
+            const daysOverlap = existingBatch.programs.program_schedule.some(
+              (existingSchedule) =>
+                batch.programs.program_schedule.some((candidateSchedule) =>
+                  existingSchedule.days.some((day) =>
+                    candidateSchedule.days.includes(day),
+                  ),
+                ),
             );
-            const timesOverlap = existingBatch.programs.program_schedule.some((existingSchedule) =>
-              batch.programs.program_schedule.some((candidateSchedule) =>
-                existingSchedule.start_time < candidateSchedule.end_time &&
-                candidateSchedule.start_time < existingSchedule.end_time,
-              ),
+            const timesOverlap = existingBatch.programs.program_schedule.some(
+              (existingSchedule) =>
+                batch.programs.program_schedule.some(
+                  (candidateSchedule) =>
+                    existingSchedule.start_time < candidateSchedule.end_time &&
+                    candidateSchedule.start_time < existingSchedule.end_time,
+                ),
             );
             return (
               !(
@@ -345,16 +354,21 @@ export class EnrollmentsService {
       const datesOverlap =
         current.batch.start_date <= selectedBatch.end_date &&
         selectedBatch.start_date <= current.batch.end_date;
-      const daysOverlap = currentProgram.program_schedule.some((currentSchedule) =>
-        selectedBatch.programs.program_schedule.some((selectedSchedule) =>
-          currentSchedule.days.some((day) => selectedSchedule.days.includes(day)),
-        ),
+      const daysOverlap = currentProgram.program_schedule.some(
+        (currentSchedule) =>
+          selectedBatch.programs.program_schedule.some((selectedSchedule) =>
+            currentSchedule.days.some((day) =>
+              selectedSchedule.days.includes(day),
+            ),
+          ),
       );
-      const timesOverlap = currentProgram.program_schedule.some((currentSchedule) =>
-        selectedBatch.programs.program_schedule.some((selectedSchedule) =>
-          currentSchedule.start_time < selectedSchedule.end_time &&
-          selectedSchedule.start_time < currentSchedule.end_time,
-        ),
+      const timesOverlap = currentProgram.program_schedule.some(
+        (currentSchedule) =>
+          selectedBatch.programs.program_schedule.some(
+            (selectedSchedule) =>
+              currentSchedule.start_time < selectedSchedule.end_time &&
+              selectedSchedule.start_time < currentSchedule.end_time,
+          ),
       );
       if (datesOverlap && daysOverlap && timesOverlap) {
         throw new ConflictException(
@@ -409,41 +423,45 @@ export class EnrollmentsService {
     traineeData: any,
     userId?: string | null,
   ) {
-    const linkedUserId = userId ?? (await (async () => {
-      const firstNameInitials = String(traineeData.firstName || '')
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean)
-        .map((name: string) => name[0])
-        .join('')
-        .toUpperCase();
-      const lastName = String(traineeData.lastName || '')
-        .replace(/\s+/g, '')
-        .toUpperCase();
-      const systemId = `MCCTEST_${firstNameInitials}${lastName}`;
+    const linkedUserId =
+      userId ??
+      (await (async () => {
+        const firstNameInitials = String(traineeData.firstName || '')
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((name: string) => name[0])
+          .join('')
+          .toUpperCase();
+        const lastName = String(traineeData.lastName || '')
+          .replace(/\s+/g, '')
+          .toUpperCase();
+        const systemId = `MCCTEST_${firstNameInitials}${lastName}`;
 
-      const existingUser = await tx.users.findUnique({
-        where: { system_id: systemId },
-        select: { id: true },
-      });
-      if (existingUser) {
-        throw new ConflictException(
-          `The trainee username ${systemId} is already in use. Please verify the trainee name or resolve the existing account.`,
-        );
-      }
+        const existingUser = await tx.users.findUnique({
+          where: { system_id: systemId },
+          select: { id: true },
+        });
+        if (existingUser) {
+          throw new ConflictException(
+            `The trainee username ${systemId} is already in use. Please verify the trainee name or resolve the existing account.`,
+          );
+        }
 
-      return (await tx.users.create({
-        data: {
-          system_id: systemId,
-          first_name: traineeData.firstName,
-          middle_name: traineeData.middleName || '',
-          last_name: traineeData.lastName,
-          password_hash: await bcrypt.hash('traineedefault', 12),
-          role: 'TRAINEE',
-        },
-        select: { id: true },
-      })).id;
-    })());
+        return (
+          await tx.users.create({
+            data: {
+              system_id: systemId,
+              first_name: traineeData.firstName,
+              middle_name: traineeData.middleName || '',
+              last_name: traineeData.lastName,
+              password_hash: await bcrypt.hash('traineedefault', 12),
+              role: 'TRAINEE',
+            },
+            select: { id: true },
+          })
+        ).id;
+      })());
 
     return tx.trainee.create({
       data: {
@@ -479,7 +497,9 @@ export class EnrollmentsService {
     });
     if (!trainee) throw new NotFoundException('Trainee not found.');
     if (!trainee.users_id) {
-      throw new BadRequestException('The selected trainee is not linked to a user.');
+      throw new BadRequestException(
+        'The selected trainee is not linked to a user.',
+      );
     }
     return trainee.users_id;
   }
@@ -609,167 +629,175 @@ export class EnrollmentsService {
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
       try {
-        return await this.prisma.$transaction(async (tx) => {
-      await this.validateBatchAvailability(tx, batchId);
+        return await this.prisma.$transaction(
+          async (tx) => {
+            await this.validateBatchAvailability(tx, batchId);
 
-      let traineeId: string;
+            let traineeId: string;
 
-      if (traineeData.isExistingTrainee && traineeData.id) {
-        const userId = await this.getTraineeUserId(tx, traineeData.id);
-        await this.checkPersonDuplicateEnrollment(tx, userId, batchId);
-        await this.updateUser(tx, userId, traineeData);
-        traineeId = (await this.createTrainee(tx, traineeData, userId)).id;
-      } else {
-        const duplicateTrainee = await tx.trainee.findFirst({
-          where: { contact_number: traineeData.contactNumber },
-          select: { id: true },
-        });
+            if (traineeData.isExistingTrainee && traineeData.id) {
+              const userId = await this.getTraineeUserId(tx, traineeData.id);
+              await this.checkPersonDuplicateEnrollment(tx, userId, batchId);
+              await this.updateUser(tx, userId, traineeData);
+              traineeId = (await this.createTrainee(tx, traineeData, userId))
+                .id;
+            } else {
+              const duplicateTrainee = await tx.trainee.findFirst({
+                where: { contact_number: traineeData.contactNumber },
+                select: { id: true },
+              });
 
-        if (duplicateTrainee) {
-          throw new ConflictException(
-            'A trainee with this contact number already exists. Search and select the existing trainee instead of creating a duplicate.',
-          );
-        }
+              if (duplicateTrainee) {
+                throw new ConflictException(
+                  'A trainee with this contact number already exists. Search and select the existing trainee instead of creating a duplicate.',
+                );
+              }
 
-        const newTrainee = await this.createTrainee(tx, traineeData);
-        traineeId = newTrainee.id;
-      }
+              const newTrainee = await this.createTrainee(tx, traineeData);
+              traineeId = newTrainee.id;
+            }
 
-      await this.saveBeneficiary(tx, traineeId, traineeData.beneficiary);
-      await this.validateTraineeProgramRules(tx, traineeId, batchId);
+            await this.saveBeneficiary(tx, traineeId, traineeData.beneficiary);
+            await this.validateTraineeProgramRules(tx, traineeId, batchId);
 
-      const batch = await tx.batch.findUnique({
-        where: { id: batchId },
-        select: { program_id: true },
-      });
+            const batch = await tx.batch.findUnique({
+              where: { id: batchId },
+              select: { program_id: true },
+            });
 
-      if (!batch) {
-        throw new NotFoundException('Batch not found.');
-      }
+            if (!batch) {
+              throw new NotFoundException('Batch not found.');
+            }
 
-      let inventoryId: string | null = null;
-      if (uniformGiven) {
-        const inventoryItem = await tx.inventory.findFirst({
-          where: {
-            program_id: batch.program_id,
-            sizes: uniformSize,
-            quantity: { gt: 0 },
+            let inventoryId: string | null = null;
+            if (uniformGiven) {
+              const inventoryItem = await tx.inventory.findFirst({
+                where: {
+                  program_id: batch.program_id,
+                  sizes: uniformSize,
+                  quantity: { gt: 0 },
+                },
+                orderBy: { updated_at: 'asc' },
+                select: { id: true },
+              });
+
+              if (!inventoryItem) {
+                throw new BadRequestException(
+                  `No ${uniformSize} uniform is currently in stock for this program.`,
+                );
+              }
+
+              const stockUpdate = await tx.inventory.updateMany({
+                where: { id: inventoryItem.id, quantity: { gt: 0 } },
+                data: { quantity: { decrement: 1 } },
+              });
+
+              if (stockUpdate.count !== 1) {
+                throw new BadRequestException(
+                  'The selected uniform stock is no longer available. Please try again.',
+                );
+              }
+
+              inventoryId = inventoryItem.id;
+            }
+
+            const idCardNumber = await this.generateIdCardNumber(
+              tx,
+              batch.program_id,
+            );
+
+            const enrollment = await tx.enrollments.create({
+              data: {
+                trainee_id: traineeId,
+                batch_id: batchId,
+                enrollment_status: 'ENROLLED',
+                uniform_size: uniformSize,
+                id_card_number: idCardNumber,
+                enrolled_by: enrolledByUserId,
+                remarks,
+              },
+            });
+
+            await tx.requirement_checklist.create({
+              data: {
+                enrollment_id: enrollment.id,
+                checked_by: enrolledByUserId,
+                bc_nso_psa_copy: requirementChecklist.bcNsoPsaCopy,
+                diploma_tor: requirementChecklist.diplomaTor,
+                brgy_clearance: requirementChecklist.brgyClearance,
+                one_by_one_pic: requirementChecklist.oneByOnePic,
+                two_by_two_pic: requirementChecklist.twoByTwoPic,
+                passport_size: requirementChecklist.passportSize,
+                commitment_fee: payment.processPayment,
+                remarks: requirementChecklist.remarks,
+              },
+            });
+
+            await tx.distribution_checklist.create({
+              data: {
+                enrollment_id: enrollment.id,
+                inventory_id: inventoryId,
+                uniform_given: uniformGiven,
+                size_issued: uniformGiven ? uniformSize : null,
+                date_distributed: uniformGiven ? new Date() : null,
+                distributed_by: uniformGiven ? enrolledByUserId : null,
+              },
+            });
+
+            let orNumber: string | null = null;
+            if (payment.processPayment) {
+              const paymentDate = new Date();
+              const activeCoverage = await tx.insurance_coverage.findFirst({
+                where: {
+                  trainee_id: traineeId,
+                  effective_date: { lte: paymentDate },
+                  expiry_date: { gte: paymentDate },
+                },
+                select: { coverage_id: true },
+              });
+              const baseFee = activeCoverage ? 450 : 500;
+              orNumber = `OR-${paymentDate.getFullYear()}-${enrollment.id.slice(0, 8).toUpperCase()}`;
+              const receipt = await tx.official_receipts.create({
+                data: {
+                  enrollment_id: enrollment.id,
+                  or_number: orNumber,
+                  base_fee: baseFee,
+                  amount: payment.amount!,
+                  payment_date: paymentDate,
+                  payment_method: payment.paymentMethod!,
+                  reason_of_dues: payment.reasonOfDues || 'ENROLLMENT',
+                  remarks: payment.remarks,
+                  confirmed_by: enrolledByUserId,
+                },
+              });
+
+              if (!activeCoverage) {
+                await tx.insurance_coverage.create({
+                  data: {
+                    trainee_id: traineeId,
+                    effective_date: paymentDate,
+                    expiry_date: new Date(
+                      paymentDate.getFullYear() + 1,
+                      paymentDate.getMonth(),
+                      paymentDate.getDate(),
+                    ),
+                    official_receipt_id: receipt.id,
+                  },
+                });
+              }
+            }
+
+            return {
+              ...enrollment,
+              idCardNumber,
+              orNumber,
+            };
           },
-          orderBy: { updated_at: 'asc' },
-          select: { id: true },
-        });
-
-        if (!inventoryItem) {
-          throw new BadRequestException(
-            `No ${uniformSize} uniform is currently in stock for this program.`,
-          );
-        }
-
-        const stockUpdate = await tx.inventory.updateMany({
-          where: { id: inventoryItem.id, quantity: { gt: 0 } },
-          data: { quantity: { decrement: 1 } },
-        });
-
-        if (stockUpdate.count !== 1) {
-          throw new BadRequestException(
-            'The selected uniform stock is no longer available. Please try again.',
-          );
-        }
-
-        inventoryId = inventoryItem.id;
-      }
-
-      const idCardNumber = await this.generateIdCardNumber(
-        tx,
-        batch.program_id,
-      );
-
-      const enrollment = await tx.enrollments.create({
-        data: {
-          trainee_id: traineeId,
-          batch_id: batchId,
-          enrollment_status: 'ENROLLED',
-          uniform_size: uniformSize,
-          id_card_number: idCardNumber,
-          enrolled_by: enrolledByUserId,
-          remarks,
-        },
-      });
-
-      await tx.requirement_checklist.create({
-        data: {
-          enrollment_id: enrollment.id,
-          checked_by: enrolledByUserId,
-          bc_nso_psa_copy: requirementChecklist.bcNsoPsaCopy,
-          diploma_tor: requirementChecklist.diplomaTor,
-          brgy_clearance: requirementChecklist.brgyClearance,
-          one_by_one_pic: requirementChecklist.oneByOnePic,
-          two_by_two_pic: requirementChecklist.twoByTwoPic,
-          passport_size: requirementChecklist.passportSize,
-          commitment_fee: payment.processPayment,
-          remarks: requirementChecklist.remarks,
-        },
-      });
-
-      await tx.distribution_checklist.create({
-        data: {
-          enrollment_id: enrollment.id,
-          inventory_id: inventoryId,
-          uniform_given: uniformGiven,
-          size_issued: uniformGiven ? uniformSize : null,
-          date_distributed: uniformGiven ? new Date() : null,
-          distributed_by: uniformGiven ? enrolledByUserId : null,
-        },
-      });
-
-      let orNumber: string | null = null;
-      if (payment.processPayment) {
-        const paymentDate = new Date();
-        const activeCoverage = await tx.insurance_coverage.findFirst({
-          where: {
-            trainee_id: traineeId,
-            effective_date: { lte: paymentDate },
-            expiry_date: { gte: paymentDate },
+          {
+            isolationLevel: 'Serializable',
+            timeout: 15000,
           },
-          select: { coverage_id: true },
-        });
-        const baseFee = activeCoverage ? 450 : 500;
-        orNumber = `OR-${paymentDate.getFullYear()}-${enrollment.id.slice(0, 8).toUpperCase()}`;
-        const receipt = await tx.official_receipts.create({
-          data: {
-            enrollment_id: enrollment.id,
-            or_number: orNumber,
-            base_fee: baseFee,
-            amount: payment.amount!,
-            payment_date: paymentDate,
-            payment_method: payment.paymentMethod!,
-            reason_of_dues: payment.reasonOfDues || 'ENROLLMENT',
-            remarks: payment.remarks,
-            confirmed_by: enrolledByUserId,
-          },
-        });
-
-        if (!activeCoverage) {
-          await tx.insurance_coverage.create({
-            data: {
-              trainee_id: traineeId,
-              effective_date: paymentDate,
-              expiry_date: new Date(paymentDate.getFullYear() + 1, paymentDate.getMonth(), paymentDate.getDate()),
-              official_receipt_id: receipt.id,
-            },
-          });
-        }
-      }
-
-      return {
-        ...enrollment,
-        idCardNumber,
-        orNumber,
-      };
-        }, {
-          isolationLevel: 'Serializable',
-          timeout: 15000,
-        });
+        );
       } catch (error) {
         const isSerializationConflict =
           typeof error === 'object' &&
@@ -785,7 +813,9 @@ export class EnrollmentsService {
       }
     }
 
-    throw new Error('Enrollment transaction failed after maximum retry attempts.');
+    throw new Error(
+      'Enrollment transaction failed after maximum retry attempts.',
+    );
   }
 
   async getEnrollments(filters: EnrollmentFilterDto) {
@@ -1056,5 +1086,4 @@ export class EnrollmentsService {
       },
     });
   }
-
 }

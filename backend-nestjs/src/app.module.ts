@@ -41,10 +41,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     AnnouncementsModule,
   ],
 
-  controllers: [
-    SessionsController,
-    AppController,
-  ],
+  controllers: [SessionsController, AppController],
 
   providers: [
     AppService,

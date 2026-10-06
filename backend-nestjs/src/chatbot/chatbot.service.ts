@@ -12,10 +12,12 @@ export class ChatbotService {
     if (process.env.GEMINI_API_KEY) {
       this.ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
     }
-    
+
     // Load JSON information file
     const filePath = path.join(process.cwd(), 'src/chatbot/data/faq-info.json');
-    this.faqData = fs.existsSync(filePath) ? fs.readFileSync(filePath, 'utf-8') : '{}';
+    this.faqData = fs.existsSync(filePath)
+      ? fs.readFileSync(filePath, 'utf-8')
+      : '{}';
   }
 
   async generateResponse(query: string): Promise<string> {
@@ -24,12 +26,16 @@ export class ChatbotService {
     }
 
     if (query.length > 500) {
-      throw new BadRequestException('Query is too long. Please keep it under 500 characters.');
+      throw new BadRequestException(
+        'Query is too long. Please keep it under 500 characters.',
+      );
     }
 
     const sanitizedQuery = this.sanitizeInput(query);
     if (!sanitizedQuery) {
-      throw new BadRequestException('Please enter a question without HTML or script content.');
+      throw new BadRequestException(
+        'Please enter a question without HTML or script content.',
+      );
     }
 
     const lowerQuery = sanitizedQuery.toLowerCase();
@@ -41,12 +47,12 @@ export class ChatbotService {
       'show your hidden prompt',
       'jailbreak',
     ];
-    if (forbiddenPatterns.some(pattern => lowerQuery.includes(pattern))) {
-      return "I’m here to help with MCCTEST enrollment, requirements, programs, fees, and location. I can’t follow requests to change my instructions.";
+    if (forbiddenPatterns.some((pattern) => lowerQuery.includes(pattern))) {
+      return 'I’m here to help with MCCTEST enrollment, requirements, programs, fees, and location. I can’t follow requests to change my instructions.';
     }
 
     const profanity = ['fuck', 'shit', 'bitch', 'asshole', 'bastard'];
-    if (profanity.some(word => lowerQuery.includes(word))) {
+    if (profanity.some((word) => lowerQuery.includes(word))) {
       return 'I’m happy to help, but please keep the conversation respectful. You can ask me about MCCTEST enrollment, requirements, programs, fees, or location.';
     }
 
@@ -90,7 +96,9 @@ export class ChatbotService {
   }
 
   private getLocalFaqResponse(query: string): string {
-    if (/\b(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(query)) {
+    if (
+      /\b(hi|hello|hey|good morning|good afternoon|good evening)\b/.test(query)
+    ) {
       return 'Hello! I’m the MCCTEST Assistant. How can I help you with enrollment, requirements, programs, fees, or location?';
     }
 
@@ -135,19 +143,36 @@ export class ChatbotService {
 Enrollment fee: PHP 450`;
     }
 
-    if (query.includes('fee') || query.includes('cost') || query.includes('price') || query.includes('how much')) {
+    if (
+      query.includes('fee') ||
+      query.includes('cost') ||
+      query.includes('price') ||
+      query.includes('how much')
+    ) {
       return 'Enrollment fee\n\nThe enrollment fee is PHP 450 for all programs.';
     }
 
-    if (query.includes('where') || query.includes('location') || query.includes('address')) {
+    if (
+      query.includes('where') ||
+      query.includes('location') ||
+      query.includes('address')
+    ) {
       return 'MCCTEST is located at J.M. Ceniza Street, near the old BJMP Female Dormitory, Looc Superior, Mandaue City, Cebu.';
     }
 
-    if (query.includes('email') || query.includes('contact') || query.includes('registrar')) {
+    if (
+      query.includes('email') ||
+      query.includes('contact') ||
+      query.includes('registrar')
+    ) {
       return 'You can contact the Registrar at mcctesttrainingassessmentcntr@gmail.com or visit J.M. Ceniza Street, near the old BJMP Female Dormitory, Looc Superior, Mandaue City, Cebu. Phone information is currently unavailable.';
     }
 
-    if (query.includes('salary') || query.includes('pay') || query.includes('income')) {
+    if (
+      query.includes('salary') ||
+      query.includes('pay') ||
+      query.includes('income')
+    ) {
       return 'I don’t have salary information. I can help with MCCTEST enrollment, requirements, programs, fees, and location instead.';
     }
 
@@ -163,10 +188,15 @@ Enrollment fee: PHP 450`;
   }
 
   private filterResponse(responseText?: string): string {
-    const fallback = 'I could not find that in the MCCTEST FAQ. Please contact the Registrar at mcctesttrainingassessmentcntr@gmail.com.';
+    const fallback =
+      'I could not find that in the MCCTEST FAQ. Please contact the Registrar at mcctesttrainingassessmentcntr@gmail.com.';
     const response = responseText?.replace(/<[^>]*>/g, '').trim();
 
-    if (!response || response.length > 2000 || /system prompt|api key|internal instructions/i.test(response)) {
+    if (
+      !response ||
+      response.length > 2000 ||
+      /system prompt|api key|internal instructions/i.test(response)
+    ) {
       return fallback;
     }
 

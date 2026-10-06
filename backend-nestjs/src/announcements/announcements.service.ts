@@ -32,19 +32,28 @@ export class AnnouncementsService {
     const hasProgram = dto.program_id !== undefined;
     const hasBatch = dto.batch_id !== undefined;
 
-    if (dto.scope === announcement_scope_enum.GLOBAL && (hasProgram || hasBatch)) {
+    if (
+      dto.scope === announcement_scope_enum.GLOBAL &&
+      (hasProgram || hasBatch)
+    ) {
       throw new BadRequestException(
         'GLOBAL announcements must not include program_id or batch_id',
       );
     }
 
-    if (dto.scope === announcement_scope_enum.PROGRAM && (!dto.program_id || hasBatch)) {
+    if (
+      dto.scope === announcement_scope_enum.PROGRAM &&
+      (!dto.program_id || hasBatch)
+    ) {
       throw new BadRequestException(
         'PROGRAM announcements require program_id and must not include batch_id',
       );
     }
 
-    if (dto.scope === announcement_scope_enum.BATCH && (!dto.batch_id || hasProgram)) {
+    if (
+      dto.scope === announcement_scope_enum.BATCH &&
+      (!dto.batch_id || hasProgram)
+    ) {
       throw new BadRequestException(
         'BATCH announcements require batch_id and must not include program_id',
       );
@@ -151,10 +160,7 @@ export class AnnouncementsService {
     }
 
     const scope = query.scope as announcement_scope_enum | undefined;
-    if (
-      scope &&
-      !Object.values(announcement_scope_enum).includes(scope)
-    ) {
+    if (scope && !Object.values(announcement_scope_enum).includes(scope)) {
       throw new BadRequestException('scope must be GLOBAL, PROGRAM, or BATCH');
     }
 
@@ -176,8 +182,18 @@ export class AnnouncementsService {
       ...(query.search?.trim()
         ? {
             OR: [
-              { content: { contains: query.search.trim(), mode: 'insensitive' as const } },
-              { remarks: { contains: query.search.trim(), mode: 'insensitive' as const } },
+              {
+                content: {
+                  contains: query.search.trim(),
+                  mode: 'insensitive' as const,
+                },
+              },
+              {
+                remarks: {
+                  contains: query.search.trim(),
+                  mode: 'insensitive' as const,
+                },
+              },
             ],
           }
         : {}),
@@ -229,8 +245,14 @@ export class AnnouncementsService {
       });
       const enrollments = trainee?.enrollments ?? [];
       scopes.push(
-        { scope: announcement_scope_enum.BATCH, batch_id: { in: enrollments.map((item) => item.batch_id) } },
-        { scope: announcement_scope_enum.PROGRAM, program_id: { in: enrollments.map((item) => item.batch.program_id) } },
+        {
+          scope: announcement_scope_enum.BATCH,
+          batch_id: { in: enrollments.map((item) => item.batch_id) },
+        },
+        {
+          scope: announcement_scope_enum.PROGRAM,
+          program_id: { in: enrollments.map((item) => item.batch.program_id) },
+        },
       );
     } else if (user.role === Role.TRAINER) {
       const trainer = await this.prisma.trainer.findUnique({
@@ -239,8 +261,14 @@ export class AnnouncementsService {
       });
       const batches = trainer?.batch ?? [];
       scopes.push(
-        { scope: announcement_scope_enum.BATCH, batch_id: { in: batches.map((item) => item.id) } },
-        { scope: announcement_scope_enum.PROGRAM, program_id: { in: batches.map((item) => item.program_id) } },
+        {
+          scope: announcement_scope_enum.BATCH,
+          batch_id: { in: batches.map((item) => item.id) },
+        },
+        {
+          scope: announcement_scope_enum.PROGRAM,
+          program_id: { in: batches.map((item) => item.program_id) },
+        },
       );
     }
 
@@ -251,21 +279,29 @@ export class AnnouncementsService {
     });
   }
 
-  async update(id: string, dto: UpdateAnnouncementDto, user: AuthenticatedUser) {
+  async update(
+    id: string,
+    dto: UpdateAnnouncementDto,
+    user: AuthenticatedUser,
+  ) {
     const announcement = await this.prisma.announcements.findUnique({
       where: { id },
       select: { posted_by: true },
     });
     if (!announcement) throw new NotFoundException('Announcement not found');
     if (announcement.posted_by !== user.id) {
-      throw new ForbiddenException('You can only edit announcements you posted');
+      throw new ForbiddenException(
+        'You can only edit announcements you posted',
+      );
     }
 
     return this.prisma.announcements.update({
       where: { id },
       data: {
         ...(dto.content !== undefined && { content: dto.content.trim() }),
-        ...(dto.remarks !== undefined && { remarks: dto.remarks.trim() || null }),
+        ...(dto.remarks !== undefined && {
+          remarks: dto.remarks.trim() || null,
+        }),
       },
       include: { users: true, programs: true, batch: true },
     });
@@ -278,7 +314,9 @@ export class AnnouncementsService {
     });
     if (!announcement) throw new NotFoundException('Announcement not found');
     if (announcement.posted_by !== user.id) {
-      throw new ForbiddenException('You can only delete announcements you posted');
+      throw new ForbiddenException(
+        'You can only delete announcements you posted',
+      );
     }
     await this.prisma.announcements.delete({ where: { id } });
     return { message: 'Announcement deleted successfully' };

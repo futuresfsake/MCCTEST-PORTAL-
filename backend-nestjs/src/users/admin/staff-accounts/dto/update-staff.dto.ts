@@ -9,21 +9,27 @@ export class UpdateStaffDto {
   @IsString()
   @MaxLength(100)
   @Matches(/^[\p{L}\p{M}]+(?:[\s'-][\p{L}\p{M}]+)*$/u, {
-  message: 'First name can only contain letters, spaces, hyphens, and apostrophes',})  
+    message:
+      'First name can only contain letters, spaces, hyphens, and apostrophes',
+  })
   firstName?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
   @Matches(/^[\p{L}\p{M}]+(?:[\s'-][\p{L}\p{M}]+)*$/u, {
-  message: 'Last name can only contain letters, spaces, hyphens, and apostrophes',})  
+    message:
+      'Last name can only contain letters, spaces, hyphens, and apostrophes',
+  })
   lastName?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(100)
   @Matches(/^[\p{L}\p{M}]+(?:[\s'-][\p{L}\p{M}]+)*$/u, {
-  message: 'Middle name can only contain letters, spaces, hyphens, and apostrophes',})  
+    message:
+      'Middle name can only contain letters, spaces, hyphens, and apostrophes',
+  })
   middleName?: string;
 
   @IsOptional()

@@ -70,10 +70,7 @@ export class StaffAccountsController {
    */
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(
-    @Body() dto: CreateStaffDto,
-    @CurrentUser() admin: { id: string },
-  ) {
+  create(@Body() dto: CreateStaffDto, @CurrentUser() admin: { id: string }) {
     return this.staffAccountsService.create(dto, admin.id);
   }
 
@@ -84,10 +81,7 @@ export class StaffAccountsController {
    * Updates non-auth profile fields only.
    */
   @Patch(':id')
-  update(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateStaffDto,
-  ) {
+  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateStaffDto) {
     return this.staffAccountsService.update(id, dto);
   }
 

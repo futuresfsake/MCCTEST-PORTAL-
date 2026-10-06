@@ -15,30 +15,14 @@ export class ProgramsService {
   private timeStringToDate(time: string): Date {
     const [hours, minutes, seconds = 0] = time.split(':').map(Number);
 
-    return new Date(
-      Date.UTC(
-        1970,
-        0,
-        1,
-        hours,
-        minutes,
-        seconds,
-      ),
-    );
+    return new Date(Date.UTC(1970, 0, 1, hours, minutes, seconds));
   }
 
-  async findAll(
-    search?: string,
-    status?: string,
-    page = 1,
-    limit = 10,
-  ) {
+  async findAll(search?: string, status?: string, page = 1, limit = 10) {
     if (status && !['active', 'archived'].includes(status)) {
-      throw new BadRequestException(
-        'status must be either active or archived',
-      );
+      throw new BadRequestException('status must be either active or archived');
     }
-    
+
     const safePage = Math.max(1, page);
     const safeLimit = Math.min(Math.max(1, limit), 100);
 
@@ -115,10 +99,7 @@ export class ProgramsService {
   async create(dto: CreateProgramDto, userId: string) {
     const existingProgram = await this.prisma.programs.findFirst({
       where: {
-        OR: [
-          { name: dto.name },
-          { program_code: dto.program_code },
-        ],
+        OR: [{ name: dto.name }, { program_code: dto.program_code }],
       },
     });
 
@@ -166,9 +147,7 @@ export class ProgramsService {
       where: {
         OR: [
           ...(dto.name ? [{ name: dto.name }] : []),
-          ...(dto.program_code
-            ? [{ program_code: dto.program_code }]
-            : []),
+          ...(dto.program_code ? [{ program_code: dto.program_code }] : []),
         ],
         NOT: {
           id,

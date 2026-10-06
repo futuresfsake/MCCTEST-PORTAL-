@@ -121,10 +121,14 @@ export class StaffAccountsService {
     );
 
     if (authError || !authData.user) {
-      this.logger.error(`Supabase Auth createUser failed: ${authError?.message}`);
+      this.logger.error(
+        `Supabase Auth createUser failed: ${authError?.message}`,
+      );
 
       // Handle Supabase's duplicate email error as a clear conflict
-      if (authError?.message?.toLowerCase().includes('already been registered')) {
+      if (
+        authError?.message?.toLowerCase().includes('already been registered')
+      ) {
         throw new ConflictException(
           `An account with the email "${email}" already exists`,
         );
@@ -144,37 +148,37 @@ export class StaffAccountsService {
     const passwordHash = await bcrypt.hash(password, this.SALT_ROUNDS);
 
     try {
-    const newUser = await this.prisma.users.create({
-      data: {
-        id: supabaseUserId,
-        email,
-        system_id: systemId,
-        first_name: firstName,
-        last_name: lastName,
-        middle_name: middleName,
-        role: role as unknown as user_role_enum,
-        password_hash: passwordHash,
-        is_active: true,
-      },
-      select: {
-        id: true,
-        system_id: true,
-        first_name: true,
-        last_name: true,
-        role: true,
-        is_active: true,
-        created_at: true,
-      },
-    });
-
-    // Create trainer profile when the staff role is TRAINER
-    if (role === user_role_enum.TRAINER) {
-      await this.prisma.trainer.create({
+      const newUser = await this.prisma.users.create({
         data: {
-          user_id: newUser.id,
+          id: supabaseUserId,
+          email,
+          system_id: systemId,
+          first_name: firstName,
+          last_name: lastName,
+          middle_name: middleName,
+          role: role,
+          password_hash: passwordHash,
+          is_active: true,
+        },
+        select: {
+          id: true,
+          system_id: true,
+          first_name: true,
+          last_name: true,
+          role: true,
+          is_active: true,
+          created_at: true,
         },
       });
-    }
+
+      // Create trainer profile when the staff role is TRAINER
+      if (role === user_role_enum.TRAINER) {
+        await this.prisma.trainer.create({
+          data: {
+            user_id: newUser.id,
+          },
+        });
+      }
 
       this.logger.log(
         `Admin ${createdByAdminId} created staff account ${newUser.system_id} (${role})`,
@@ -190,11 +194,13 @@ export class StaffAccountsService {
         `DB insert failed for Supabase user ${supabaseUserId}. Rolling back auth user. Error: ${dbError instanceof Error ? dbError.message : String(dbError)}`,
       );
 
-      await this.supabaseAdmin.auth.admin.deleteUser(supabaseUserId).catch((e) => {
-        this.logger.error(
-          `CRITICAL: Failed to delete orphaned Supabase auth user ${supabaseUserId}: ${e instanceof Error ? e.message : String(e)}`,
-        );
-      });
+      await this.supabaseAdmin.auth.admin
+        .deleteUser(supabaseUserId)
+        .catch((e) => {
+          this.logger.error(
+            `CRITICAL: Failed to delete orphaned Supabase auth user ${supabaseUserId}: ${e instanceof Error ? e.message : String(e)}`,
+          );
+        });
 
       throw new InternalServerErrorException(
         'Account creation failed. The operation has been rolled back.',
@@ -202,73 +208,69 @@ export class StaffAccountsService {
     }
   }
 
-// ── Update staff profile ────────────────────────────────────────────────────
+  // ── Update staff profile ────────────────────────────────────────────────────
 
-async update(id: string, dto: UpdateStaffDto) {
-  await this.findOne(id); // throws 404 if not found or not a staff role
+  async update(id: string, dto: UpdateStaffDto) {
+    await this.findOne(id); // throws 404 if not found or not a staff role
 
-  // ── Update Supabase Auth email first ─────────────────────────────────────
-  if (dto.email) {
-    const { error: authError } =
-      await this.supabaseAdmin.auth.admin.updateUserById(id, {
-        email: dto.email,
-        email_confirm: true,
-      });
+    // ── Update Supabase Auth email first ─────────────────────────────────────
+    if (dto.email) {
+      const { error: authError } =
+        await this.supabaseAdmin.auth.admin.updateUserById(id, {
+          email: dto.email,
+          email_confirm: true,
+        });
 
-    if (authError) {
-      this.logger.error(
-        `Supabase Auth email update failed for user ${id}: ${authError.message}`,
-      );
+      if (authError) {
+        this.logger.error(
+          `Supabase Auth email update failed for user ${id}: ${authError.message}`,
+        );
 
-      if (
-        authError.message
-          ?.toLowerCase()
-          .includes('already registered')
-      ) {
-        throw new ConflictException(
-          `An account with the email "${dto.email}" already exists`,
+        if (authError.message?.toLowerCase().includes('already registered')) {
+          throw new ConflictException(
+            `An account with the email "${dto.email}" already exists`,
+          );
+        }
+
+        throw new BadRequestException(
+          'Failed to update email address. Please try again.',
         );
       }
-
-      throw new BadRequestException(
-        'Failed to update email address. Please try again.',
-      );
     }
+
+    // ── Update our users table ───────────────────────────────────────────────
+    const updated = await this.prisma.users.update({
+      where: { id },
+      data: {
+        ...(dto.firstName !== undefined && {
+          first_name: dto.firstName,
+        }),
+        ...(dto.lastName !== undefined && {
+          last_name: dto.lastName,
+        }),
+        ...(dto.middleName !== undefined && {
+          middle_name: dto.middleName,
+        }),
+        ...(dto.email !== undefined && {
+          email: dto.email,
+        }),
+        updated_at: new Date(),
+      },
+      select: {
+        id: true,
+        system_id: true,
+        first_name: true,
+        last_name: true,
+        middle_name: true,
+        email: true,
+        role: true,
+        is_active: true,
+        updated_at: true,
+      },
+    });
+
+    return updated;
   }
-
-  // ── Update our users table ───────────────────────────────────────────────
-  const updated = await this.prisma.users.update({
-    where: { id },
-    data: {
-      ...(dto.firstName !== undefined && {
-        first_name: dto.firstName,
-      }),
-      ...(dto.lastName !== undefined && {
-        last_name: dto.lastName,
-      }),
-      ...(dto.middleName !== undefined && {
-        middle_name: dto.middleName,
-      }),
-      ...(dto.email !== undefined && {
-        email: dto.email,
-      }),
-      updated_at: new Date(),
-    },
-    select: {
-      id: true,
-      system_id: true,
-      first_name: true,
-      last_name: true,
-      middle_name: true,
-      email: true,
-      role: true,
-      is_active: true,
-      updated_at: true,
-    },
-  });
-
-  return updated;
-}
 
   // ── Deactivate / Reactivate ─────────────────────────────────────────────────
 
@@ -303,9 +305,7 @@ async update(id: string, dto: UpdateStaffDto) {
       );
     }
 
-    this.logger.log(
-      `Staff ${id} ${isActive ? 'reactivated' : 'deactivated'}`,
-    );
+    this.logger.log(`Staff ${id} ${isActive ? 'reactivated' : 'deactivated'}`);
 
     return {
       ...updated,
@@ -339,7 +339,9 @@ async update(id: string, dto: UpdateStaffDto) {
     );
 
     if (error) {
-      this.logger.error(`Password reset email failed for user ${id}: ${error.message}`);
+      this.logger.error(
+        `Password reset email failed for user ${id}: ${error.message}`,
+      );
       throw new InternalServerErrorException(
         'Failed to send password reset email. Please try again.',
       );
@@ -371,7 +373,9 @@ async update(id: string, dto: UpdateStaffDto) {
     const systemId = `${prefix}${String(nextSeq).padStart(3, '0')}`;
 
     // Guard against race condition
-    const exists = await this.prisma.users.findUnique({ where: { system_id: systemId } });
+    const exists = await this.prisma.users.findUnique({
+      where: { system_id: systemId },
+    });
     if (exists) return this.generateSystemId();
 
     return systemId;

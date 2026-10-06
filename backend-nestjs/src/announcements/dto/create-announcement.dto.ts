@@ -18,12 +18,17 @@ export class CreateAnnouncementDto {
   @MaxLength(5000)
   content!: string;
 
-  @ValidateIf((dto: CreateAnnouncementDto) => dto.scope === announcement_scope_enum.PROGRAM)
+  @ValidateIf(
+    (dto: CreateAnnouncementDto) =>
+      dto.scope === announcement_scope_enum.PROGRAM,
+  )
   @IsUUID()
   @IsNotEmpty()
   program_id?: string;
 
-  @ValidateIf((dto: CreateAnnouncementDto) => dto.scope === announcement_scope_enum.BATCH)
+  @ValidateIf(
+    (dto: CreateAnnouncementDto) => dto.scope === announcement_scope_enum.BATCH,
+  )
   @IsUUID()
   @IsNotEmpty()
   batch_id?: string;

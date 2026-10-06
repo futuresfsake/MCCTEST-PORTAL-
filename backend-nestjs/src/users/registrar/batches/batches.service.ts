@@ -22,7 +22,11 @@ const STATUS_ORDER: batch_status_enum[] = [
 ];
 
 /** Fields restricted to OPEN-only editing */
-const CRITICAL_FIELDS: (keyof UpdateBatchDto)[] = ['start_date', 'end_date', 'capacity'];
+const CRITICAL_FIELDS: (keyof UpdateBatchDto)[] = [
+  'start_date',
+  'end_date',
+  'capacity',
+];
 
 @Injectable()
 export class BatchesService {
@@ -37,7 +41,8 @@ export class BatchesService {
     start_date_to?: string;
     search?: string;
   }) {
-    const { program_id, batch_status, start_date_from, start_date_to, search } = filters;
+    const { program_id, batch_status, start_date_from, start_date_to, search } =
+      filters;
 
     const batches = await this.prisma.batch.findMany({
       where: {
@@ -89,12 +94,22 @@ export class BatchesService {
       where: { id },
       include: {
         programs: {
-          select: { id: true, name: true, program_code: true, total_training_hours: true },
+          select: {
+            id: true,
+            name: true,
+            program_code: true,
+            total_training_hours: true,
+          },
         },
         trainer: {
           include: {
             users: {
-              select: { id: true, first_name: true, last_name: true, email: true },
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                email: true,
+              },
             },
           },
         },
@@ -124,7 +139,12 @@ export class BatchesService {
       throw new BadRequestException('Start date and end date are required');
     }
 
-    if (!dto.program_id || !dto.trainer_id || !dto.batch_name || dto.capacity === undefined) {
+    if (
+      !dto.program_id ||
+      !dto.trainer_id ||
+      !dto.batch_name ||
+      dto.capacity === undefined
+    ) {
       throw new BadRequestException(
         'Program, trainer, batch name, and capacity are required',
       );
@@ -133,7 +153,11 @@ export class BatchesService {
     // Validate date range
     const start = new Date(dto.start_date);
     const end = new Date(dto.end_date);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+    if (
+      Number.isNaN(start.getTime()) ||
+      Number.isNaN(end.getTime()) ||
+      end <= start
+    ) {
       throw new BadRequestException('End date must be after start date');
     }
 
@@ -142,7 +166,8 @@ export class BatchesService {
       where: { id: dto.program_id },
     });
     if (!program) throw new NotFoundException('Program not found');
-    if (!program.is_active) throw new BadRequestException('Program is not active');
+    if (!program.is_active)
+      throw new BadRequestException('Program is not active');
 
     // Verify trainer exists
     const trainer = await this.prisma.trainer.findUnique({
@@ -194,7 +219,9 @@ export class BatchesService {
     // Block critical field edits for non-OPEN batches
     const isLocked = batch.batch_status !== batch_status_enum.OPEN;
     if (isLocked) {
-      const criticalAttempted = CRITICAL_FIELDS.filter((f) => dto[f] !== undefined);
+      const criticalAttempted = CRITICAL_FIELDS.filter(
+        (f) => dto[f] !== undefined,
+      );
       if (criticalAttempted.length > 0) {
         throw new ForbiddenException(
           `Cannot modify ${criticalAttempted.join(', ')} on a batch that is ${batch.batch_status}`,
@@ -222,11 +249,17 @@ export class BatchesService {
 
     // Validate dates if provided
     if (hasStartDate || hasEndDate) {
-      const newStart = hasStartDate ? new Date(dto.start_date as string) : batch.start_date;
-      const newEnd = hasEndDate ? new Date(dto.end_date as string) : batch.end_date;
+      const newStart = hasStartDate
+        ? new Date(dto.start_date as string)
+        : batch.start_date;
+      const newEnd = hasEndDate
+        ? new Date(dto.end_date as string)
+        : batch.end_date;
 
       if (Number.isNaN(newStart.getTime()) || Number.isNaN(newEnd.getTime())) {
-        throw new BadRequestException('Start date and end date must be valid dates');
+        throw new BadRequestException(
+          'Start date and end date must be valid dates',
+        );
       }
 
       if (newEnd <= newStart) {
@@ -235,7 +268,9 @@ export class BatchesService {
     }
 
     if (dto.trainer_id) {
-      const trainer = await this.prisma.trainer.findUnique({ where: { id: dto.trainer_id } });
+      const trainer = await this.prisma.trainer.findUnique({
+        where: { id: dto.trainer_id },
+      });
       if (!trainer) throw new NotFoundException('Trainer not found');
     }
 
@@ -245,7 +280,8 @@ export class BatchesService {
         ...(dto.trainer_id && { trainer_id: dto.trainer_id }),
         ...(dto.batch_name && { batch_name: dto.batch_name }),
         ...(dto.capacity !== undefined && { capacity: dto.capacity }),
-        ...(hasStartDate && dto.start_date && { start_date: new Date(dto.start_date) }),
+        ...(hasStartDate &&
+          dto.start_date && { start_date: new Date(dto.start_date) }),
         ...(hasEndDate && dto.end_date && { end_date: new Date(dto.end_date) }),
         ...(dto.venue !== undefined && { remarks: dto.venue }), // stored in remarks for now
         ...(dto.remarks !== undefined && { remarks: dto.remarks }),
@@ -278,8 +314,8 @@ export class BatchesService {
       throw new BadRequestException('Batch status is required');
     }
 
-    const currentIdx = STATUS_ORDER.indexOf(batch.batch_status as batch_status_enum);
-    const nextIdx = STATUS_ORDER.indexOf(dto.batch_status as batch_status_enum);
+    const currentIdx = STATUS_ORDER.indexOf(batch.batch_status);
+    const nextIdx = STATUS_ORDER.indexOf(dto.batch_status);
 
     // Allow CANCELLED from any non-terminal state
     if (dto.batch_status === batch_status_enum.CANCELLED) {
@@ -310,97 +346,97 @@ export class BatchesService {
 
   // ─── DROPDOWN DATA ────────────────────────────────────────────────────────
 
-    async getDropdownData() {
+  async getDropdownData() {
     const [programs, trainers] = await Promise.all([
-        this.prisma.programs.findMany({
+      this.prisma.programs.findMany({
         where: {
-            is_active: true,
+          is_active: true,
         },
         select: {
-            id: true,
-            name: true,
-            program_code: true,
+          id: true,
+          name: true,
+          program_code: true,
         },
         orderBy: {
-            name: 'asc',
+          name: 'asc',
         },
-        }),
+      }),
 
-        this.prisma.trainer.findMany({
+      this.prisma.trainer.findMany({
         where: {
-            users: {
+          users: {
             role: user_role_enum.TRAINER,
             is_active: true,
-            },
+          },
         },
         select: {
-            id: true,
-            user_id: true,
-            users: {
+          id: true,
+          user_id: true,
+          users: {
             select: {
-                first_name: true,
-                middle_name: true,
-                last_name: true,
+              first_name: true,
+              middle_name: true,
+              last_name: true,
             },
-            },
+          },
         },
         orderBy: {
-            users: {
+          users: {
             last_name: 'asc',
-            },
+          },
         },
-        }),
+      }),
     ]);
 
     return {
-        programs,
+      programs,
 
-        trainers: trainers.map((trainer) => ({
+      trainers: trainers.map((trainer) => ({
         id: trainer.id,
         user_id: trainer.user_id,
         full_name: [
-            trainer.users.first_name,
-            trainer.users.middle_name,
-            trainer.users.last_name,
+          trainer.users.first_name,
+          trainer.users.middle_name,
+          trainer.users.last_name,
         ]
-            .filter(Boolean)
-            .join(' '),
-        })),
+          .filter(Boolean)
+          .join(' '),
+      })),
     };
-    }
+  }
 
-    async getPrograms() {
-        return this.prisma.programs.findMany({
-            where: { is_active: true },
-            select: {
-            id: true,
-            name: true,
-            program_code: true,
-            },
-            orderBy: {
-            name: 'asc',
-            },
-        });
-        }
+  async getPrograms() {
+    return this.prisma.programs.findMany({
+      where: { is_active: true },
+      select: {
+        id: true,
+        name: true,
+        program_code: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+  }
 
-    async getTrainers() {
-        return this.prisma.users.findMany({
-            where: {
-            role: 'TRAINER',
-            is_active: true,
-            },
-            select: {
-            id: true,
-            first_name: true,
-            middle_name: true,
-            last_name: true,
-            email: true,
-            },
-            orderBy: {
-            last_name: 'asc',
-            },
-        });
-        }
+  async getTrainers() {
+    return this.prisma.users.findMany({
+      where: {
+        role: 'TRAINER',
+        is_active: true,
+      },
+      select: {
+        id: true,
+        first_name: true,
+        middle_name: true,
+        last_name: true,
+        email: true,
+      },
+      orderBy: {
+        last_name: 'asc',
+      },
+    });
+  }
   // ─── HELPER ───────────────────────────────────────────────────────────────
 
   private formatBatch(batch: any) {
