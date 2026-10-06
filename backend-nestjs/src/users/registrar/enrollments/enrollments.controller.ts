@@ -13,12 +13,12 @@ import { RolesGuard } from '../../../auth/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { Role } from '../../../common/enums/role.enum';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
-import { EnrollmentsService } from './enrollments.service';
-import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
+import { EnrollmentsService } from '../../../enrollments/enrollments.service';
+import { CreateEnrollmentDto } from '../../../enrollments/dto/create-enrollment.dto';
 import {
   UpdateEnrollmentStatusDto,
   EnrollmentFilterDto,
-} from './dto/update-enrollment.dto';
+} from '../../../enrollments/dto/update-enrollment.dto';
 
 @Controller('registrar')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -74,4 +74,5 @@ export class EnrollmentsController {
       updateDto,
     );
   }
+
 }

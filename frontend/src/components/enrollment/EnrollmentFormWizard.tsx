@@ -1,12 +1,34 @@
 import React, { useState } from 'react';
-import type { EnrollmentFormData, TraineeData, RequirementChecklistData, BatchInfo, Program } from '../../../../../types/enrollment.type';
-import { createEnrollment, searchTrainees, getAvailableBatches, getPrograms } from '../../../../../api/users/registrar.api';
+import type { EnrollmentFormData, TraineeData, RequirementChecklistData, BatchInfo, Program } from '../../types/enrollment.type';
+import { createEnrollment, searchTrainees, getAvailableBatches, getPrograms } from '../../api/enrollments/enrollment.api';
 import EnrollmentStatusBadge from './EnrollmentStatusBadge';
 
 interface EnrollmentFormWizardProps {
   onSuccess: (result: any) => void;
   onCancel: () => void;
 }
+
+const getTodayDate = () => {
+  const today = new Date();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${today.getFullYear()}-${month}-${day}`;
+};
+
+const isValidBirthDate = (value: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const today = getTodayDate();
+
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day &&
+    value <= today
+  );
+};
 
 const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
   onSuccess,
@@ -43,6 +65,15 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
       employmentStatus: '',
       employmentType: '',
       isExistingTrainee: false,
+      beneficiary: {
+        firstName: '',
+        middleName: '',
+        lastName: '',
+        relationship: '',
+        contactNumber: '',
+        address: '',
+        idNumber: '',
+      },
     },
     batchId: '',
     requirementChecklist: {
@@ -93,12 +124,30 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
       ['highestEducation', 'Highest Education'],
       ['employmentStatus', 'Employment Status'],
       ['employmentType', 'Employment Type'],
+      ['beneficiary.firstName', 'Beneficiary First Name'],
+      ['beneficiary.lastName', 'Beneficiary Last Name'],
+      ['beneficiary.relationship', 'Beneficiary Relationship'],
+      ['beneficiary.contactNumber', 'Beneficiary Contact Number'],
+      ['beneficiary.address', 'Beneficiary Address'],
+      ['beneficiary.idNumber', 'Beneficiary ID No.'],
     ];
     const missing = requiredFields
-      .filter(([field]) => field === 'contactNumber'
-        ? formData.trainee.contactNumber.replace(/\D/g, '').length < 12
-        : !String(formData.trainee[field as keyof TraineeData] || '').trim())
+      .filter(([field]) => {
+        if (field === 'contactNumber') return formData.trainee.contactNumber.replace(/\D/g, '').length < 12;
+        if (field === 'beneficiary.contactNumber') return formData.trainee.beneficiary.contactNumber.replace(/\D/g, '').length < 12;
+        if (field.startsWith('beneficiary.')) {
+          const beneficiaryField = field.split('.')[1] as keyof TraineeData['beneficiary'];
+          return !String(formData.trainee.beneficiary[beneficiaryField] || '').trim();
+        }
+        return !String(formData.trainee[field as keyof TraineeData] || '').trim();
+      })
       .map(([, label]) => label);
+    if (
+      formData.trainee.dateOfBirth &&
+      !isValidBirthDate(formData.trainee.dateOfBirth)
+    ) {
+      missing.push('Valid Date of Birth');
+    }
     if (!formData.batchId) missing.push('Training Batch');
     if (formData.payment.processPayment && (!formData.payment.amount || !formData.payment.paymentMethod)) missing.push('Payment details');
     setMissingFields(missing);
@@ -335,6 +384,15 @@ const Step1TraineeInfo: React.FC<{
       gender: trainee.gender || 'MALE',
       hasActiveInsurance: trainee.hasActiveInsurance,
       isExistingTrainee: true,
+      beneficiary: {
+        firstName: '',
+        middleName: '',
+        lastName: '',
+        relationship: '',
+        contactNumber: '',
+        address: '',
+        idNumber: '',
+      },
     });
     setSearchQuery('');
     setSearchResults([]);
@@ -389,7 +447,7 @@ const Step1TraineeInfo: React.FC<{
         <Field label="Last Name "><input type="text" placeholder="Last name" value={traineeData.lastName} onChange={(e) => onTraineeChange({ lastName: e.target.value })} className={fieldClass(missingFields.has('Last Name'))} /></Field>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Field label="Date of Birth "><input type="date" value={traineeData.dateOfBirth} onChange={(e) => onTraineeChange({ dateOfBirth: e.target.value })} className={fieldClass(missingFields.has('Date of Birth'))} /></Field>
+        <Field label="Date of Birth "><input type="date" max={getTodayDate()} value={traineeData.dateOfBirth} onChange={(e) => onTraineeChange({ dateOfBirth: e.target.value })} className={fieldClass(missingFields.has('Date of Birth') || missingFields.has('Valid Date of Birth'))} /></Field>
         <Field label="Gender "><select value={traineeData.gender} onChange={(e) => onTraineeChange({ gender: e.target.value as TraineeData['gender'] })} className={inputClass}><option value="MALE">Male</option><option value="FEMALE">Female</option><option value="OTHER">Other</option></select></Field>
         <Field label="Contact Number ">
           <div className={`${fieldClass(missingFields.has('Contact Number'))} flex items-center px-0`}>
@@ -422,6 +480,20 @@ const Step1TraineeInfo: React.FC<{
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <SelectField label="Employment Type " value={traineeData.employmentType} invalid={missingFields.has('Employment Type')} onChange={(value) => onTraineeChange({ employmentType: value as TraineeData['employmentType'] })} options={[['FULL_TIME', 'Full Time'], ['PART_TIME', 'Part Time'], ['CASUAL', 'Casual'], ['CONTRACTUAL', 'Contractual'], ['SEASONAL', 'Seasonal'], ['NA', 'N/A']]} />
           <label className="flex h-10 items-center gap-2 self-end text-xs font-medium text-slate-700"><input type="checkbox" checked={traineeData.pwd} onChange={(e) => onTraineeChange({ pwd: e.target.checked })} className="h-4 w-4 rounded border-slate-300" /> PWD (Person with Disability)</label>
+        </div>
+        <div className="mt-4 border-t border-slate-200 pt-4">
+          <h3 className="mb-3 text-sm font-semibold text-slate-900">Beneficiary</h3>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <Field label="First Name *"><input type="text" value={traineeData.beneficiary.firstName} onChange={(e) => onTraineeChange({ beneficiary: { ...traineeData.beneficiary, firstName: e.target.value } })} className={fieldClass(missingFields.has('Beneficiary First Name'))} /></Field>
+            <Field label="Middle Name"><input type="text" value={traineeData.beneficiary.middleName} onChange={(e) => onTraineeChange({ beneficiary: { ...traineeData.beneficiary, middleName: e.target.value } })} className={inputClass} /></Field>
+            <Field label="Last Name *"><input type="text" value={traineeData.beneficiary.lastName} onChange={(e) => onTraineeChange({ beneficiary: { ...traineeData.beneficiary, lastName: e.target.value } })} className={fieldClass(missingFields.has('Beneficiary Last Name'))} /></Field>
+            <Field label="Relationship *"><input type="text" value={traineeData.beneficiary.relationship} onChange={(e) => onTraineeChange({ beneficiary: { ...traineeData.beneficiary, relationship: e.target.value } })} className={fieldClass(missingFields.has('Beneficiary Relationship'))} /></Field>
+            <Field label="Contact # *"><input type="tel" value={traineeData.beneficiary.contactNumber.replace(/^\+63/, '')} onChange={(e) => onTraineeChange({ beneficiary: { ...traineeData.beneficiary, contactNumber: `+63${e.target.value.replace(/\D/g, '').slice(0, 10)}` } })} className={fieldClass(missingFields.has('Beneficiary Contact Number'))} placeholder="9171234567" /></Field>
+            <Field label="ID No. *"><input type="text" value={traineeData.beneficiary.idNumber} onChange={(e) => onTraineeChange({ beneficiary: { ...traineeData.beneficiary, idNumber: e.target.value } })} className={fieldClass(missingFields.has('Beneficiary ID No.'))} /></Field>
+          </div>
+          <div className="mt-3">
+            <Field label="Address *"><input type="text" value={traineeData.beneficiary.address} onChange={(e) => onTraineeChange({ beneficiary: { ...traineeData.beneficiary, address: e.target.value } })} className={fieldClass(missingFields.has('Beneficiary Address'))} /></Field>
+          </div>
         </div>
     </div>
   );
@@ -543,11 +615,26 @@ const Step2BatchSelection: React.FC<{
       {batches.length === 0 ? (
         <div className="text-center py-6 bg-slate-50 border border-slate-200 rounded-md">
           <p className="text-slate-600">No available batches at this time</p>
+          <button
+            type="button"
+            onClick={loadBatches}
+            className="mt-2 text-sm text-blue-700 hover:underline font-medium"
+          >
+            Refresh batches
+          </button>
         </div>
       ) : (
         <>
-          <div className="mb-3">
+          <div className="mb-3 flex items-center gap-2">
             <input type="search" value={programQuery} onChange={(event) => { setProgramQuery(event.target.value); setShowAllPrograms(true); }} placeholder="Search program name" aria-label="Search program name" className={inputClass} />
+            <button
+              type="button"
+              onClick={loadBatches}
+              disabled={isLoading}
+              className="whitespace-nowrap rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Refresh
+            </button>
           </div>
           <div className="divide-y divide-slate-200 border-y border-slate-200">
             {visiblePrograms.map((program) => (

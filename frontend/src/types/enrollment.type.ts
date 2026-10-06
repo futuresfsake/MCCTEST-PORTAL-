@@ -26,6 +26,17 @@ export interface TraineeData {
   employmentType: '' | 'FULL_TIME' | 'PART_TIME' | 'CASUAL' | 'CONTRACTUAL' | 'SEASONAL' | 'NA';
   isExistingTrainee: boolean;
   hasActiveInsurance?: boolean;
+  beneficiary: BeneficiaryData;
+}
+
+export interface BeneficiaryData {
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  relationship: string;
+  contactNumber: string;
+  address: string;
+  idNumber: string;
 }
 
 export interface EnrollmentPaymentData {

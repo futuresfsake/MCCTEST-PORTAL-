@@ -8,18 +8,20 @@ import {
   IsInt,
   Min,
   Max,
+  MaxLength,
 } from 'class-validator';
-import { enrollment_status_enum } from '../../../../generated/prisma/enums';
+import { enrollment_status_enum } from '../../generated/prisma/enums';
 
 /**
  * DTO for updating an enrollment status
  */
 export class UpdateEnrollmentStatusDto {
   @IsEnum(enrollment_status_enum)
-  status: enrollment_status_enum;
+  status!: enrollment_status_enum;
 
   @IsOptional()
   @IsString()
+  @MaxLength(2000)
   remarks?: string;
 }
 

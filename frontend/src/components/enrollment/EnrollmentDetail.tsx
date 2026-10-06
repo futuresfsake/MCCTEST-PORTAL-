@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getEnrollmentDetail, updateEnrollmentStatus } from '../../../../../api/users/registrar.api';
+import { getEnrollmentDetail, updateEnrollmentStatus } from '../../api/enrollments/enrollment.api';
 import EnrollmentStatusBadge from './EnrollmentStatusBadge';
 
 interface EnrollmentDetailProps {
@@ -202,6 +202,7 @@ const EnrollmentDetail: React.FC<EnrollmentDetailProps> = ({
                 <p className="font-medium text-slate-600">ID Card Number</p>
                 <p className="text-slate-900 font-mono">{enrollment.id_card_number}</p>
               </div>
+
               <div>
                 <p className="font-medium text-slate-600">Uniform Size</p>
                 <p className="text-slate-900">{enrollment.uniform_size}</p>
@@ -264,6 +265,12 @@ const EnrollmentDetail: React.FC<EnrollmentDetailProps> = ({
             Close
           </button>
         </div>
+      </div>
+      <div className="mt-4 border-t border-slate-200 pt-4">
+        <p className="font-medium text-slate-600">Remarks</p>
+        <p className="mt-1 text-sm text-slate-700 whitespace-pre-wrap">
+          {enrollment.remarks || 'No remarks posted.'}
+        </p>
       </div>
     </div>
   );

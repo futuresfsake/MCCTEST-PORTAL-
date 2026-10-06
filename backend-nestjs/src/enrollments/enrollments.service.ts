@@ -5,7 +5,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import {
   UpdateEnrollmentStatusDto,
@@ -99,6 +99,7 @@ export class EnrollmentsService {
 
   async getAvailableBatches(traineeId?: string) {
     const today = new Date();
+    today.setUTCHours(0, 0, 0, 0);
 
     const existingEnrollments = traineeId
       ? await this.prisma.enrollments.findMany({
@@ -483,6 +484,45 @@ export class EnrollmentsService {
     return trainee.users_id;
   }
 
+  private async saveBeneficiary(
+    tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
+    traineeId: string,
+    beneficiary: {
+      firstName: string;
+      middleName: string;
+      lastName: string;
+      relationship: string;
+      contactNumber: string;
+      address: string;
+      idNumber: string;
+    },
+  ) {
+    const data = {
+      first_name: beneficiary.firstName,
+      middle_name: beneficiary.middleName || '',
+      last_name: beneficiary.lastName,
+      relationship: beneficiary.relationship,
+      contact_number: beneficiary.contactNumber,
+      address: beneficiary.address,
+      id_number: beneficiary.idNumber,
+    };
+    const existing = await tx.trainee_beneficiaries.findFirst({
+      where: { trainee_id: traineeId },
+      select: { id: true },
+    });
+
+    if (existing) {
+      return tx.trainee_beneficiaries.update({
+        where: { id: existing.id },
+        data,
+      });
+    }
+
+    return tx.trainee_beneficiaries.create({
+      data: { trainee_id: traineeId, ...data },
+    });
+  }
+
   private async checkPersonDuplicateEnrollment(
     tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
     userId: string,
@@ -535,7 +575,41 @@ export class EnrollmentsService {
       payment,
     } = createDto;
 
-    return this.prisma.$transaction(async (tx) => {
+    const dateOfBirth = traineeData.dateOfBirth;
+    const dateParts = dateOfBirth.split('-').map(Number);
+    const parsedDateOfBirth = new Date(
+      Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]),
+    );
+    const today = new Date();
+    const todayUtc = Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate(),
+    );
+    const normalizedDateOfBirth = Date.UTC(
+      parsedDateOfBirth.getUTCFullYear(),
+      parsedDateOfBirth.getUTCMonth(),
+      parsedDateOfBirth.getUTCDate(),
+    );
+
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) ||
+      Number.isNaN(normalizedDateOfBirth) ||
+      parsedDateOfBirth.getUTCFullYear() !== dateParts[0] ||
+      parsedDateOfBirth.getUTCMonth() !== dateParts[1] - 1 ||
+      parsedDateOfBirth.getUTCDate() !== dateParts[2] ||
+      normalizedDateOfBirth > todayUtc
+    ) {
+      throw new BadRequestException(
+        'Date of birth must be a valid calendar date that is not in the future.',
+      );
+    }
+
+    const maxAttempts = 3;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      try {
+        return await this.prisma.$transaction(async (tx) => {
       await this.validateBatchAvailability(tx, batchId);
 
       let traineeId: string;
@@ -561,6 +635,7 @@ export class EnrollmentsService {
         traineeId = newTrainee.id;
       }
 
+      await this.saveBeneficiary(tx, traineeId, traineeData.beneficiary);
       await this.validateTraineeProgramRules(tx, traineeId, batchId);
 
       const batch = await tx.batch.findUnique({
@@ -613,7 +688,7 @@ export class EnrollmentsService {
         data: {
           trainee_id: traineeId,
           batch_id: batchId,
-          enrollment_status: 'PENDING',
+          enrollment_status: 'ENROLLED',
           uniform_size: uniformSize,
           id_card_number: idCardNumber,
           enrolled_by: enrolledByUserId,
@@ -691,7 +766,26 @@ export class EnrollmentsService {
         idCardNumber,
         orNumber,
       };
-    }, { isolationLevel: 'Serializable' });
+        }, {
+          isolationLevel: 'Serializable',
+          timeout: 15000,
+        });
+      } catch (error) {
+        const isSerializationConflict =
+          typeof error === 'object' &&
+          error !== null &&
+          'code' in error &&
+          error.code === 'P2034';
+
+        if (!isSerializationConflict || attempt === maxAttempts) {
+          throw error;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 100 * attempt));
+      }
+    }
+
+    throw new Error('Enrollment transaction failed after maximum retry attempts.');
   }
 
   async getEnrollments(filters: EnrollmentFilterDto) {
@@ -709,7 +803,7 @@ export class EnrollmentsService {
 
     if (search?.trim()) {
       const searchTerm = search.trim();
-      where.OR = [
+      const searchConditions: Record<string, any>[] = [
         { id_card_number: { contains: searchTerm, mode: 'insensitive' } },
         {
           trainee: {
@@ -720,7 +814,16 @@ export class EnrollmentsService {
         },
         {
           trainee: {
-            users: { last_name: { contains: searchTerm, mode: 'insensitive' } },
+            users: {
+              last_name: { contains: searchTerm, mode: 'insensitive' },
+            },
+          },
+        },
+        {
+          trainee: {
+            users: {
+              middle_name: { contains: searchTerm, mode: 'insensitive' },
+            },
           },
         },
         {
@@ -736,7 +839,24 @@ export class EnrollmentsService {
             programs: { name: { contains: searchTerm, mode: 'insensitive' } },
           },
         },
+        {
+          official_receipts: {
+            some: {
+              or_number: { contains: searchTerm, mode: 'insensitive' },
+            },
+          },
+        },
       ];
+
+      if (
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          searchTerm,
+        )
+      ) {
+        searchConditions.push({ id: { equals: searchTerm } });
+      }
+
+      where.OR = searchConditions;
     }
 
     if (batchId) where.batch_id = batchId;
@@ -928,8 +1048,13 @@ export class EnrollmentsService {
       where: { id: enrollmentId },
       data: {
         enrollment_status: updateDto.status,
-        remarks: updateDto.remarks || enrollment.remarks,
+        remarks: updateDto.remarks?.trim()
+          ? [enrollment.remarks, updateDto.remarks.trim()]
+              .filter(Boolean)
+              .join('\n\n')
+          : enrollment.remarks,
       },
     });
   }
+
 }

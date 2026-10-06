@@ -165,6 +165,15 @@ export async function createEnrollment(enrollmentData: {
     employmentStatus: string;
     employmentType: string;
     isExistingTrainee: boolean;
+    beneficiary: {
+      firstName: string;
+      middleName: string;
+      lastName: string;
+      relationship: string;
+      contactNumber: string;
+      address: string;
+      idNumber: string;
+    };
   };
   batchId: string;
   requirementChecklist: {
@@ -217,4 +226,5 @@ export async function updateEnrollmentStatus(
     console.error('Error updating enrollment status:', error);
     throw error;
   }
+
 }

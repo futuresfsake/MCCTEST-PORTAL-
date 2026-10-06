@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import Header from '../../../components/layout/Header';
 import Sidebar from '../../../components/layout/Sidebar';
 import Footer from '../../../components/layout/Footer';
-import EnrollmentTable from './enrollments/components/EnrollmentTable';
-import EnrollmentFormWizard from './enrollments/components/EnrollmentFormWizard';
-import EnrollmentDetail from './enrollments/components/EnrollmentDetail';
+import EnrollmentTable from '../../../components/enrollment/EnrollmentTable';
+import EnrollmentFormWizard from '../../../components/enrollment/EnrollmentFormWizard';
+import EnrollmentDetail from '../../../components/enrollment/EnrollmentDetail';
 
 type TabType = 'list' | 'create';
 

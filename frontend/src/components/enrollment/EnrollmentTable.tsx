@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { getEnrollments, getPrograms } from '../../../../../api/users/registrar.api';
+import React, { useEffect, useRef, useState } from 'react';
+import { getEnrollments, getPrograms } from '../../api/enrollments/enrollment.api';
 import EnrollmentStatusBadge from './EnrollmentStatusBadge';
-import type { EnrollmentRecord, Program } from '../../../../../types/enrollment.type';
+import type { EnrollmentRecord, Program } from '../../types/enrollment.type';
 
 interface EnrollmentTableProps {
   onSelectEnrollment: (enrollmentId: string) => void;
@@ -22,6 +22,7 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
   const [endDate, setEndDate] = useState('');
   const [pageNumber, setPageNumber] = useState(1);
   const pageSize = 10;
+  const requestNumber = useRef(0);
 
   async function loadInitialData() {
     try {
@@ -40,6 +41,8 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
   }
 
   async function loadEnrollments() {
+    const currentRequest = ++requestNumber.current;
+
     try {
       setIsLoading(true);
       const data = await getEnrollments({
@@ -52,10 +55,12 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
         take: pageSize,
       });
 
+      if (currentRequest !== requestNumber.current) return;
       setEnrollments(data.data || []);
       setTotal(data.total || 0);
       setError(null);
     } catch (err) {
+      if (currentRequest !== requestNumber.current) return;
       console.error('Error loading enrollments:', err);
       const responseMessage = (err as any)?.response?.data?.message;
       setError(responseMessage || 'Failed to load enrollments');
@@ -70,7 +75,11 @@ const EnrollmentTable: React.FC<EnrollmentTableProps> = ({ onSelectEnrollment })
   }, []);
 
   useEffect(() => {
-    void loadEnrollments();
+    const timer = window.setTimeout(() => {
+      void loadEnrollments();
+    }, search.trim() ? 300 : 0);
+
+    return () => window.clearTimeout(timer);
   }, [search, programIdFilter, statusFilter, startDate, endDate, pageNumber]);
 
   const handleResetFilters = () => {

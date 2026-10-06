@@ -209,7 +209,7 @@ model enrollments {
   id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   trainee_id             String                   @db.Uuid
   batch_id               String                   @db.Uuid
-  enrollment_status      enrollment_status_enum   @default(PENDING)
+  enrollment_status      enrollment_status_enum   @default(ENROLLED)
   uniform_size           size_enum?
   id_card_number         String?                  @unique @db.VarChar(50)
   exit_reason            String?
