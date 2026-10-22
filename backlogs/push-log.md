@@ -26,6 +26,8 @@
 | 2026-10-20 | — | Dev sync merge (resolve conflicts in acceptance.md and push-log.md) | PR #27 `merge-dev-sync` | — |
 | 2026-10-20 | — | Dev merge (push log PRs #24–#27, announcements role permissions) | PR #28 `dev` | — |
 | 2026-10-20 | — | Staging → main (push log updates, role permissions table) | PR #29 `staging` | — |
+| 2026-10-22 | MP-39 | Trainer Announcements Module | PR #30 `trainerannouncements` | Sprint 3 |
+| 2026-10-22 | MP-25 | Payments Module (admin + registrar) — backend + frontend | PR #34 `feature/MP-25` → `dev` | Sprint 3 |
 
 ---
 
@@ -65,5 +67,5 @@
 
 | Ticket | Feature | Branch | Assignee | Status |
 |--------|---------|--------|----------|--------|
-| MP-25 | Payments Module | — | Vince Jon Gonzalez | Not Started |
-| MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | Code Review Done (34/34 AC) |
+| MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
+| MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
