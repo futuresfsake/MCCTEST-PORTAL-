@@ -20,6 +20,7 @@ import { AdminEnrollmentsModule } from './users/admin/enrollments/enrollments.mo
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminTraineesModule } from './users/admin/trainee-information/trainees.module';
+import { TraineeModule } from './users/trainee/trainee.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { AdminTraineesModule } from './users/admin/trainee-information/trainees.
     AnnouncementsModule,
     PaymentsModule,
     AdminTraineesModule,
+    TraineeModule,
   ],
 
   controllers: [SessionsController, AppController],

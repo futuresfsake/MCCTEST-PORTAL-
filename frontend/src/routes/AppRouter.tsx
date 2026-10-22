@@ -19,7 +19,7 @@ import AdminImportDataPage from '../pages/users/admin/import-data/AdminImportDat
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 import TrainerAnnouncementsPage from '../pages/users/trainer/announcements/TrainerAnnouncementsPage'
 
-import TraineeDashboard from '../pages/users/trainee/TraineeDashboard'
+import TraineeDashboard from '../pages/users/trainee/dashboard/TraineeDashboard'
 import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 import EncoderAnnouncementsPage from '../pages/users/encoder/announcements/EncoderAnnouncementsPage'
 
