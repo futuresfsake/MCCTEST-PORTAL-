@@ -41,12 +41,12 @@ export class AnnouncementsController {
 
   @Get('options')
   @Roles(Role.ADMIN, Role.REGISTRAR, Role.ENCODER, Role.TRAINER)
-  getOptions() {
-    return this.announcementsService.getOptions();
+  getOptions(@Req() req: AnnouncementRequest) {
+    return this.announcementsService.getOptions(req.user);
   }
 
   @Get()
-  @Roles(Role.ADMIN, Role.REGISTRAR, Role.ENCODER)
+  @Roles(Role.ADMIN, Role.REGISTRAR, Role.ENCODER, Role.TRAINER)
   findAll(@Req() req: AnnouncementRequest) {
     return this.announcementsService.findAll(req.query, req.user);
   }

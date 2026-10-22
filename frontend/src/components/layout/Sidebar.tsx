@@ -159,6 +159,11 @@ const sidebarConfig: Record<
             path: '/trainer/dashboard',
             icon: 'fa-solid fa-gauge-high',
           },
+          {
+            label: 'Announcements',
+            path: '/trainer/announcements',
+            icon: 'fa-solid fa-bullhorn',
+          },
         ],
       },
 

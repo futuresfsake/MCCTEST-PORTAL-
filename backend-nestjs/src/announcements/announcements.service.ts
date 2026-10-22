@@ -13,8 +13,7 @@ import {
 } from '../generated/prisma/client';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
-
-type AuthenticatedUser = { id: string; role: string };
+import type { AuthenticatedUser } from '../common/types/authenticated-user.type';
 export type AnnouncementListQuery = {
   page?: string;
   limit?: string;
@@ -90,7 +89,40 @@ export class AnnouncementsService {
     }
   }
 
-  async getOptions() {
+  async getOptions(user: AuthenticatedUser) {
+    if (user.role === Role.TRAINER) {
+      const trainer = await this.prisma.trainer.findUnique({
+        where: { user_id: user.id },
+        select: {
+          batch: {
+            where: {
+              batch_status: {
+                in: [batch_status_enum.OPEN, batch_status_enum.ONGOING],
+              },
+            },
+            select: {
+              id: true,
+              batch_name: true,
+              program_id: true,
+              programs: { select: { name: true } },
+            },
+            orderBy: { batch_name: 'asc' },
+          },
+        },
+      });
+
+      const batches = trainer?.batch ?? [];
+      const programIds = [...new Set(batches.map((b) => b.program_id))];
+
+      const programs = await this.prisma.programs.findMany({
+        where: { id: { in: programIds }, is_active: true },
+        select: { id: true, name: true, program_code: true },
+        orderBy: { name: 'asc' },
+      });
+
+      return { programs, batches };
+    }
+
     const [programs, batches] = await Promise.all([
       this.prisma.programs.findMany({
         where: { is_active: true },
@@ -115,9 +147,40 @@ export class AnnouncementsService {
     return { programs, batches };
   }
 
+  private async assertTrainerOwnsTarget(
+    dto: CreateAnnouncementDto,
+    userId: string,
+  ) {
+    const trainer = await this.prisma.trainer.findUnique({
+      where: { user_id: userId },
+      select: { batch: { select: { id: true, program_id: true } } },
+    });
+    const batches = trainer?.batch ?? [];
+
+    if (dto.scope === announcement_scope_enum.BATCH) {
+      if (!batches.some((b) => b.id === dto.batch_id)) {
+        throw new ForbiddenException(
+          'You can only post announcements for batches you handle',
+        );
+      }
+    }
+
+    if (dto.scope === announcement_scope_enum.PROGRAM) {
+      if (!batches.some((b) => b.program_id === dto.program_id)) {
+        throw new ForbiddenException(
+          'You can only post announcements for programs where you handle a batch',
+        );
+      }
+    }
+  }
+
   async create(dto: CreateAnnouncementDto, user: AuthenticatedUser) {
     this.validateScope(dto);
     this.assertCanPost(dto.scope, user.role);
+
+    if (user.role === Role.TRAINER) {
+      await this.assertTrainerOwnsTarget(dto, user.id);
+    }
 
     if (dto.program_id) {
       const program = await this.prisma.programs.findUnique({
