@@ -27,8 +27,8 @@
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
 | 4 | Admin and Registrar can record a payment for an enrolled trainee | PASS | `@Post('payments')` on both controllers; service validates `enrollment_status === 'ENROLLED'` |
-| 5 | Only 4 external reasons: Processing Fee, Uniform/ID Fee, Assessment Deposit, External Fees | PASS | `VALID_REASONS` in service; `@IsEnum` on DTO; 4 options in frontend |
-| 6 | Trainee picker searches API as you type, never loads all trainees | PASS | Debounced 300ms, backend `take: 10`, `contains` filter |
+| 5 | Only 4 external reasons: Processing Fee, Uniform/ID Fee, Assessment Deposit, External Fees | PASS | `VALID_REASONS` array in service; `@IsEnum` on DTO; 4 options in frontend |
+| 6 | Trainee picker searches API as you type, never loads all trainees | PASS | Debounced 300ms search, backend `take: 10`, `contains` filter |
 | 7 | Receipt records who confirmed it and when | PASS | `confirmed_by` from JWT `user.id`; `created_at` auto-set; detail returns both |
 | 8 | Recording external payment doesn't create/change insurance | PASS | Service only touches `official_receipts` and `or_number_seq` |
 | 9 | Invalid input shows clear error, not server error | PASS | class-validator on DTO; `BadRequestException` for business rules; frontend inline validation |
@@ -51,8 +51,8 @@
 | 16 | Sort by payment date, amount, OR number; default newest first | PASS | `ALLOWED_SORTS` set; default `payment_date desc`; UI sort buttons |
 | 17 | Server-side pagination with page sizes 10/20/50; limit > 100 = 400 | PASS | `@Max(100)` on DTO; `Math.min(100, ...)` in service; `PAGE_SIZES = [10, 20, 50]` |
 | 18 | URL state survives refresh and back button | PASS | `useSearchParams()` from react-router-dom |
-| 19 | Total count and total amount match filters, calculated in DB | PASS | `count` + `aggregate` with same `where`, in `Promise.all` |
-| 20 | Receipt detail shows all fields including program, batch, confirming staff | PASS | Detail selects all fields; drawer renders them all |
+| 19 | Total count and total amount match filters, calculated in DB | PASS | `count` + `aggregate` with same `where`, all in `Promise.all` |
+| 20 | Receipt detail shows all fields including program, batch, confirming staff | PASS | Detail selects and serializes all fields; drawer renders them |
 
 ### Money
 
@@ -64,7 +64,7 @@
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 22 | 50,000 receipts + search + filters under 500 ms locally | PASS (design) | Indexes on all filter/sort columns including trgm GIN; needs load test to confirm timing |
+| 22 | 50,000 receipts + search + filters under 500 ms locally | PASS (design) | Indexes on `payment_date`, `amount`, `or_number` (trgm GIN), `reason_of_dues`, `payment_method`, `confirmed_by`, `system_id` (trgm GIN). Needs load test to confirm timing. |
 | 23 | Fixed number of queries, no N+1 | PASS | Exactly 3 queries in `Promise.all`: `findMany`, `count`, `aggregate` |
 
 ### Access Control
@@ -74,7 +74,7 @@
 | 24 | Only Admin and Registrar can use endpoints | PASS | `@Roles(Role.ADMIN)` / `@Roles(Role.REGISTRAR)` + `JwtAuthGuard` + `RolesGuard` |
 | 25 | Each role uses own endpoints | PASS | `/admin/payments/*` and `/registrar/payments/*` — separate controllers |
 | 26 | Other roles get 403 | PASS | `RolesGuard` rejects; frontend `ProtectedRoute` gates by role |
-| 27 | No `password_hash` in responses | PASS | All queries use explicit `select`; grep confirms zero `password_hash` in payments service |
+| 27 | No `password_hash` in responses | PASS | All queries use explicit `select` — only `first_name`, `last_name`, `system_id`, `id` selected from users |
 
 ### Data and Quality
 
@@ -288,12 +288,3 @@
 ## Summary: 30/30 — All PASS
 
 AC #22 marked PASS (design) — indexes and fixed query count are in place; needs load test against 50k rows to confirm the 500ms threshold.
-
-### Note: OR Number Unification
-
-The enrollment-time payment flow and the independent (external) payment flow are entirely different workflows:
-
-- **Enrollment payment** — auto-created during enrollment (`enrollments.service.ts`); tied to insurance coverage check; only for processing fee
-- **Independent/external payment** — manually recorded via the Payments module (`payments.service.ts`); supports 4 reasons (Processing Fee, Uniform/ID Fee, Assessment Deposit, External Fees)
-
-Both flows now share the same `generateOrNumber()` function (`or-number.ts`) and the `or_number_seq` table, producing a unified sequential format: `OR-{year}-{000001}`. Previously, enrollment used `OR-{year}-{uuid-fragment}` — that format is retired.
