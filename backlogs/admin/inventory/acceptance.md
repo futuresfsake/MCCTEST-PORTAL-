@@ -88,6 +88,10 @@ Added after the review, from the senior-developer suggestions. Built and unit te
 | A2 | A distribution shows who received it: the trainee's name and ID card number | NOT TESTED | Joined in the history query's `select` (`enrollments.trainee.users`), no query per row. Blank if the enrollment was deleted |
 | A3 | History shows who did each change: staff name and role | NOT TESTED | `users` select now includes `role`. Never selects the email or password hash (unit test) |
 | A4 | "Last Restocked" column on the main table | NOT TESTED | One grouped query per page for `RESTOCK` rows. Shows "Never" if the item has only an opening balance |
+| A5 | **Every program has inventory by default.** Each program has one row per size (XS, S, M, L, XL, XXL, XXXL), all at quantity 0, and each row has an `INITIAL` history entry of 0 | NOT STARTED | Found 2026-11-03: 5 of 7 programs have no inventory rows, so they do not appear on the page at all |
+| A6 | A new program gets its seven size rows (quantity 0, with history) automatically, in the same transaction as the program | NOT STARTED | Hook in `programs.service.ts`. Seeding must not fail the program creation |
+| A7 | Existing programs without rows are backfilled by a migration, without touching rows that already exist | NOT STARTED | Needs a migration applied to the shared database |
+| A8 | The inventory page can add a missing item (program + size), and the size filter lists all seven sizes including XXXL | NOT STARTED | Today the page has no "Add" control (`createInventory` exists in the API but is never called), and the size filter stops at XXL |
 
 ---
 
@@ -117,7 +121,54 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 - **Prisma client.** Anyone pulling the branch must run `npx prisma generate`, otherwise `tsc` reports missing `inventory_transactions` types.
 - **Limited tests.** `inventory.service.spec.ts` covers the history filters, cursor, selected fields, last-restocked query and `deductAndLog`. Restock, adjust, duplicate handling and concurrency still have no automated tests.
 
-## Summary: 1 PASS (code), 4 PARTIAL, 2 FAIL, 1 NOT STARTED, rest NOT TESTED. Additions A1 to A4 NOT TESTED
+## Summary: 1 PASS (code), 4 PARTIAL, 2 FAIL, 1 NOT STARTED, rest NOT TESTED. Additions A1 to A4 NOT TESTED, A5 to A8 NOT STARTED
+
+---
+
+## Test Cases
+
+### TC-D1: Every program has inventory by default
+- **Precondition:** Seven sizes exist (XS, S, M, L, XL, XXL, XXXL). Run after F8 is built and the backfill migration has run.
+- **Steps:**
+  1. Open `/admin/inventory` and set the page size so all rows show, or filter by one program at a time.
+  2. For each program in Programs, count its rows.
+- **Expected:** Every program has exactly 7 rows, one per size. Programs that never had stock show quantity 0 with the "Out of stock" badge. The summary cards count every program.
+
+### TC-D2: Default rows are zero and have history
+- **Precondition:** A program that had no inventory before the backfill.
+- **Steps:** Open History on any of its rows.
+- **Expected:** One `INITIAL` entry, change 0, balance 0, with a date and a performer. The row's quantity is 0.
+
+### TC-D3: A new program gets its rows automatically
+- **Precondition:** None.
+- **Steps:**
+  1. As Admin, create a new program.
+  2. Open the inventory page and search for the program.
+- **Expected:** 7 rows at quantity 0, each with an `INITIAL` 0 history entry performed by the admin who created the program. If the program creation fails, no inventory rows remain.
+
+### TC-D4: Backfill does not change existing stock
+- **Precondition:** Programs that already have rows with stock, for example one with 11 units.
+- **Steps:** Run the backfill migration, then compare their rows before and after.
+- **Expected:** Quantities, item names and history of existing rows are unchanged. Only the missing size rows are added. There are no duplicate program + size rows.
+
+### TC-D5: Restock a default row
+- **Precondition:** A program with a default row at 0.
+- **Steps:** Restock size M by 10.
+- **Expected:** Quantity becomes 10, history shows the `INITIAL` 0 entry then a `RESTOCK` +10 entry with balance 10. The Last Restocked column shows today's date.
+
+### TC-D6: Enrollment with a default row at 0
+- **Precondition:** A program whose size M row is at 0.
+- **Steps:** Enroll a trainee in that program, size M, with "Uniform distributed" selected.
+- **Expected:** The enrollment is rejected with "No M uniform is currently in stock for this program." Nothing is saved.
+
+### TC-D7: Add a missing item from the page
+- **Precondition:** A program with one size row removed (or deliberately missing).
+- **Steps:** Use "Add item", choose the program and size, enter a starting quantity.
+- **Expected:** The row appears, with an `INITIAL` history entry equal to the starting quantity. Adding the same program and size again is rejected with "This item already exists, restock it instead."
+
+### TC-D8: Size filter lists every size
+- **Steps:** Open the size filter on the inventory page.
+- **Expected:** XS, S, M, L, XL, XXL and XXXL are all listed. Selecting XXXL shows only XXXL rows.
 
 ---
 
@@ -140,6 +191,9 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 | F5 | Add tests for restock, adjust, duplicate handling (409) and concurrent restocks. Today only the history, last-restocked and `deductAndLog` logic has tests (`inventory.service.spec.ts`) | 4, 5, 7, 17 | Medium | NOT STARTED |
 | F6 | Keep the filters and sorting in the URL (survive a refresh) and use the shared list toolkit, as the ticket asks. The page keeps them in component state | 18 | Low | NOT STARTED |
 | F7 | `multer` denial-of-service advisory in the backend (SEC-02). Not specific to inventory, but the file upload routes depend on it. Logged and deferred. See `technical/multer-dos-advisory/acceptance.md` | — | High | LOGGED, NOT FIXED |
+| F8 | **Default inventory for every program (A5, A6, A7).** Seed seven size rows at quantity 0, each with an `INITIAL` 0 history entry, when a program is created, and backfill every existing program with a migration. Items that already exist are not changed | A5 to A7 | High | NOT STARTED |
+| F9 | **Add item on the inventory page, and the XXXL filter (A8).** Add a control that calls the existing `createInventory` API (program, size, starting quantity) and show `XXXL` in the size filter | A8, 4 | High | NOT STARTED |
+| F10 | Rename the "BPP Uniform" item to "Uniform Shirt" for consistency (one row was created before the name was standardized) | 4 | Low | NOT STARTED |
 
 ---
 
