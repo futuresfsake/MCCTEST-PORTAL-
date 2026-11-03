@@ -239,6 +239,49 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 
 ---
 
+## Definition of Done Audit (2026-11-03)
+
+Audited at 16:12 on branch `feature/MP-35-inventory-program-groups` (`fc3e250`), before its PR into `dev`. The first six rows are the "Definition of Done" listed in the Jira ticket.
+
+| # | Definition of Done (from the ticket) | Status | Evidence |
+|---|--------------------------------------|--------|----------|
+| 1 | Code reviewed and merged into `main` | NOT MET (in progress) | On `dev` through PR #52 and PR #53. This PR is next. Not on `staging` or `main` yet |
+| 2 | `add_inventory_transactions` migration committed and applied to the shared database with `prisma migrate deploy` | MET | The migration is `20261019_add_inventory_transactions`, applied to Supabase 2026-10-20. All 11 migrations are applied, `prisma migrate status` is up to date, `prisma migrate diff` shows no drift, and every migration checksum matches its file (older ones match their Windows line-ending version) |
+| 3 | Tested as admin and as registrar: create, restock, adjust and view history | PARTIAL | The history in Supabase shows both roles creating, restocking and adjusting through the API on the earlier version of the page (for example an Admin restock and a Registrar restock of +6 on 2026-11-03). Viewing history leaves no trace. The current page (program groups, size strip, Add Item) has **not** been clicked through |
+| 4 | Tested enrollment with stock available, with stock at 0 and with concurrent submissions | PARTIAL | Stock available: 3 enrollments are marked given, each has its own `DISTRIBUTED` entry and the quantities add up. A distribution took a row to 0, so the boundary worked. Rejection at 0 is covered only by a unit test with a mocked database. Concurrent submissions: **not tested** |
+| 5 | Tested parallel restocks and parallel adjustments | NOT MET | No test. The code uses atomic SQL (restock `quantity + n` with `RETURNING`, adjust with a `quantity + change >= 0` condition), but it has not been run in parallel |
+| 6 | No duplicated inventory page code between admin and registrar | MET | One shared `InventoryPage` (590 lines). `AdminInventoryPage` and `RegistrarInventoryPage` are 6-line wrappers. Each route allows only its own role |
+
+### Engineering checks
+
+| Check | Result |
+|-------|--------|
+| Merge of this branch into `dev` | No conflicts. 0 behind, 4 ahead |
+| This PR changes the schema or migrations | No |
+| Backend ESLint, `tsc`, `nest build`, `prisma validate` | Pass |
+| Backend tests | 52 of 52 pass (9 suites) |
+| Frontend ESLint, `tsc`, `vite build` | Pass |
+| Frontend `npm audit` | 0 vulnerabilities |
+| Backend `npm audit` | 2 high (`multer`, SEC-02, deferred) |
+| Secrets, AI mentions, debug logging, tracked `.env` or `text.txt` in the diff | None |
+| Inventory controller guarded | `JwtAuthGuard`, `RolesGuard`, `@Roles(ADMIN, REGISTRAR)`. No update or delete routes exist |
+| Real backend boot | No errors. All inventory routes return 401 without a token, and PUT, PATCH and DELETE return 404 |
+| Inventory queries never select a password or an email | Confirmed |
+| Data in Supabase | 7 programs, 49 rows, 59 history entries. No duplicates, no negatives, every quantity equals its history, every distribution has its entry |
+
+### Result
+
+- **Ready to merge into `dev`:** all engineering checks pass and this PR has no schema change.
+- **MP-35 is not Done yet.** Open before it can be closed:
+  1. DoD 1: `staging` and `main`.
+  2. DoD 3: click through the current page as Admin and as Registrar (TC-G1 to TC-G6, TC-D1 to TC-D8).
+  3. DoD 4 and 5: concurrency checks.
+  4. Criterion 12 (later handout, MP-53) and criterion 13 (stock in the enrollment form).
+
+
+
+---
+
 ## Change Log
 
 All times are UTC+8. "User" is the person who made or ran the change. Commits are on `MP-35-uniform-inventory`.
@@ -274,6 +317,7 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 15:53 | Chelsea Cllj | Applied the backfill migration to Supabase (details in the Database table). Checked with read-only queries: all 7 programs have 7 rows, existing stock and history unchanged | `docs/mp35-default-inventory-test-cases` |
 | 16:04 | Chelsea Cllj | **UI change:** the inventory list is grouped by program (collapsible, sizes loaded on demand) instead of one 49-row table. New `InventoryProgramGroup` component, `InventoryPage` simplified (no paging, column sorting or size filter). Search by program name and a stock filter added. No backend or database change. Lint, `tsc` and build pass. Criterion 18 updated, test cases TC-G1 to TC-G6 added | `9cb463e` |
 | 16:08 | Chelsea Cllj | **Design change to the program headers:** replaced the red "N out" and amber "N low" count badges (nearly every program read "7 out" because rows start at 0) with a size strip showing each size's quantity. Zero is muted grey, low is amber, red is no longer used for stock. Row status is a small dot and label instead of a filled pill. Backend: the summary query returns `sizes` (quantity and level per size). 2 new tests (52 of 52 pass). Lint, `tsc` and builds pass | `109140f` |
+| 16:12 | Chelsea Cllj | **Definition of Done audit** before the PR into `dev`: 2 of 6 DoD items met, 2 partial, 2 not met. Engineering checks all pass. Result in the "Definition of Done Audit" section | `fc3e250` |
 
 ### Database (Supabase, shared)
 
