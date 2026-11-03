@@ -22,6 +22,11 @@ const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 const HISTORY_PAGE_SIZE = 20;
 
+/** The one item kept per program and size. */
+export const DEFAULT_ITEM_NAME = 'Uniform Shirt';
+/** Every size a program gets a stock row for. */
+export const UNIFORM_SIZES: size_enum[] = Object.values(size_enum);
+
 /**
  * One select for every history view. It joins the staff member who did it and,
  * for a distribution, the trainee it was given to, so the log shows names
@@ -309,7 +314,7 @@ export class InventoryService {
         const item = await tx.inventory.create({
           data: {
             program_id: dto.program_id,
-            item_name: 'Uniform Shirt',
+            item_name: DEFAULT_ITEM_NAME,
             sizes: size,
             quantity: dto.quantity,
             updated_by: userId,
@@ -558,6 +563,40 @@ export class InventoryService {
       nextCursor: hasMore ? data[data.length - 1].id : null,
       hasMore,
     };
+  }
+
+  /**
+   * Give a program one stock row per size at quantity 0, each with an INITIAL
+   * history entry, so every program shows up in the inventory by default.
+   * Call it inside the transaction that creates the program, so a failure
+   * here also cancels the program.
+   */
+  async seedDefaultStock(
+    tx: Prisma.TransactionClient,
+    programId: string,
+    userId: string,
+  ) {
+    const rows = await tx.inventory.createManyAndReturn({
+      data: UNIFORM_SIZES.map((size) => ({
+        program_id: programId,
+        item_name: DEFAULT_ITEM_NAME,
+        sizes: size,
+        quantity: 0,
+        updated_by: userId,
+      })),
+      select: { id: true },
+    });
+
+    await tx.inventory_transactions.createMany({
+      data: rows.map((row) => ({
+        inventory_id: row.id,
+        type: inventory_transaction_type_enum.INITIAL,
+        quantity_change: 0,
+        quantity_after: 0,
+        performed_by: userId,
+        remarks: 'Default stock (opening balance)',
+      })),
+    });
   }
 
   /**
