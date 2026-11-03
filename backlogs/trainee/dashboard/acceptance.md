@@ -127,3 +127,28 @@ Tracked in `backlogs/trainee/dashboard-data-gaps/acceptance.md`.
 ---
 
 ## Summary: 30/30 PASS — 2 require browser testing
+
+## Staging audit (2026-11-03)
+
+Ran on `staging` at `ed5ccaf` (PR #49, `dev` into `staging`) before merging to `main`. `staging` has the same content as `dev`. No logins were available, so there was still no browser walkthrough.
+
+| Check | Result |
+|-------|--------|
+| Backend tests, ESLint, `tsc`, `nest build` | 7 suites, 35 tests pass (includes the SEC-01 regression test). All exit 0 |
+| Frontend ESLint, `tsc`, `vite build` | All pass |
+| Dependency audit (production) | Backend 0 critical, 2 high (`multer`, logged as SEC-02, a fix is available but deferred). Frontend 0 |
+| Secrets (tracked files and history), tracked env files | None found. Only `USER:PASSWORD` placeholders in the Prisma tooling docs |
+| Role guards | Every controller guarded, except the chatbot, which stays public for the landing page and is limited to 10 requests per minute |
+| Debug logging, AI mentions | Only the database connection message remains. No AI mentions in source or in the commits ahead of `main` |
+| SEC-01 on `staging` | `POSTER_SELECT` is in place and the regression test passes |
+| Merge into `main` | 11 commits ahead, 0 behind, no conflicts |
+
+### Still not verified
+- Browser walkthrough of the trainee dashboard, announcements page and header bell (the two AC items marked as needing a browser).
+- The announcements bell for Admin, Registrar, Trainer and Encoder does not exist yet (MP-52).
+
+### Follow-ups
+- SEC-01 is fixed in code but needs the backend restarted on every environment, and the passwords reset for any staff who posted announcements before the fix.
+- SEC-02: `multer` advisory is logged and deferred. `npm audit fix` is available.
+- Open gaps from earlier audits are unchanged (MP-33 has 7 failing criteria, MP-24 gaps).
+

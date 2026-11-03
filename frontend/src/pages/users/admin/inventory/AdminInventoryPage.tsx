@@ -1,12 +1,6 @@
-import AdminPageShell from '../../../../components/admin/AdminPageShell'
+import InventoryPage from '../../../../components/inventory/InventoryPage'
 
-/** Admin Inventory page (/admin/inventory); content not built yet */
+/** Admin inventory page (/admin/inventory) */
 export default function AdminInventoryPage() {
-  return (
-    <AdminPageShell
-      eyebrow="Supplies"
-      title="Inventory"
-      description="Uniform and supply stock per program."
-    />
-  )
+  return <InventoryPage scope="admin" />
 }
