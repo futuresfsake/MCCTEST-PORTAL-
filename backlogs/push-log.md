@@ -28,6 +28,7 @@
 | 2026-10-20 | — | Staging → main (push log updates, role permissions table) | PR #29 `staging` | — |
 | 2026-10-22 | MP-39 | Trainer Announcements Module | PR #30 `trainerannouncements` | Sprint 3 |
 | 2026-10-22 | MP-25 | Payments Module (admin + registrar) — backend + frontend | PR #34 `feature/MP-25` → `dev` | Sprint 3 |
+| 2026-11-03 | MP-50, MP-51 | Trainee Information for Trainer (own batches only, no insurance) and Encoder (all trainees), view-only | PR #39 `feature/MP-50-51-trainee-information-trainer-encoder` → `main` (merged straight to main; `dev` and `staging` synced afterwards) | Sprint 3 |
 
 ---
 
@@ -69,8 +70,6 @@
 |--------|---------|--------|----------|--------|
 | MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
-| MP-50 | Trainee Information for Trainer (own batches only, no insurance) | `dev` | Chelsea Cllj | Pushed to `dev` — staging PR pending. Audited 2026-11-03, see `trainer/trainee-information/acceptance.md` |
-| MP-51 | Trainee Information for Encoder (all trainees, view-only) | `dev` | Chelsea Cllj | Pushed to `dev` — staging PR pending. Audited 2026-11-03, see `trainer/trainee-information/acceptance.md` |
 
 ---
 
