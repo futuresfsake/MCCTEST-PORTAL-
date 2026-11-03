@@ -1,5 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
-import { InventoryService } from './inventory.service';
+import {
+  DEFAULT_ITEM_NAME,
+  InventoryService,
+  UNIFORM_SIZES,
+} from './inventory.service';
 
 const PROGRAM_ID = '11111111-1111-4111-8111-111111111111';
 
@@ -202,5 +206,65 @@ describe('InventoryService.deductAndLog', () => {
       ),
     ).rejects.toThrow('No M uniform is currently in stock for this program.');
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe('InventoryService.seedDefaultStock', () => {
+  const service = new InventoryService({} as never);
+  const createManyAndReturn = jest.fn();
+  const createMany = jest.fn();
+  const tx = {
+    inventory: { createManyAndReturn },
+    inventory_transactions: { createMany },
+  };
+
+  beforeEach(() => {
+    createManyAndReturn.mockReset();
+    createMany.mockReset();
+  });
+
+  it('creates one row per size at quantity 0 for the program', async () => {
+    createManyAndReturn.mockResolvedValue(
+      UNIFORM_SIZES.map((_, i) => ({ id: `inv-${i}` })),
+    );
+
+    await service.seedDefaultStock(tx as never, PROGRAM_ID, 'user-1');
+
+    const { data } = createManyAndReturn.mock.calls[0][0];
+    expect(UNIFORM_SIZES).toEqual(['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL']);
+    expect(data).toHaveLength(7);
+    expect(data.map((row: { sizes: string }) => row.sizes)).toEqual(
+      UNIFORM_SIZES,
+    );
+    for (const row of data) {
+      expect(row).toMatchObject({
+        program_id: PROGRAM_ID,
+        item_name: DEFAULT_ITEM_NAME,
+        quantity: 0,
+        updated_by: 'user-1',
+      });
+    }
+  });
+
+  it('writes an INITIAL history entry of 0 for every new row', async () => {
+    createManyAndReturn.mockResolvedValue(
+      UNIFORM_SIZES.map((_, i) => ({ id: `inv-${i}` })),
+    );
+
+    await service.seedDefaultStock(tx as never, PROGRAM_ID, 'user-1');
+
+    const { data } = createMany.mock.calls[0][0];
+    expect(data).toHaveLength(7);
+    expect(
+      data.map((row: { inventory_id: string }) => row.inventory_id),
+    ).toEqual(UNIFORM_SIZES.map((_, i) => `inv-${i}`));
+    for (const row of data) {
+      expect(row).toMatchObject({
+        type: 'INITIAL',
+        quantity_change: 0,
+        quantity_after: 0,
+        performed_by: 'user-1',
+      });
+    }
   });
 });

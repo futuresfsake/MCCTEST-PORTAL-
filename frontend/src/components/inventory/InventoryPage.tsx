@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import AdminPageShell from '../admin/AdminPageShell'
 import InventoryHistoryRow from './InventoryHistoryEntry'
 import InventoryStockLogDialog from './InventoryStockLogDialog'
+import InventoryAddItemDialog, { INVENTORY_SIZES } from './InventoryAddItemDialog'
 import {
   adjustInventory,
   getInventory,
@@ -86,6 +87,7 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
   const [historyHasMore, setHistoryHasMore] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [stockLogOpen, setStockLogOpen] = useState(false)
+  const [addItemOpen, setAddItemOpen] = useState(false)
 
   const loadSummary = useCallback(async () => {
     try {
@@ -377,6 +379,13 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
               <div className="flex gap-2">
                 <button
                   type="button"
+                  onClick={() => setAddItemOpen(true)}
+                  className="bg-blue-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-800"
+                >
+                  Add Item
+                </button>
+                <button
+                  type="button"
                   onClick={() => setStockLogOpen(true)}
                   className="border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
@@ -439,7 +448,7 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
                 aria-label="Filter by size"
               >
                 <option value="">All sizes</option>
-                {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((option) => (
+                {INVENTORY_SIZES.map((option) => (
                   <option key={option} value={option}>
                     {option}
                   </option>
@@ -746,6 +755,21 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
               )}
             </section>
           </div>
+        )}
+
+        {addItemOpen && (
+          <InventoryAddItemDialog
+            programs={summary.map((program) => ({
+              id: program.program_id,
+              name: program.program_name,
+            }))}
+            onClose={() => setAddItemOpen(false)}
+            onCreated={() => {
+              setAddItemOpen(false)
+              setNotice('Item added successfully.')
+              void Promise.all([loadItems(), loadSummary()])
+            }}
+          />
         )}
 
         {stockLogOpen && (

@@ -5,12 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../prisma/prisma.service';
+import { InventoryService } from '../../../inventory/inventory.service';
 import { CreateProgramDto } from './dto/create-program.dto';
 import { UpdateProgramDto } from './dto/update-program.dto';
 
 @Injectable()
 export class ProgramsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly inventoryService: InventoryService,
+  ) {}
 
   private timeStringToDate(time: string): Date {
     const [hours, minutes, seconds = 0] = time.split(':').map(Number);
@@ -109,34 +113,41 @@ export class ProgramsService {
       );
     }
 
-    return this.prisma.programs.create({
-      data: {
-        name: dto.name,
-        program_code: dto.program_code,
-        description: dto.description,
-        is_accredited: dto.is_accredited ?? false,
-        total_training_hours: dto.total_training_hours,
-        approx_months: dto.approx_months,
-        control_number_prefix: dto.control_number_prefix,
-        created_by: userId,
-        updated_by: userId,
+    // The program and its default inventory rows are saved together.
+    return this.prisma.$transaction(async (tx) => {
+      const program = await tx.programs.create({
+        data: {
+          name: dto.name,
+          program_code: dto.program_code,
+          description: dto.description,
+          is_accredited: dto.is_accredited ?? false,
+          total_training_hours: dto.total_training_hours,
+          approx_months: dto.approx_months,
+          control_number_prefix: dto.control_number_prefix,
+          created_by: userId,
+          updated_by: userId,
 
-        ...(dto.schedules?.length
-          ? {
-              program_schedule: {
-                create: dto.schedules.map((schedule) => ({
-                  schedule_name: schedule.schedule_name,
-                  days: schedule.days as any,
-                  start_time: this.timeStringToDate(schedule.start_time),
-                  end_time: this.timeStringToDate(schedule.end_time),
-                })),
-              },
-            }
-          : {}),
-      },
-      include: {
-        program_schedule: true,
-      },
+          ...(dto.schedules?.length
+            ? {
+                program_schedule: {
+                  create: dto.schedules.map((schedule) => ({
+                    schedule_name: schedule.schedule_name,
+                    days: schedule.days as any,
+                    start_time: this.timeStringToDate(schedule.start_time),
+                    end_time: this.timeStringToDate(schedule.end_time),
+                  })),
+                },
+              }
+            : {}),
+        },
+        include: {
+          program_schedule: true,
+        },
+      });
+
+      await this.inventoryService.seedDefaultStock(tx, program.id, userId);
+
+      return program;
     });
   }
 
