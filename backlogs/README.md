@@ -24,6 +24,7 @@ backlogs/
     enrollment/acceptance.md                     — MP-33: Admin Enrollments Module (IN PROGRESS)
     payments/acceptance.md                       — MP-25: Payments Module (30/30 PASS)
     inventory/acceptance.md                      — MP-35: Uniform Inventory (shared Admin and Registrar, IN REVIEW, not merged)
+    uniform-distribution/acceptance.md           — MP-53: Uniform Distribution, reusable module for Admin and Registrar (NOT STARTED)
   registrar/
     dashboard/acceptance.md                      — Registrar Dashboard (placeholder)
     batches/acceptance.md                        — MP-15: Batch Configuration Module
