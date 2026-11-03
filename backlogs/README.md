@@ -34,10 +34,12 @@ backlogs/
     trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
+    dashboard-data-gaps/acceptance.md            — MP-30 follow-up: attendance, competencies, sessions not functional (NOT STARTED)
     account-generation/acceptance.md             — MP-26: Trainee Account Generation
   encoder/
     dashboard/acceptance.md                      — Encoder Dashboard (placeholder, 4 pages planned)
   technical/
+    announcements-password-hash-exposure/acceptance.md — SEC-01: password hash exposed by announcements API (FIXED in working tree, hotfix pending)
     e2e-test-config/acceptance.md                — TECH-01: Jest ESM config fix for e2e tests
 ```
 
@@ -102,12 +104,14 @@ backlogs/
 | Ticket | Module | Assignee | Status | Gaps |
 |--------|--------|----------|--------|------|
 | MP-33 | Admin Enrollments | Chelsea Cllj | In Progress | 8 FAIL, 2 PARTIAL — 7 critical gaps |
+| MP-30 follow-up | Trainee dashboard: Attendance Summary, Competency Outcomes, Upcoming Sessions | Unassigned | Not Started | Tables are empty and nothing can write them (0 sessions, 0 attendance, 0 competencies, 0 outcomes). See `trainee/dashboard-data-gaps` |
 
 ### Technical Debt
 
 | ID      | Issue                              | Priority | Status      | Notes                                                  |
 |---------|------------------------------------|----------|-------------|--------------------------------------------------------|
 | TECH-01 | E2E Test Jest ESM Compatibility    | Medium   | Not Started | `@nestjs/config` ESM breaks `jest-e2e.json` transform  |
+| SEC-01  | Announcements API exposed the poster's password hash | High | Fixed in working tree, not yet on main | `include: { users: true }` returned the whole user row to every role. See `technical/announcements-password-hash-exposure` |
 
 ---
 

@@ -207,3 +207,7 @@ Ran on `main` at `969547d` (PR #44, `staging` into `main`) after the merge. `mai
 - Recheck `multer` for a fixed version.
 - Open MP-24 gaps: default page size 10 (ticket asked for 20), single-select status filters, no "Expired" insurance option, no First/Last buttons, no mobile cards, and an end date before the start date is not rejected.
 - MP-33 admin enrollments still has 7 failing acceptance criteria.
+
+### Correction (2026-11-03): password hash in announcements
+
+The audits above recorded "no `password_hash` in responses" as clean. That was wrong for the announcements API, which returned the poster's whole user row, including `password_hash`, to every logged-in role. It was found later the same day and is logged as SEC-01 (`backlogs/technical/announcements-password-hash-exposure/acceptance.md`). The trainee information, trainee dashboard and sessions endpoints were not affected.

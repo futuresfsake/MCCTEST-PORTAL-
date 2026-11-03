@@ -74,6 +74,7 @@
 |--------|---------|--------|----------|--------|
 | MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
+| SEC-01 | **Security: announcements API exposed the poster's password hash to every logged-in role** | working tree on `feature/MP-30-trainee-dashboard` (needs its own hotfix branch from `main`) | Chelsea Cllj | Fixed and tested locally, **not yet on `main`, `staging` or `dev`**. Needs hotfix, backend restart and password resets. See `technical/announcements-password-hash-exposure/acceptance.md` |
 
 ---
 

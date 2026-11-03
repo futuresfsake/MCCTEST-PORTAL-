@@ -113,4 +113,17 @@
 
 ---
 
+## Known Gap: three sections cannot show real data
+
+The Attendance Summary, Competency Outcomes and Upcoming Sessions sections pass their criteria
+because they load and show the correct empty state. In practice they are always empty: the dev
+database has 0 training sessions, 0 attendance records, 0 competencies, 0 learning outcomes and
+0 outcome statuses, and nothing in the app can create them (the trainer Attendance, Progress and
+Grades & Competencies pages are not started). The program's recurring schedule does display on the
+enrollment card, but Upcoming Sessions reads dated sessions and is not generated from it.
+
+Tracked in `backlogs/trainee/dashboard-data-gaps/acceptance.md`.
+
+---
+
 ## Summary: 30/30 PASS — 2 require browser testing
