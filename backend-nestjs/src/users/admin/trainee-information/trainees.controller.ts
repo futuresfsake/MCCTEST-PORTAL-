@@ -18,7 +18,7 @@ import { TraineeInformationService } from '../../../trainee-information/trainee-
 @Controller('admin/trainees')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.ADMIN)
-// Search-as-you-type and paging exceed the global 15 requests/minute.
+// Search-as-you-type and paging need headroom; matches the global limit.
 @Throttle({ default: { limit: 120, ttl: 60000 } })
 export class AdminTraineesController {
   constructor(
