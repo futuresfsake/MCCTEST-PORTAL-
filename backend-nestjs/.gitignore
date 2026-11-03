@@ -58,3 +58,8 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /generated/prisma
 
 /src/generated/prisma
+
+# AI tooling folders (local only)
+.agents/
+.claude/
+.windsurf/

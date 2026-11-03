@@ -22,7 +22,7 @@ backlogs/
     batches/acceptance.md                        — MP-22/23: Batch Management + Trainee Management
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
     enrollment/acceptance.md                     — MP-33: Admin Enrollments Module (IN PROGRESS)
-    payments/acceptance.md                       — MP-25: Payments Module (NOT STARTED)
+    payments/acceptance.md                       — MP-25: Payments Module (30/30 PASS)
   registrar/
     dashboard/acceptance.md                      — Registrar Dashboard (placeholder)
     batches/acceptance.md                        — MP-15: Batch Configuration Module
@@ -61,7 +61,7 @@ backlogs/
 |--------|-------|---------|--------|
 | MP Sprint 1 | 2026-08-23 → 2026-08-30 | MP-4, MP-8 | All Done |
 | MP Sprint 2 | 2026-09-02 → 2026-10-12 | MP-13, MP-14, MP-15, MP-16, MP-20, MP-21, MP-22, MP-23, MP-26, MP-31 | All Done |
-| MP Sprint 3 | 2026-10-12 → 2026-10-18 | MP-24, MP-25, MP-33 | MP-24 Done, MP-25 To Do, MP-33 In Progress |
+| MP Sprint 3 | 2026-10-12 → 2026-10-18 | MP-24, MP-25, MP-33, MP-50, MP-51 | MP-24 Done, MP-25 30/30 PASS, MP-33 In Progress, MP-50/51 merged, browser check pending |
 
 ---
 
@@ -84,7 +84,8 @@ backlogs/
 | MP-16 | Enrollment Form | Registrar | Vince Jon Gonzalez | 7/7 PASS |
 | MP-31 | Announcements | Registrar | Chelsea Cllj | 28/28 PASS |
 | MP-24 | Trainee Information | Registrar | Aubrien Fuentes | 29 PASS, 4 PARTIAL |
-| MP-24 ext. | Trainee Information | Trainer | - | In review (own-batch scope, unverified) |
+| MP-50 | Trainee Information | Trainer | Chelsea Cllj | 21 PASS, 1 PENDING, 10 IMPLEMENTED (browser check pending) |
+| MP-51 | Trainee Information | Encoder | Chelsea Cllj | Built, role access tested, browser check pending |
 | MP-26 | Account Generation | Trainee | Chelsea Cllj | 12/12 PASS |
 
 ### Placeholders (dashboard only, no feature pages)
@@ -101,7 +102,6 @@ backlogs/
 | Ticket | Module | Assignee | Status | Gaps |
 |--------|--------|----------|--------|------|
 | MP-33 | Admin Enrollments | Chelsea Cllj | In Progress | 8 FAIL, 2 PARTIAL — 7 critical gaps |
-| MP-25 | Payments | Vince Jon Gonzalez | Not Started | 0/30 criteria |
 
 ### Technical Debt
 
