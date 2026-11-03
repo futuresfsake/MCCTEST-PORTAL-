@@ -103,6 +103,28 @@ Added after the review, from the senior-developer suggestions. Built and unit te
 
 ---
 
+## Still Not Verified
+
+- **Browser walkthrough as Admin and as Registrar.** Nothing in the module has been used in a browser: the `/admin/inventory` and `/registrar/inventory` pages, restock, adjust, History, Stock Log and its filters, the Last Restocked column, and the low and out-of-stock badges. Most criteria are marked NOT TESTED for this reason.
+- **Enrollment with a uniform.** No enrollment has been run with "Uniform distributed" selected: stock available, stock at 0 (the enrollment must be blocked and nothing saved), and two enrollments for the last shirt at the same time.
+- **Concurrency.** Two restocks or two adjustments of the same item at the same moment (criterion 17) have no test.
+- **Performance.** History with 10,000+ rows for one item (criterion 20) and the availability endpoint under 100 ms (criterion 21) have not been measured.
+- **Migrations on an empty database.** The migrations have not been run from scratch on a new database. The shared Supabase database is up to date and matches `schema.prisma`.
+
+## Follow-ups
+
+| # | Follow-up | Related criteria | Priority | Status |
+|---|-----------|------------------|----------|--------|
+| F1 | Show the available quantity for the chosen program and size in the enrollment wizard. The endpoint `GET /inventory/availability` and the API function `getUniformAvailability` already exist, but the wizard never calls them. Today staff only learn a size is empty after submitting the whole form | 13, 21 | High | NOT STARTED |
+| F2 | Deduct stock when a uniform is marked given after enrollment. If staff choose "not distributed" at enrollment and hand out the shirt later, nothing reduces the stock. Needs an enrollment edit flow, so it depends on MP-42. Reuse `InventoryService.deductAndLog` | 12 | High | NOT STARTED (blocked by MP-42) |
+| F3 | Update the Jira ticket MP-35 text to say one row per program and size, and that the item is always "Uniform Shirt". The ticket still says program + item + size. The code and the database (`uq_inventory_program_size`) use program + size on purpose, and no duplicates existed | 4 | Medium | NOT STARTED |
+| F4 | Run the browser walkthrough and the enrollment checks listed under "Still Not Verified", then update the statuses in this file | most | High | NOT STARTED |
+| F5 | Add tests for restock, adjust, duplicate handling (409) and concurrent restocks. Today only the history, last-restocked and `deductAndLog` logic has tests (`inventory.service.spec.ts`) | 4, 5, 7, 17 | Medium | NOT STARTED |
+| F6 | Keep the filters and sorting in the URL (survive a refresh) and use the shared list toolkit, as the ticket asks. The page keeps them in component state | 18 | Low | NOT STARTED |
+| F7 | `multer` denial-of-service advisory in the backend (SEC-02). Not specific to inventory, but the file upload routes depend on it. Logged and deferred. See `technical/multer-dos-advisory/acceptance.md` | — | High | LOGGED, NOT FIXED |
+
+---
+
 ## Change Log
 
 All times are UTC+8. "User" is the person who made or ran the change. Commits are on `MP-35-uniform-inventory`.
