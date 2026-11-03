@@ -4,10 +4,10 @@
 |-------|-------|
 | **Jira** | MP-35 |
 | **Type** | Feature |
-| **Status** | On `dev` (PR #52 and #53). Not on `staging` or `main`. Definition of Done: 2 of 6 met, 2 partial, 2 not met |
+| **Status** | On `dev` (PR #52, #53 and #54). Not on `staging` or `main`. `dev` audited 2026-11-03. Definition of Done: 2 of 6 met, 2 partial, 2 not met |
 | **Assignee** | Rhoddz Gerunda |
 | **Sprint** | MP Sprint 3 |
-| **Branch** | `MP-35-uniform-inventory` (merged into `dev`, PR #52). Later work: `docs/mp35-default-inventory-test-cases` (PR #53) and `feature/MP-35-inventory-program-groups` |
+| **Branch** | `MP-35-uniform-inventory` (PR #52). Later work merged into `dev`: `docs/mp35-default-inventory-test-cases` (PR #53) and `feature/MP-35-inventory-program-groups` (PR #54) |
 | **Routes** | `/admin/inventory`, `/registrar/inventory` (one shared page) |
 | **Migrations** | `20261019_add_inventory_transactions` (on `main`, applied to Supabase), `20261022_inventory_unique_program_size` (this branch, **already applied to Supabase**), `20261103_inventory_transactions_created_index` and `20261103_restore_mp24_indexes` (this branch, **applied to Supabase 2026-11-03 14:55**), `20261104_default_inventory_for_every_program` (this branch, **applied to Supabase 2026-11-03 15:53**) |
 
@@ -247,7 +247,7 @@ Audited at 16:12 on branch `feature/MP-35-inventory-program-groups` (`fc3e250`),
 |---|--------------------------------------|--------|----------|
 | 1 | Code reviewed and merged into `main` | NOT MET (in progress) | On `dev` through PR #52 and PR #53. This PR is next. Not on `staging` or `main` yet |
 | 2 | `add_inventory_transactions` migration committed and applied to the shared database with `prisma migrate deploy` | MET | The migration is `20261019_add_inventory_transactions`, applied to Supabase 2026-10-20. All 11 migrations are applied, `prisma migrate status` is up to date, `prisma migrate diff` shows no drift, and every migration checksum matches its file (older ones match their Windows line-ending version) |
-| 3 | Tested as admin and as registrar: create, restock, adjust and view history | PARTIAL | The history in Supabase shows both roles creating, restocking and adjusting through the API on the earlier version of the page (for example an Admin restock and a Registrar restock of +6 on 2026-11-03). Viewing history leaves no trace. The current page (program groups, size strip, Add Item) has **not** been clicked through |
+| 3 | Tested as admin and as registrar: create, restock, adjust and view history | PARTIAL | The history in Supabase shows both roles creating, restocking and adjusting through the API on the earlier version of the page (for example an Admin restock and a Registrar restock of +6 on 2026-11-03). Viewing history leaves no trace. The current page (program groups, size strip, Add Item) was reviewed on screen by Chelsea Cllj, who approved the layout (2026-11-03, about 16:10). A click-through of restock, adjust, History, Stock Log and Add Item on the current page, as each role, is **not recorded** (TC-G1 to TC-G6, TC-D1 to TC-D8) |
 | 4 | Tested enrollment with stock available, with stock at 0 and with concurrent submissions | PARTIAL | Stock available: 3 enrollments are marked given, each has its own `DISTRIBUTED` entry and the quantities add up. A distribution took a row to 0, so the boundary worked. Rejection at 0 is covered only by a unit test with a mocked database. Concurrent submissions: **not tested** |
 | 5 | Tested parallel restocks and parallel adjustments | NOT MET | No test. The code uses atomic SQL (restock `quantity + n` with `RETURNING`, adjust with a `quantity + change >= 0` condition), but it has not been run in parallel |
 | 6 | No duplicated inventory page code between admin and registrar | MET | One shared `InventoryPage` (590 lines). `AdminInventoryPage` and `RegistrarInventoryPage` are 6-line wrappers. Each route allows only its own role |
@@ -279,6 +279,32 @@ Audited at 16:12 on branch `feature/MP-35-inventory-program-groups` (`fc3e250`),
   4. Criterion 12 (later handout, MP-53) and criterion 13 (stock in the enrollment form).
 
 
+
+
+### Audit of `dev` after PR #54 (2026-11-03, 16:18)
+
+Run on `dev` at `01e853c` (merge of PR #54). `dev` has the same files as the PR branch tip `2731bfd`. This is the check before the PR from `dev` into `staging`.
+
+| Check | Result |
+|-------|--------|
+| `dev` into `staging` | No conflicts. 0 behind, 36 ahead |
+| Backend ESLint, `tsc`, `nest build`, `prisma validate` | Pass |
+| Backend tests | 52 of 52 pass (9 suites) |
+| Frontend ESLint, `tsc`, `vite build` | Pass |
+| Frontend `npm audit` | 0 vulnerabilities |
+| Backend `npm audit` | 2 high (`multer`, SEC-02, deferred) |
+| Secrets, AI mentions, tracked `.env` or `text.txt` | None. Only the database connection log remains |
+| Role guards | Every controller guarded, except the chatbot (public on purpose, rate limited) |
+| Migrations | 11 in the repo, all applied. `prisma migrate status` up to date. Every checksum matches its file. `prisma migrate diff` between Supabase and `schema.prisma`: no difference |
+| Data in Supabase | 7 programs, 49 rows, 59 history entries (49 opening balances). No duplicate program + size, no negative quantities, every quantity equals its history, every history balance follows the previous one |
+| Distributions | 3 enrollments marked given, 3 `DISTRIBUTED` entries, all linked, sizes match |
+| Program header data | Matches the page design: Bread and Pastry Production 18 units (M 7, L 11), the other six at 0 |
+| Real backend boot | No errors. All inventory routes return 401 without a token. PUT, PATCH and DELETE on inventory return 404 |
+| Page structure | One shared `InventoryPage` (590 lines), two 6-line wrappers. `/admin/inventory` allows ADMIN, `/registrar/inventory` allows REGISTRAR |
+
+**Definition of Done on `dev`: unchanged.** 2 of 6 met (migration applied, no duplicated page code), 2 partial (tested as each role, enrollment with stock), 2 not met (merged into `main`, parallel restocks and adjustments).
+
+**Before `staging`:** nothing in the code or the database blocks it. The browser walkthrough and the concurrency tests are still open and are better done on `dev` or `staging` before `main`.
 
 ---
 
@@ -321,6 +347,8 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 16:08 | Chelsea Cllj | **Design change to the program headers:** replaced the red "N out" and amber "N low" count badges (nearly every program read "7 out" because rows start at 0) with a size strip showing each size's quantity. Zero is muted grey, low is amber, red is no longer used for stock. Row status is a small dot and label instead of a filled pill. Backend: the summary query returns `sizes` (quantity and level per size). 2 new tests (52 of 52 pass). Lint, `tsc` and builds pass | `109140f` |
 | 16:12 | Chelsea Cllj | **Definition of Done audit** before the PR into `dev`: 2 of 6 DoD items met, 2 partial, 2 not met. Engineering checks all pass. Result in the "Definition of Done Audit" section | `fc3e250` |
 | 16:14 | Chelsea Cllj | Updated the push log, README and this file's status before opening the PR for `feature/MP-35-inventory-program-groups` into `dev`. Branch pushed to the remote | `feature/MP-35-inventory-program-groups` |
+| 16:15 | Chelsea Cllj | **PR #54 merged into `dev`**: `feature/MP-35-inventory-program-groups` (list grouped by program, size strip, Definition of Done audit, log updates) | `01e853c` |
+| 16:18 | Chelsea Cllj | **Audit of `dev` after PR #54:** code, migrations, data and a real backend boot all pass. Definition of Done unchanged. Recorded in the "Audit of `dev` after PR #54" section | `docs/mp35-dev-audit` |
 
 ### Database (Supabase, shared)
 
