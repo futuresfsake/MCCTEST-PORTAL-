@@ -64,6 +64,8 @@ export interface InventorySummary {
   total_items: number
   low_stock_items: number
   out_of_stock_items: number
+  /** Quantity and stock level for each size the program has a row for. */
+  sizes: Partial<Record<string, { quantity: number; level: InventoryStockLevel }>>
 }
 
 export interface InventoryAvailability {

@@ -243,6 +243,10 @@ export class InventoryService {
         total_items: bigint;
         low_stock_items: bigint;
         out_of_stock_items: bigint;
+        sizes: Record<
+          string,
+          { quantity: number; level: 'out_of_stock' | 'low_stock' | 'in_stock' }
+        >;
       }>
     >`
       SELECT
@@ -255,7 +259,24 @@ export class InventoryService {
         )::bigint AS low_stock_items,
         COUNT(i.id) FILTER (
           WHERE i.quantity = 0
-        )::bigint AS out_of_stock_items
+        )::bigint AS out_of_stock_items,
+        -- Quantity and stock level per size, so the page can show every size
+        -- of a program without loading its rows. The level uses the same
+        -- threshold as the rest of the module.
+        COALESCE(
+          jsonb_object_agg(
+            i.sizes::text,
+            jsonb_build_object(
+              'quantity', i.quantity,
+              'level', CASE
+                WHEN i.quantity = 0 THEN 'out_of_stock'
+                WHEN i.quantity <= ${LOW_STOCK_THRESHOLD}::int THEN 'low_stock'
+                ELSE 'in_stock'
+              END
+            )
+          ) FILTER (WHERE i.id IS NOT NULL),
+          '{}'::jsonb
+        ) AS sizes
       FROM programs p
       LEFT JOIN inventory i ON i.program_id = p.id
       GROUP BY p.id, p.name
@@ -269,6 +290,7 @@ export class InventoryService {
       total_items: Number(row.total_items),
       low_stock_items: Number(row.low_stock_items),
       out_of_stock_items: Number(row.out_of_stock_items),
+      sizes: row.sizes,
     }));
   }
 

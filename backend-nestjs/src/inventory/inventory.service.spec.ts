@@ -268,3 +268,48 @@ describe('InventoryService.seedDefaultStock', () => {
     }
   });
 });
+
+describe('InventoryService.getSummary', () => {
+  const queryRaw = jest.fn();
+  const service = new InventoryService({ $queryRaw: queryRaw } as never);
+
+  it('returns the totals as numbers and the quantity and level of every size', async () => {
+    queryRaw.mockResolvedValue([
+      {
+        program_id: PROGRAM_ID,
+        program_name: 'Welding',
+        total_units: BigInt(18),
+        total_items: BigInt(7),
+        low_stock_items: BigInt(1),
+        out_of_stock_items: BigInt(5),
+        sizes: {
+          XS: { quantity: 0, level: 'out_of_stock' },
+          M: { quantity: 11, level: 'in_stock' },
+          L: { quantity: 7, level: 'in_stock' },
+        },
+      },
+    ]);
+
+    const [program] = await service.getSummary();
+
+    expect(program).toMatchObject({
+      program_id: PROGRAM_ID,
+      total_units: 18,
+      total_items: 7,
+      low_stock_items: 1,
+      out_of_stock_items: 5,
+    });
+    expect(program.sizes.M).toEqual({ quantity: 11, level: 'in_stock' });
+    expect(program.sizes.XS.level).toBe('out_of_stock');
+  });
+
+  it('uses the shared low-stock threshold for the per-size level', async () => {
+    queryRaw.mockResolvedValue([]);
+
+    await service.getSummary();
+
+    // Tagged-template call: the first argument is the SQL parts, then the values.
+    const values = queryRaw.mock.calls[0].slice(1);
+    expect(values).toEqual([5, 5]);
+  });
+});

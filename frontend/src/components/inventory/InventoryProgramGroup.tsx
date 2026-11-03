@@ -5,6 +5,7 @@ import {
   type InventoryItem,
   type InventorySummary,
 } from '../../api/inventory.api'
+import { INVENTORY_SIZES } from './inventory.constants'
 
 export type InventoryRowAction = 'restock' | 'adjust' | 'history'
 
@@ -33,10 +34,23 @@ function stockLabel(level: InventoryItem['stock_level']) {
   return 'In stock'
 }
 
-function stockStyle(level: InventoryItem['stock_level']) {
-  if (level === 'out_of_stock') return 'bg-red-50 text-red-700 ring-red-200'
-  if (level === 'low_stock') return 'bg-amber-50 text-amber-800 ring-amber-200'
-  return 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+/** Zero stock is where every program starts, so it is shown quietly. Amber is kept for low stock. */
+function statusDot(level: InventoryItem['stock_level']) {
+  if (level === 'out_of_stock') return 'bg-slate-300'
+  if (level === 'low_stock') return 'bg-amber-500'
+  return 'bg-emerald-500'
+}
+
+function statusText(level: InventoryItem['stock_level']) {
+  if (level === 'out_of_stock') return 'text-slate-500'
+  if (level === 'low_stock') return 'text-amber-800'
+  return 'text-slate-700'
+}
+
+function sizeCellStyle(level: InventoryItem['stock_level'] | 'in_stock' | undefined) {
+  if (level === 'low_stock') return 'font-semibold text-amber-700'
+  if (level === 'in_stock') return 'font-semibold text-slate-900'
+  return 'text-slate-300'
 }
 
 /**
@@ -102,21 +116,37 @@ export default function InventoryProgramGroup({
             {program.program_name}
           </span>
           <span className="mt-1 block text-xs text-slate-500">
-            {program.total_items} sizes · {program.total_units.toLocaleString()} units in stock
+            {program.total_units > 0
+              ? `${program.total_units.toLocaleString()} units in stock`
+              : 'No stock yet'}
           </span>
         </span>
 
-        <span className="flex shrink-0 items-center gap-3">
-          {program.out_of_stock_items > 0 && (
-            <span className="bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-inset ring-red-200">
-              {program.out_of_stock_items} out
-            </span>
-          )}
-          {program.low_stock_items > 0 && (
-            <span className="bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-inset ring-amber-200">
-              {program.low_stock_items} low
-            </span>
-          )}
+        <span className="flex shrink-0 items-center gap-4">
+          {/* One cell per size, so stock reads at a glance without opening the program. */}
+          <span className="hidden gap-1 md:flex" aria-hidden="true">
+            {INVENTORY_SIZES.map((size) => {
+              const cell = program.sizes[size]
+              return (
+                <span
+                  key={size}
+                  title={cell ? `${size}: ${cell.quantity}` : `${size}: no row`}
+                  className="w-11 text-center"
+                >
+                  <span className="block text-[10px] font-medium uppercase tracking-wide text-slate-400">
+                    {size}
+                  </span>
+                  <span className={`block text-sm tabular-nums ${sizeCellStyle(cell?.level)}`}>
+                    {cell ? cell.quantity : '–'}
+                  </span>
+                </span>
+              )
+            })}
+          </span>
+          <span className="sr-only">
+            Stock by size:{' '}
+            {INVENTORY_SIZES.map((size) => `${size} ${program.sizes[size]?.quantity ?? 'none'}`).join(', ')}
+          </span>
           <ChevronDown
             size={18}
             aria-hidden="true"
@@ -162,13 +192,19 @@ export default function InventoryProgramGroup({
                             </span>
                           )}
                         </td>
-                        <td className="px-5 py-3 font-semibold tabular-nums text-slate-900">
+                        <td
+                          className={`px-5 py-3 tabular-nums ${item.quantity === 0 ? 'text-slate-400' : 'font-semibold text-slate-900'}`}
+                        >
                           {item.quantity}
                         </td>
                         <td className="px-5 py-3">
                           <span
-                            className={`inline-flex whitespace-nowrap px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${stockStyle(item.stock_level)}`}
+                            className={`inline-flex items-center gap-2 whitespace-nowrap text-xs font-medium ${statusText(item.stock_level)}`}
                           >
+                            <span
+                              aria-hidden="true"
+                              className={`h-2 w-2 rounded-full ${statusDot(item.stock_level)}`}
+                            />
                             {stockLabel(item.stock_level)}
                           </span>
                         </td>
