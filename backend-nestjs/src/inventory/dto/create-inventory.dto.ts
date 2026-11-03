@@ -1,11 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsEnum,
-  IsInt,
-  IsUUID,
-  Max,
-  Min,
-} from 'class-validator';
+import { IsEnum, IsInt, IsUUID, Max, Min } from 'class-validator';
 import { size_enum } from '../../generated/prisma/client';
 
 export class CreateInventoryDto {

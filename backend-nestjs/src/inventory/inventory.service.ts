@@ -1,11 +1,14 @@
-
 import {
   BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, size_enum, inventory_transaction_type_enum } from '../generated/prisma/client';
+import {
+  Prisma,
+  size_enum,
+  inventory_transaction_type_enum,
+} from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 import { CreateInventoryDto } from './dto/create-inventory.dto';
@@ -29,9 +32,7 @@ export class InventoryService {
   }
 
   private async handlePrismaError(error: unknown): Promise<never> {
-    if (
-      error instanceof Prisma.PrismaClientKnownRequestError
-    ) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         throw new ConflictException(
           'This item already exists, restock it instead.',
@@ -54,7 +55,7 @@ export class InventoryService {
     }
 
     return size as size_enum;
-  }   
+  }
 
   /**
    * GET /inventory
@@ -295,11 +296,7 @@ export class InventoryService {
    * POST /inventory/:id/restock
    * Atomic increment + log in one transaction.
    */
-  async restock(
-    id: string,
-    dto: RestockInventoryDto,
-    userId: string,
-  ) {
+  async restock(id: string, dto: RestockInventoryDto, userId: string) {
     if (!Number.isInteger(dto.quantity) || dto.quantity <= 0) {
       throw new BadRequestException(
         'Restock quantity must be a positive whole number.',
@@ -355,11 +352,7 @@ export class InventoryService {
    * Positive change adds stock; negative change removes stock.
    * Zero is not a stock adjustment.
    */
-  async adjust(
-    id: string,
-    dto: AdjustInventoryDto,
-    userId: string,
-  ) {
+  async adjust(id: string, dto: AdjustInventoryDto, userId: string) {
     const change = dto.quantity_change;
     const reason = dto.reason?.trim();
 
@@ -370,9 +363,7 @@ export class InventoryService {
     }
 
     if (!reason) {
-      throw new BadRequestException(
-        'An adjustment reason is required.',
-      );
+      throw new BadRequestException('An adjustment reason is required.');
     }
 
     try {
@@ -477,10 +468,7 @@ export class InventoryService {
 
     const rows = await this.prisma.inventory_transactions.findMany({
       where: cursorFilter,
-      orderBy: [
-        { created_at: 'desc' },
-        { id: 'desc' },
-      ],
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
       take: HISTORY_PAGE_SIZE + 1,
       select: {
         id: true,
@@ -510,20 +498,18 @@ export class InventoryService {
     };
   }
 
-    /**
-     * Deduct one uniform and log the distribution.
-     * Must be called with the same transaction as enrollment creation.
-     */
-    async deductAndLog(
+  /**
+   * Deduct one uniform and log the distribution.
+   * Must be called with the same transaction as enrollment creation.
+   */
+  async deductAndLog(
     tx: Prisma.TransactionClient,
     programId: string,
     size: size_enum,
     enrollmentId: string,
     userId: string,
-    ): Promise<string> {
-    const updated = await tx.$queryRaw<
-        Array<{ id: string; quantity: number }>
-    >`
+  ): Promise<string> {
+    const updated = await tx.$queryRaw<Array<{ id: string; quantity: number }>>`
         WITH candidate AS (
         SELECT id
         FROM inventory
@@ -546,15 +532,15 @@ export class InventoryService {
     `;
 
     if (updated.length === 0) {
-        throw new BadRequestException(
+      throw new BadRequestException(
         `No ${size} uniform is currently in stock for this program.`,
-        );
+      );
     }
 
     const item = updated[0];
 
     await tx.inventory_transactions.create({
-        data: {
+      data: {
         inventory_id: item.id,
         type: inventory_transaction_type_enum.DISTRIBUTED,
         quantity_change: -1,
@@ -562,9 +548,9 @@ export class InventoryService {
         enrollment_id: enrollmentId,
         performed_by: userId,
         remarks: 'Uniform distributed during enrollment',
-        },
+      },
     });
 
     return item.id;
-    }
+  }
 }
