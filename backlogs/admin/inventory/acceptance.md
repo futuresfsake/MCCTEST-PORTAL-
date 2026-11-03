@@ -36,7 +36,7 @@ Last reviewed 2026-11-03 against `main` at `4386ee7` after merging `main` into t
 | 6 | A restock saves a `RESTOCK` history entry with the change, quantity after, user and time | NOT TESTED | Written in the same transaction |
 | 7 | Restock must be a positive whole number. Adjustments need a reason and cannot make stock negative | NOT TESTED | DTO and service checks, conditional update |
 | 14 | Items at or below 5 show "Low stock", items at 0 show "Out of stock" | NOT TESTED | One `LOW_STOCK_THRESHOLD` constant |
-| 18 | List is paginated on the server. Search, filters and sorting work together and survive a refresh (URL state) | PARTIAL | Server side: yes. Filters are kept in component state, not the URL, and the shared list toolkit is not used |
+| 18 | List is paginated on the server. Search, filters and sorting work together and survive a refresh (URL state) | PARTIAL | **Changed 2026-11-03 (`9cb463e`):** the page is now grouped by program instead of one paged table, because the default rows made the table 49 rows long. Each program opens to show its sizes (loaded on demand with the server list endpoint, filtered by program, at most 100 rows). The page no longer pages, sorts by column or filters by size and stock level; it searches by program name and filters programs by stock (all, has stock, low stock, no stock yet). The server endpoint still supports pagination, filters and sorting. Search and filters are kept in component state, not the URL. The ticket's table layout is deliberately not followed |
 | 19 | The per-program summary matches the list and is calculated in the database | NOT TESTED | Raw SQL `GROUP BY` |
 | 22 | List endpoints run a fixed number of queries per request | NOT TESTED | `findMany` plus `count` in one transaction |
 | 25 | **Every program has inventory by default.** Each program has one row per size (XS, S, M, L, XL, XXL, XXXL), all at quantity 0, and each row has an `INITIAL` history entry of 0 | NOT TESTED | **Not in the original ticket.** Built (fix F8, `f00d685`): new programs get rows from the app, existing programs from the migration `20261104_default_inventory_for_every_program`. **Migration applied to Supabase 2026-11-03 15:53.** Checked with read-only queries afterwards: 7 programs, all with 7 rows (49 rows, was 3), 59 history entries (was 13), 49 `INITIAL`, no duplicate program + size, no negative quantity. Not yet seen on the page in a browser |
@@ -92,6 +92,7 @@ Added after the review, from the senior-developer suggestions. Built and unit te
 | A2 | A distribution shows who received it: the trainee's name and ID card number | NOT TESTED | Joined in the history query's `select` (`enrollments.trainee.users`), no query per row. Blank if the enrollment was deleted |
 | A3 | History shows who did each change: staff name and role | NOT TESTED | `users` select now includes `role`. Never selects the email or password hash (unit test) |
 | A4 | "Last Restocked" column on the main table | NOT TESTED | One grouped query per page for `RESTOCK` rows. Shows "Never" if the item has only an opening balance |
+| A5 | **List grouped by program.** Each program is one collapsible row showing its totals (sizes, units in stock, how many sizes are out or low). Opening it loads that program's sizes with Restock, Adjust and History. Search by program name, a stock filter, and Expand all or Collapse all | NOT TESTED | Uses the existing summary and list endpoints, no backend change. Replaces the flat 49-row table. Not yet seen in a browser. Test cases TC-G1 to TC-G6 |
 
 ---
 
@@ -120,7 +121,7 @@ Follows the shared-module convention used by enrollments, payments and trainee i
 | Program hook | `src/users/admin/programs/programs.service.ts` calls `InventoryService.seedDefaultStock` | `ProgramsModule` imports `InventoryModule` (which exports `InventoryService`), the same way `EnrollmentsModule` does. Inventory does not depend on programs, so there is no circular dependency |
 | Frontend API | `src/api/inventory.api.ts` | Shared |
 | Frontend page | `src/components/inventory/InventoryPage.tsx` | Shared page. Takes `scope` (`admin` or `registrar`) |
-| Frontend parts | `src/components/inventory/InventoryHistoryEntry.tsx`, `InventoryStockLogDialog.tsx`, `InventoryAddItemDialog.tsx` | Shared. `InventoryAddItemDialog` also exports the shared `INVENTORY_SIZES` list |
+| Frontend parts | `src/components/inventory/InventoryHistoryEntry.tsx`, `InventoryStockLogDialog.tsx`, `InventoryAddItemDialog.tsx`, `InventoryProgramGroup.tsx` | Shared. `InventoryAddItemDialog` also exports the shared `INVENTORY_SIZES` list |
 | Admin wrapper | `src/pages/users/admin/inventory/AdminInventoryPage.tsx` | 6 lines, `scope="admin"` |
 | Registrar wrapper | `src/pages/users/registrar/inventory/RegistrarInventoryPage.tsx` | 6 lines, `scope="registrar"` |
 
@@ -136,7 +137,7 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 - **Prisma client.** Anyone pulling the branch must run `npx prisma generate`, otherwise `tsc` reports missing `inventory_transactions` types.
 - **Limited tests.** `inventory.service.spec.ts` covers the history filters, cursor, selected fields, last-restocked query and `deductAndLog`. Restock, adjust, duplicate handling and concurrency still have no automated tests.
 
-## Summary: 28 criteria. 1 PASS (code), 4 PARTIAL, 2 FAIL, 1 NOT STARTED, 20 NOT TESTED. Additions A1 to A4 NOT TESTED
+## Summary: 28 criteria. 1 PASS (code), 4 PARTIAL, 2 FAIL, 1 NOT STARTED, 20 NOT TESTED. Additions A1 to A5 NOT TESTED
 
 ---
 
@@ -184,6 +185,31 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 ### TC-D8: Size filter lists every size
 - **Steps:** Open the size filter on the inventory page.
 - **Expected:** XS, S, M, L, XL, XXL and XXXL are all listed. Selecting XXXL shows only XXXL rows.
+
+### TC-G1: Programs are grouped and collapsed by default
+- **Precondition:** The default rows exist, so every program has 7 sizes.
+- **Steps:** Open `/admin/inventory` and `/registrar/inventory`.
+- **Expected:** One row per program, all collapsed. Each header shows the program name, "7 sizes", the units in stock, and a red "N out" and an amber "N low" badge when there are any. Bread and Pastry Production shows 18 units. The three summary cards at the top are unchanged.
+
+### TC-G2: Open a program
+- **Steps:** Click a program's header.
+- **Expected:** The row opens and shows its sizes in order XS, S, M, L, XL, XXL, XXXL, each with quantity, status, Last Restocked and Restock, Adjust and History. "Loading sizes..." shows briefly. Clicking the header again closes it. The chevron turns. The header button reports expanded and collapsed to screen readers.
+
+### TC-G3: Actions still work from an opened program
+- **Steps:** Restock size M by 10, then open History for it, then adjust it by -2 with a reason.
+- **Expected:** Quantity updates in the open program without a page reload, the header's units update, and the History shows the new entries. The other opened programs are reloaded too and stay open.
+
+### TC-G4: Search and filter
+- **Steps:** Type part of a program's name. Then choose "Has stock", "Has low stock" and "No stock yet" in the stock filter. Then press Clear filters.
+- **Expected:** Only matching programs are listed and the count reads "N of 7 programs". "Has stock" lists only programs with units. "No stock yet" lists the programs with zero units. Clear filters restores the full list.
+
+### TC-G5: Expand all and Collapse all
+- **Steps:** Press "Expand all", then "Collapse all".
+- **Expected:** Every listed program opens, each loading its own sizes. The button then reads "Collapse all" and closes them. With a filter active, it only affects the programs shown.
+
+### TC-G6: Error and empty states
+- **Steps:** Stop the backend, open a program. Then restart it and press "Try again". Separately, create a program that has no rows (or remove its rows).
+- **Expected:** An error with "Try again" appears inside that program only, and the rest of the page keeps working. A program with no rows says "No sizes yet for this program. Use 'Add Item' to add one."
 
 ---
 
@@ -246,6 +272,7 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 15:47 | Chelsea Cllj | **Fix F9:** "Add Item" button and dialog on the inventory page (calls the existing `createInventory`), and the size filter now lists XXXL (shared `INVENTORY_SIZES`) | `f00d685` |
 | 15:47 | Chelsea Cllj | Checks run before this commit. Read-only dry run of the backfill on Supabase: parses, adds 46 rows, 2 rows with stock untouched. Nothing was written to Supabase. Backend: 50 of 50 tests, `tsc`, ESLint, build and a boot with no errors. Frontend: ESLint, `tsc`, `vite build` pass | `f00d685` |
 | 15:53 | Chelsea Cllj | Applied the backfill migration to Supabase (details in the Database table). Checked with read-only queries: all 7 programs have 7 rows, existing stock and history unchanged | `docs/mp35-default-inventory-test-cases` |
+| 16:04 | Chelsea Cllj | **UI change:** the inventory list is grouped by program (collapsible, sizes loaded on demand) instead of one 49-row table. New `InventoryProgramGroup` component, `InventoryPage` simplified (no paging, column sorting or size filter). Search by program name and a stock filter added. No backend or database change. Lint, `tsc` and build pass. Criterion 18 updated, test cases TC-G1 to TC-G6 added | `9cb463e` |
 
 ### Database (Supabase, shared)
 
