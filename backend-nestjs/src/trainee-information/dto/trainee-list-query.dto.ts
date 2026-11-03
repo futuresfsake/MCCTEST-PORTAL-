@@ -11,6 +11,8 @@ import {
   Max,
   MaxLength,
   Min,
+  ValidationArguments,
+  registerDecorator,
 } from 'class-validator';
 import {
   batch_status_enum,
@@ -40,6 +42,33 @@ export const DEFAULT_PAGE_SIZE = 10;
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 
+/** Highest page number accepted; keeps OFFSET (page x limit) bounded. */
+export const MAX_PAGE = 10000;
+
+/** Fails when this YYYY-MM-DD field is earlier than the one named by `other`. */
+function IsNotBefore(other: string) {
+  return (target: object, propertyName: string) =>
+    registerDecorator({
+      name: 'isNotBefore',
+      target: target.constructor,
+      propertyName,
+      constraints: [other],
+      validator: {
+        // ISO dates compare correctly as strings
+        validate(value: unknown, args: ValidationArguments) {
+          const earlier = (args.object as Record<string, unknown>)[other];
+          return (
+            typeof value !== 'string' ||
+            typeof earlier !== 'string' ||
+            value >= earlier
+          );
+        },
+        defaultMessage: (args: ValidationArguments) =>
+          `${args.property} must not be before ${other}`,
+      },
+    });
+}
+
 /**
  * Query string for GET /admin/trainees and GET /registrar/trainees.
  * Every field is optional; unknown fields are stripped by the global
@@ -50,7 +79,7 @@ export class TraineeListQueryDto {
   @Type(() => Number)
   @IsInt()
   @Min(1)
-  @Max(100000)
+  @Max(MAX_PAGE)
   page: number = 1;
 
   @IsOptional()
@@ -92,6 +121,7 @@ export class TraineeListQueryDto {
   @IsOptional()
   @IsDateString({ strict: true })
   @Matches(DATE_ONLY, { message: 'dateTo must be YYYY-MM-DD' })
+  @IsNotBefore('dateFrom')
   dateTo?: string;
 
   @IsOptional()
