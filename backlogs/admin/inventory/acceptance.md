@@ -23,8 +23,8 @@ Last reviewed 2026-11-03 against `main` at `4386ee7` after merging `main` into t
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 1 | Admin opens Inventory from the sidebar at `/admin/inventory` | NOT TESTED | Route guarded for ADMIN and REGISTRAR |
-| 2 | Registrar opens the same page at `/registrar/inventory` | NOT TESTED | Route added, renders `AdminInventoryPage` |
+| 1 | Admin opens Inventory from the sidebar at `/admin/inventory` | NOT TESTED | Route guarded for ADMIN only. Renders `AdminInventoryPage`, a thin wrapper around the shared `InventoryPage` |
+| 2 | Registrar opens the same page at `/registrar/inventory` | NOT TESTED | Route guarded for REGISTRAR only. Renders `RegistrarInventoryPage`, a thin wrapper around the same shared `InventoryPage` |
 | 3 | Trainee, trainer and encoder get 403 from the inventory endpoints | NOT TESTED | Controller has `@Roles(Role.ADMIN, Role.REGISTRAR)` with JWT and roles guards |
 
 ### Stock Management
@@ -91,6 +91,24 @@ Added after the review, from the senior-developer suggestions. Built and unit te
 
 ---
 
+## Folder Structure
+
+Follows the shared-module convention used by enrollments, payments and trainee information: logic once in a shared place, a thin wrapper per role.
+
+| Layer | Location | Notes |
+|-------|----------|-------|
+| Backend service | `src/inventory/inventory.service.ts` | Shared. Exported by `InventoryModule` and also used by `EnrollmentsService` (`deductAndLog`) |
+| Backend controller | `src/inventory/inventory.controller.ts` | One controller, `@Roles(ADMIN, REGISTRAR)`, route `/api/inventory`, as the ticket specifies. There are no per-role controllers, because that would change the endpoints listed in the ticket |
+| Frontend API | `src/api/inventory.api.ts` | Shared |
+| Frontend page | `src/components/inventory/InventoryPage.tsx` | Shared page. Takes `scope` (`admin` or `registrar`) |
+| Frontend parts | `src/components/inventory/InventoryHistoryEntry.tsx`, `InventoryStockLogDialog.tsx` | Shared |
+| Admin wrapper | `src/pages/users/admin/inventory/AdminInventoryPage.tsx` | 6 lines, `scope="admin"` |
+| Registrar wrapper | `src/pages/users/registrar/inventory/RegistrarInventoryPage.tsx` | 6 lines, `scope="registrar"` |
+
+Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registrar/inventory` allows REGISTRAR. Before 2026-11-03 both routes allowed both roles and both rendered the page named `AdminInventoryPage`, which lived in the Admin folder. The sidebar already follows the logged-in user's role, so the registrar sees the registrar menu.
+
+---
+
 ## Notes
 
 - **Uniqueness differs from the ticket.** The ticket says program + item + size. The branch enforces program + size (`uq_inventory_program_size`) and always saves the item as `Uniform Shirt`. One program can have one row per size.
@@ -150,6 +168,7 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 14:46 | Chelsea Cllj | Program-level stock log (`GET /inventory/history`, Stock Log dialog), recipient name and ID card on distributions, staff name and role on history rows, Last Restocked column, `idx_inventory_transactions_created` index and migration, 10 tests in `inventory.service.spec.ts` | `cbca15b` |
 | 14:46 | Chelsea Cllj | Added this file, with the review of all 24 ticket criteria | `555393c` |
 | 14:52 | Chelsea Cllj | Restored `20261022` to its original content (checksum matches Supabase). Added migration `20261103_restore_mp24_indexes` to recreate the two dropped MP-24 indexes | `d78af8f` |
+| 15:20 | Chelsea Cllj | Moved the inventory page into the shared `components/inventory/InventoryPage.tsx`. `AdminInventoryPage` and a new `RegistrarInventoryPage` are 6-line wrappers. Each route is limited to its own role. `AdminPageShell` accepts an optional `variant` | `c22d500` |
 
 ### Database (Supabase, shared)
 
