@@ -182,3 +182,28 @@ Gaps that remain in the committed code (unchanged from MP-24):
 ### Still not verified
 - Browser walkthrough of all five roles.
 - Two trainers with overlapping batches (the dev data has one trainer with batches).
+
+## Main audit (2026-11-03)
+
+Ran on `main` at `969547d` (PR #44, `staging` into `main`) after the merge. `main` has the same content as `staging`. No logins were available, so there was still no browser walkthrough.
+
+| Check | Result |
+|-------|--------|
+| Backend tests, ESLint, `tsc`, build | 6 suites, 32 tests pass. All exit 0 |
+| Frontend ESLint, `tsc`, `vite build` | All pass |
+| Dependency audit (production) | Backend 0 critical, 2 high (`multer`, uploads unused, no fix available yet). Frontend 0 |
+| Secrets, tracked env files | None found |
+| Role guards | Every controller guarded, except the chatbot, which stays public for the landing page and is limited to 10 requests per minute |
+| Debug logging, AI mentions | Only the database connection message remains. No AI mentions in source, backlogs or the new commits |
+| MP-24 (Admin and Registrar), shared module on dev data | 33 of 33 read-only checks pass |
+| MP-50 (Trainer) scope on dev data | Scoped list, enrollments, filter options and profile pass. An outsider trainer gets a 404 on a profile, 0 search results and empty filter options |
+| MP-51 (Encoder) | Role access passes in tests. The page itself was not exercised in a browser |
+
+### Still not verified
+- Browser walkthrough of all five roles (trainer and encoder pages especially).
+- Two trainers with overlapping batches (the dev data has one trainer with batches).
+
+### Follow-ups
+- Recheck `multer` for a fixed version.
+- Open MP-24 gaps: default page size 10 (ticket asked for 20), single-select status filters, no "Expired" insurance option, no First/Last buttons, no mobile cards, and an end date before the start date is not rejected.
+- MP-33 admin enrollments still has 7 failing acceptance criteria.
