@@ -149,3 +149,36 @@ Ran before pushing to `dev`. No logins were available, so the page walkthrough p
 - Browser walkthrough of the four roles (no logins available). Includes the Filter-closed default, the hidden insurance filter and section for the trainer, sidebar items, and route protection in the UI.
 - Two trainers with overlapping batches (the dev data has no second trainer with batches). Exclusion is proven only through the trainer with no batches.
 - Encoder page behavior (shares the registrar code path; role access is tested, the page is not).
+
+## Staging audit (2026-11-03)
+
+Ran on `staging` at `451507c` (PR #42) before merging to `main`. `staging` has the same content as `dev`. No logins were available, so there was still no browser walkthrough.
+
+| Check | Result |
+|-------|--------|
+| Backend tests, ESLint, `tsc`, build | 6 suites, 32 tests pass. All exit 0 |
+| Frontend ESLint, `tsc`, `vite build` | All pass. The earlier `methodIcons` error is fixed |
+| Dependency audit (production) | Backend 0 critical, 2 high (`multer`, uploads unused, no fix available yet). Frontend 0 |
+| Secrets, tracked env files, `password_hash` in responses | None found |
+| Role guards | Every controller guarded. The chatbot stays public for the landing page and is limited to 10 requests per minute. `/sessions/expires` is admin only |
+| Debug logging, AI mentions | Only the database connection message remains. No AI mentions in source, backlogs or the new commits |
+| Merge into `main` | 6 commits ahead, 0 behind, no conflicts |
+
+### MP-24 shared module (Admin and Registrar), run on dev data
+
+The Admin and Registrar pages share one service, so this covers both. 33 of 33 read-only checks pass:
+- Search by partial first name (any case), full name in reverse order, contact number, ID card number, blank search, and a SQL-looking string (harmless). Email search was not exercised.
+- Filters: program, batch, every enrollment status, every batch status, gender, program type, insurance (Active plus None cover all 11 trainees), requirements, a date range, and filters combined with search.
+- Default sort newest first, name sort both ways, and pages that neither overlap nor skip.
+- Profile has every section and one card per enrollment. An unknown id returns 404. No password, hash or token appears.
+
+Gaps that remain in the committed code (unchanged from MP-24):
+- Default page size is 10, the ticket asked for 20.
+- Enrollment status and batch status are single-select.
+- The insurance filter has no "Expired" option.
+- No First and Last pagination buttons, and no mobile card layout.
+- A date range with an end date before the start date is not rejected with a 400.
+
+### Still not verified
+- Browser walkthrough of all five roles.
+- Two trainers with overlapping batches (the dev data has one trainer with batches).
