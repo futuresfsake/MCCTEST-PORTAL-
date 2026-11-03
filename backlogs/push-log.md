@@ -39,6 +39,8 @@
 | 2026-11-03 | MP-35 | Default inventory for every program (7 size rows at 0 and a backfill migration), Add Item dialog, XXXL in the size filter | PR #53 `docs/mp35-default-inventory-test-cases` → `dev` | Sprint 3 |
 | 2026-11-03 | MP-35 | Inventory list grouped by program with a size strip, program-level Stock Log fixes, Definition of Done audit | PR #54 `feature/MP-35-inventory-program-groups` → `dev` | Sprint 3 |
 | 2026-11-03 | — | Audit log for `dev` (MP-35: Definition of Done, migrations, data) | `docs/mp35-dev-audit` → `dev` | Sprint 3 |
+| 2026-11-03 | MP-35 | `dev` → `staging`: Uniform Inventory (admin + registrar), default inventory for every program, program-grouped list, audit logs. Four migrations, all already applied to Supabase | PR #56 `dev` → `staging` (PRs #52 to #55 came with it) | Sprint 3 |
+| 2026-11-03 | — | Audit logs for `staging` (MP-35: Definition of Done, migrations, data) | `docs/mp35-staging-audit` → `staging` | Sprint 3 |
 
 ---
 
@@ -79,7 +81,7 @@
 | Ticket | Feature | Branch | Assignee | Status |
 |--------|---------|--------|----------|--------|
 | MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
-| MP-35 | Uniform Inventory Module (admin + registrar) | `MP-35-uniform-inventory` → `dev` (PR #52, #53, #54) | Rhoddz Gerunda | On `dev`. **Not on `staging` or `main`.** All five MP-35 migrations are applied to Supabase (the last, default inventory for every program, on 2026-11-03 15:53). `dev` audited 2026-11-03 after PR #54 (checks, migrations and data all pass). Definition of Done: 2 of 6 met, 2 partial, 2 not met. Open: browser walkthrough as Admin and Registrar, concurrency tests, stock in the enrollment form (criterion 13), MP-53. See `admin/inventory/acceptance.md` |
+| MP-35 | Uniform Inventory Module (admin + registrar) | `MP-35-uniform-inventory` → `dev` (PR #52, #53, #54) | Rhoddz Gerunda | On `dev` and `staging` (PR #56). **Not on `main`.** All five MP-35 migrations are applied to Supabase (the last, default inventory for every program, on 2026-11-03 15:53). `dev` and `staging` audited 2026-11-03 (checks, migrations and data all pass). Definition of Done: 2 of 6 met, 2 partial, 2 not met. Open: browser walkthrough as Admin and Registrar, concurrency tests, stock in the enrollment form (criterion 13), MP-53. See `admin/inventory/acceptance.md` |
 | MP-53 | Uniform Distribution: mark a uniform as distributed after enrollment and deduct stock (reusable module, Admin and Registrar) | not started | Chelsea Cllj (Jira default, reassign if needed) | Not started. Jira ticket and backlog written, depends on MP-35. See `admin/uniform-distribution/acceptance.md` |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
 | SEC-01 | **Security: announcements API exposed the poster's password hash to every logged-in role** | `feature/MP-30-trainee-dashboard` → `dev` (PR #46) → `staging` (PR #49) | Chelsea Cllj | Fixed and on `dev` and `staging`. **Not yet on `main`.** Still needs the backend restart and password resets for staff who posted announcements. See `technical/announcements-password-hash-exposure/acceptance.md` |
