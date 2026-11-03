@@ -175,6 +175,8 @@ const TraineeProfileView: React.FC<TraineeProfileViewProps> = ({ role, traineeId
   }
 
   const { address, beneficiary } = profile;
+  // Trainers don't see insurance data.
+  const showInsurance = role !== 'trainer';
   const hasActiveInsurance = profile.insurance.some((coverage) => coverage.isActive);
 
   return (
@@ -193,9 +195,11 @@ const TraineeProfileView: React.FC<TraineeProfileViewProps> = ({ role, traineeId
               <span className={`${tagClass} text-slate-500`}>
                 {profile.enrollments.length} {profile.enrollments.length === 1 ? 'program' : 'programs'}
               </span>
-              <span className={`${tagClass} ${hasActiveInsurance ? 'text-green-700' : 'text-slate-400'}`}>
-                {hasActiveInsurance ? 'Insured' : 'No active insurance'}
-              </span>
+              {showInsurance && (
+                <span className={`${tagClass} ${hasActiveInsurance ? 'text-green-700' : 'text-slate-400'}`}>
+                  {hasActiveInsurance ? 'Insured' : 'No active insurance'}
+                </span>
+              )}
               {profile.pwd && <span className={`${tagClass} text-blue-800`}>PWD</span>}
             </div>
           </div>
@@ -263,25 +267,27 @@ const TraineeProfileView: React.FC<TraineeProfileViewProps> = ({ role, traineeId
           )}
         </Section>
 
-        <Section title="Insurance Coverage">
-          {profile.insurance.length === 0 ? (
-            <p className="text-sm text-slate-500">No insurance coverage on record.</p>
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {profile.insurance.map((coverage) => (
-                <li key={coverage.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
-                  <span className="text-slate-900">
-                    {formatDateOnly(coverage.effectiveDate)} – {formatDateOnly(coverage.expiryDate)}
-                    <span className="ml-2 font-mono text-xs text-slate-500">{coverage.orNumber}</span>
-                  </span>
-                  <span className={`${tagClass} ${coverage.isActive ? 'text-green-700' : 'text-slate-400'}`}>
-                    {coverage.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
+        {showInsurance && (
+          <Section title="Insurance Coverage">
+            {profile.insurance.length === 0 ? (
+              <p className="text-sm text-slate-500">No insurance coverage on record.</p>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {profile.insurance.map((coverage) => (
+                  <li key={coverage.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
+                    <span className="text-slate-900">
+                      {formatDateOnly(coverage.effectiveDate)} – {formatDateOnly(coverage.expiryDate)}
+                      <span className="ml-2 font-mono text-xs text-slate-500">{coverage.orNumber}</span>
+                    </span>
+                    <span className={`${tagClass} ${coverage.isActive ? 'text-green-700' : 'text-slate-400'}`}>
+                      {coverage.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        )}
       </div>
 
       <section className="space-y-3">

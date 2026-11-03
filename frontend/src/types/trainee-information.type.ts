@@ -3,7 +3,7 @@
  * Admin and Registrar modules. Shapes match the backend responses.
  */
 
-export type TraineeInformationRole = 'admin' | 'registrar';
+export type TraineeInformationRole = 'admin' | 'registrar' | 'trainer' | 'encoder';
 
 export type EnrollmentStatus = 'PENDING' | 'ENROLLED' | 'WITHDRAWN' | 'COMPLETED' | 'DROPPED';
 export type BatchStatus = 'OPEN' | 'ONGOING' | 'CLOSED' | 'CANCELLED';

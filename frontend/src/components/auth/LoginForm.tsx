@@ -87,14 +87,12 @@ function LoginForm() {
         data.user,
       )
 
-      console.log('Login successful:', data.user)
 
       /*
        * Redirect according to the authenticated role.
        */
       switch (data.user.role) {
         case 'ADMIN':
-          console.log('Redirecting to /admin')
           navigate('/admin/AdminDashboard', { replace: true })
           break
 
@@ -107,7 +105,6 @@ function LoginForm() {
           break
 
         case 'REGISTRAR':
-          console.log('Redirecting to /registrar')
           navigate('/registrar', { replace: true })
           break
       }
