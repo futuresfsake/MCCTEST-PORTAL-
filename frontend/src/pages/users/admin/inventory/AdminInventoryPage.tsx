@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import AdminPageShell from '../../../../components/admin/AdminPageShell'
+import InventoryHistoryRow from '../../../../components/inventory/InventoryHistoryEntry'
+import InventoryStockLogDialog from '../../../../components/inventory/InventoryStockLogDialog'
 import {
   adjustInventory,
   getInventory,
@@ -75,6 +77,7 @@ export default function AdminInventoryPage() {
   const [historyCursor, setHistoryCursor] = useState<string | null>(null)
   const [historyHasMore, setHistoryHasMore] = useState(false)
   const [historyLoading, setHistoryLoading] = useState(false)
+  const [stockLogOpen, setStockLogOpen] = useState(false)
 
   const loadSummary = useCallback(async () => {
     try {
@@ -362,14 +365,23 @@ export default function AdminInventoryPage() {
                   {total} record{total === 1 ? '' : 's'} found
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => void Promise.all([loadItems(), loadSummary()])}
-                disabled={loading}
-                className="border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-              >
-                Refresh
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setStockLogOpen(true)}
+                  className="border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Stock Log
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void Promise.all([loadItems(), loadSummary()])}
+                  disabled={loading}
+                  className="border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                >
+                  Refresh
+                </button>
+              </div>
             </div>
           </div>
 
@@ -452,7 +464,7 @@ export default function AdminInventoryPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[850px] text-left text-sm">
+            <table className="w-full min-w-[960px] text-left text-sm">
               <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
                 <tr>
                   <th className="px-5 py-3">
@@ -476,6 +488,7 @@ export default function AdminInventoryPage() {
                     </button>
                   </th>
                   <th className="px-5 py-3">Status</th>
+                  <th className="px-5 py-3">Last Restocked</th>
                   <th className="px-5 py-3">Last Updated</th>
                   <th className="px-5 py-3 text-right">Actions</th>
                 </tr>
@@ -483,13 +496,13 @@ export default function AdminInventoryPage() {
               <tbody className="divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center text-slate-500">
+                    <td colSpan={8} className="px-5 py-12 text-center text-slate-500">
                       Loading inventory...
                     </td>
                   </tr>
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center">
+                    <td colSpan={8} className="px-5 py-12 text-center">
                       <p className="font-semibold text-slate-700">No inventory records found</p>
                       <p className="mt-1 text-slate-500">Try changing your search or filters.</p>
                     </td>
@@ -509,6 +522,9 @@ export default function AdminInventoryPage() {
                         <span className={`inline-flex whitespace-nowrap px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${stockStyle(item.stock_level)}`}>
                           {stockLabel(item.stock_level)}
                         </span>
+                      </td>
+                      <td className="px-5 py-4 whitespace-nowrap text-slate-500">
+                        {item.last_restocked_at ? formatDate(item.last_restocked_at) : 'Never'}
                       </td>
                       <td className="px-5 py-4 whitespace-nowrap text-slate-500">
                         {formatDate(item.updated_at)}
@@ -625,29 +641,7 @@ export default function AdminInventoryPage() {
                   ) : (
                     <div className="max-h-96 space-y-3 overflow-y-auto">
                       {history.map((entry) => (
-                        <div key={entry.id} className="border-b border-slate-100 pb-3">
-                          <div className="flex items-start justify-between gap-4">
-                            <div>
-                              <p className="font-semibold text-slate-800">
-                                {entry.type.replace('_', ' ')}
-                              </p>
-                              <p className="mt-1 text-xs text-slate-500">
-                                {formatDate(entry.created_at)}
-                                {entry.users ? ` · ${entry.users.first_name} ${entry.users.last_name}` : ''}
-                              </p>
-                              {entry.remarks && (
-                                <p className="mt-1 text-sm text-slate-600">{entry.remarks}</p>
-                              )}
-                            </div>
-                            <div className="shrink-0 text-right">
-                              <p className={`font-semibold ${entry.quantity_change < 0 ? 'text-red-700' : 'text-emerald-700'}`}>
-                                {entry.quantity_change > 0 ? '+' : ''}
-                                {entry.quantity_change}
-                              </p>
-                              <p className="text-xs text-slate-500">Balance: {entry.quantity_after}</p>
-                            </div>
-                          </div>
-                        </div>
+                        <InventoryHistoryRow key={entry.id} entry={entry} />
                       ))}
                     </div>
                   )}
@@ -743,6 +737,16 @@ export default function AdminInventoryPage() {
               )}
             </section>
           </div>
+        )}
+
+        {stockLogOpen && (
+          <InventoryStockLogDialog
+            programs={summary.map((program) => ({
+              id: program.program_id,
+              name: program.program_name,
+            }))}
+            onClose={() => setStockLogOpen(false)}
+          />
         )}
       </div>
     </AdminPageShell>

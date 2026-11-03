@@ -21,6 +21,7 @@ import { CreateInventoryDto } from './dto/create-inventory.dto';
 import { RestockInventoryDto } from './dto/restock-inventory.dto';
 import { AdjustInventoryDto } from './dto/adjust-inventory.dto';
 import { QueryInventoryDto } from './dto/query-inventory.dto';
+import { QueryInventoryHistoryDto } from './dto/query-inventory-history.dto';
 
 @Controller('inventory')
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -36,6 +37,12 @@ export class InventoryController {
   @Get('summary')
   getSummary() {
     return this.inventoryService.getSummary();
+  }
+
+  // Declared before `:id/history` so the two routes can never be confused.
+  @Get('history')
+  getProgramHistory(@Query() query: QueryInventoryHistoryDto) {
+    return this.inventoryService.getProgramHistory(query);
   }
 
   @Get('availability')

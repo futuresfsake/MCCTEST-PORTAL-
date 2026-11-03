@@ -15,11 +15,48 @@ import { CreateInventoryDto } from './dto/create-inventory.dto';
 import { RestockInventoryDto } from './dto/restock-inventory.dto';
 import { AdjustInventoryDto } from './dto/adjust-inventory.dto';
 import { QueryInventoryDto } from './dto/query-inventory.dto';
+import { QueryInventoryHistoryDto } from './dto/query-inventory-history.dto';
 
 const LOW_STOCK_THRESHOLD = 5;
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 const HISTORY_PAGE_SIZE = 20;
+
+/**
+ * One select for every history view. It joins the staff member who did it and,
+ * for a distribution, the trainee it was given to, so the log shows names
+ * without a second query per row.
+ */
+const HISTORY_SELECT = {
+  id: true,
+  type: true,
+  quantity_change: true,
+  quantity_after: true,
+  enrollment_id: true,
+  remarks: true,
+  created_at: true,
+  users: {
+    select: { id: true, first_name: true, last_name: true, role: true },
+  },
+  enrollments: {
+    select: {
+      id_card_number: true,
+      trainee: {
+        select: {
+          users: { select: { first_name: true, last_name: true } },
+        },
+      },
+    },
+  },
+  inventory: {
+    select: {
+      id: true,
+      item_name: true,
+      sizes: true,
+      programs: { select: { id: true, name: true } },
+    },
+  },
+} satisfies Prisma.inventory_transactionsSelect;
 
 @Injectable()
 export class InventoryService {
@@ -158,9 +195,25 @@ export class InventoryService {
       this.prisma.inventory.count({ where }),
     ]);
 
+    // One grouped query for the whole page, not one query per row.
+    const restocks = items.length
+      ? await this.prisma.inventory_transactions.groupBy({
+          by: ['inventory_id'],
+          where: {
+            inventory_id: { in: items.map((item) => item.id) },
+            type: inventory_transaction_type_enum.RESTOCK,
+          },
+          _max: { created_at: true },
+        })
+      : [];
+    const lastRestocked = new Map(
+      restocks.map((row) => [row.inventory_id, row._max.created_at]),
+    );
+
     return {
       data: items.map((item) => ({
         ...item,
+        last_restocked_at: lastRestocked.get(item.id) ?? null,
         stock_level: this.getStockLevel(item.quantity),
       })),
       meta: {
@@ -422,7 +475,7 @@ export class InventoryService {
 
   /**
    * GET /inventory/:id/history?cursor=<transaction UUID>
-   * Newest first, with stable (created_at, id) keyset pagination.
+   * One item's ledger, newest first.
    */
   async getHistory(id: string, cursor?: string) {
     const inventoryItem = await this.prisma.inventory.findUnique({
@@ -434,58 +487,67 @@ export class InventoryService {
       throw new NotFoundException('Inventory item not found.');
     }
 
-    let cursorFilter: Prisma.inventory_transactionsWhereInput = {
-      inventory_id: id,
+    return this.pageHistory({ inventory_id: id }, cursor);
+  }
+
+  /**
+   * GET /inventory/history?programId=&type=&from=&to=&cursor=
+   * Program-level stock log: every movement across sizes, newest first.
+   * `from` is inclusive and `to` is exclusive.
+   */
+  async getProgramHistory(query: QueryInventoryHistoryDto) {
+    const where: Prisma.inventory_transactionsWhereInput = {
+      ...(query.programId && { inventory: { program_id: query.programId } }),
+      ...(query.type && { type: query.type }),
+      ...((query.from || query.to) && {
+        created_at: {
+          ...(query.from && { gte: new Date(query.from) }),
+          ...(query.to && { lt: new Date(query.to) }),
+        },
+      }),
     };
+
+    return this.pageHistory(where, query.cursor);
+  }
+
+  /**
+   * Keyset pagination on (created_at, id), shared by both history views.
+   * The cursor row must match the same filters as the page it continues.
+   */
+  private async pageHistory(
+    baseWhere: Prisma.inventory_transactionsWhereInput,
+    cursor?: string,
+  ) {
+    let where = baseWhere;
 
     if (cursor) {
       const cursorRow = await this.prisma.inventory_transactions.findFirst({
-        where: {
-          id: cursor,
-          inventory_id: id,
-        },
-        select: {
-          id: true,
-          created_at: true,
-        },
+        where: { ...baseWhere, id: cursor },
+        select: { id: true, created_at: true },
       });
 
       if (!cursorRow) {
         throw new BadRequestException('Invalid history cursor.');
       }
 
-      cursorFilter = {
-        inventory_id: id,
-        OR: [
-          { created_at: { lt: cursorRow.created_at } },
+      where = {
+        AND: [
+          baseWhere,
           {
-            created_at: cursorRow.created_at,
-            id: { lt: cursorRow.id },
+            OR: [
+              { created_at: { lt: cursorRow.created_at } },
+              { created_at: cursorRow.created_at, id: { lt: cursorRow.id } },
+            ],
           },
         ],
       };
     }
 
     const rows = await this.prisma.inventory_transactions.findMany({
-      where: cursorFilter,
+      where,
       orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
       take: HISTORY_PAGE_SIZE + 1,
-      select: {
-        id: true,
-        type: true,
-        quantity_change: true,
-        quantity_after: true,
-        enrollment_id: true,
-        remarks: true,
-        created_at: true,
-        users: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-          },
-        },
-      },
+      select: HISTORY_SELECT,
     });
 
     const hasMore = rows.length > HISTORY_PAGE_SIZE;

@@ -306,6 +306,7 @@ model inventory_transactions {
 
   @@index([inventory_id, created_at(sort: Desc), id(sort: Desc)], map: "idx_inventory_transactions_history")
   @@index([enrollment_id], map: "idx_inventory_transactions_enrollment")
+  @@index([created_at(sort: Desc), id(sort: Desc)], map: "idx_inventory_transactions_created")
 }
 
 model learning_outcome {

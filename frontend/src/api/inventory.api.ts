@@ -34,6 +34,7 @@ export interface InventoryItem {
   sizes: string
   quantity: number
   updated_at: string
+  last_restocked_at: string | null
   stock_level: InventoryStockLevel
   programs?: {
     id: string
@@ -93,19 +94,56 @@ export interface InventoryMutationResponse {
   stock_level: InventoryStockLevel
 }
 
+export type InventoryHistoryType =
+  | 'INITIAL'
+  | 'RESTOCK'
+  | 'DISTRIBUTED'
+  | 'ADJUSTMENT'
+
 export interface InventoryHistoryEntry {
   id: string
-  type: 'INITIAL' | 'RESTOCK' | 'DISTRIBUTED' | 'ADJUSTMENT'
+  type: InventoryHistoryType
   quantity_change: number
   quantity_after: number
   enrollment_id: string | null
   remarks: string | null
   created_at: string
+  /** The staff member who made the change. */
   users: {
     id: string
     first_name: string
     last_name: string
+    role: string
   } | null
+  /** For a distribution: the enrollment, and through it the trainee who received the uniform. */
+  enrollments: {
+    id_card_number: string | null
+    trainee: {
+      users: {
+        first_name: string
+        last_name: string
+      } | null
+    } | null
+  } | null
+  inventory: {
+    id: string
+    item_name: string
+    sizes: string
+    programs: {
+      id: string
+      name: string
+    } | null
+  } | null
+}
+
+export interface InventoryProgramHistoryQuery {
+  programId?: string
+  type?: InventoryHistoryType
+  /** Inclusive start, ISO date-time. */
+  from?: string
+  /** Exclusive end, ISO date-time. */
+  to?: string
+  cursor?: string
 }
 
 export interface InventoryHistoryResponse {
@@ -236,6 +274,26 @@ export async function getInventoryHistory(
 
   return inventoryRequest<InventoryHistoryResponse>(
     `/api/inventory/${id}/history${search ? `?${search}` : ''}`,
+    { signal },
+  )
+}
+
+export async function getProgramInventoryHistory(
+  query: InventoryProgramHistoryQuery = {},
+  signal?: AbortSignal,
+): Promise<InventoryHistoryResponse> {
+  const params = new URLSearchParams()
+
+  Object.entries(query).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value)
+    }
+  })
+
+  const search = params.toString()
+
+  return inventoryRequest<InventoryHistoryResponse>(
+    `/api/inventory/history${search ? `?${search}` : ''}`,
     { signal },
   )
 }
