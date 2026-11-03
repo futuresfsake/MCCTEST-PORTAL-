@@ -100,6 +100,14 @@
 
 ---
 
+## Known Gaps (not in the Jira ticket)
+
+| # | Gap | Severity | Detail | Suggested fix |
+|---|-----|----------|--------|---------------|
+| G1 | Search columns lack trigram indexes | Medium | Search runs `ILIKE '%term%'` on `users.email`, `users.system_id`, `enrollments.id_card_number` and `official_receipts.or_number`. MP-24 lists these as "already indexed (no change)", but a B-tree index cannot serve a leading-wildcard search, so they fall back to sequential scans on large tables. The migration `20261019_trainee_information_indexes` only adds trigram indexes for first name, last name and contact number. | New indexes-only migration adding `gin_trgm_ops` indexes on the four columns, or limit those fields to prefix/exact matching. Correct the "already indexed" note in MP-24. |
+
+---
+
 ## Test Cases
 
 ### TC-01: Admin opens trainee information

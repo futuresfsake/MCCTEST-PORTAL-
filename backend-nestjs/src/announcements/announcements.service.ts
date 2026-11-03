@@ -23,6 +23,22 @@ export type AnnouncementListQuery = {
   date_to?: string;
 };
 
+/**
+ * The poster fields an announcement may expose. Never the whole user row:
+ * that would send password_hash and the email to every reader.
+ */
+const POSTER_SELECT = {
+  select: {
+    id: true,
+    first_name: true,
+    middle_name: true,
+    last_name: true,
+    role: true,
+    avatar_url: true,
+    system_id: true,
+  },
+} as const;
+
 @Injectable()
 export class AnnouncementsService {
   constructor(private readonly prisma: PrismaService) {}
@@ -207,7 +223,7 @@ export class AnnouncementsService {
         batch_id: dto.batch_id,
         remarks: dto.remarks?.trim() || null,
       },
-      include: { users: true, programs: true, batch: true },
+      include: { users: POSTER_SELECT, programs: true, batch: true },
     });
   }
 
@@ -273,7 +289,7 @@ export class AnnouncementsService {
     const [data, total] = await Promise.all([
       this.prisma.announcements.findMany({
         where,
-        include: { users: true, programs: true, batch: true },
+        include: { users: POSTER_SELECT, programs: true, batch: true },
         orderBy: { posted_at: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
@@ -337,7 +353,7 @@ export class AnnouncementsService {
 
     return this.prisma.announcements.findMany({
       where: { OR: scopes },
-      include: { users: true, programs: true, batch: true },
+      include: { users: POSTER_SELECT, programs: true, batch: true },
       orderBy: { posted_at: 'desc' },
     });
   }
@@ -366,7 +382,7 @@ export class AnnouncementsService {
           remarks: dto.remarks.trim() || null,
         }),
       },
-      include: { users: true, programs: true, batch: true },
+      include: { users: POSTER_SELECT, programs: true, batch: true },
     });
   }
 

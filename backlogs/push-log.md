@@ -33,6 +33,8 @@
 | 2026-11-03 | — | Audit logs for `dev` and `staging` (MP-24, MP-50, MP-51) | `docs/staging-audit-logs` → `staging` | Sprint 3 |
 | 2026-11-03 | MP-24, MP-50, MP-51 | `staging` → `main`: Trainee Information for Trainer and Encoder, audit fixes, audit logs (main audited after merge, see `trainer/trainee-information/acceptance.md`) | PR #44 `staging` → `main` | Sprint 3 |
 | 2026-11-03 | — | Audit logs for `main` | `docs/main-audit-logs` → `main` | Sprint 3 |
+| 2026-11-03 | MP-30, SEC-01 | Trainee Dashboard, trainee announcements page and header bell, and the SEC-01 fix (announcements API no longer returns the poster's password hash) | PR #46 `feature/MP-30-trainee-dashboard` → `dev`, then PR #49 `dev` → `staging` (not yet on `main`) | Sprint 3 |
+| 2026-11-03 | — | Audit logs for `staging` (MP-30, SEC-01, SEC-02) | `docs/staging-audit-mp30-sec01` → `staging` | Sprint 3 |
 
 ---
 
@@ -74,6 +76,8 @@
 |--------|---------|--------|----------|--------|
 | MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
+| SEC-01 | **Security: announcements API exposed the poster's password hash to every logged-in role** | `feature/MP-30-trainee-dashboard` → `dev` (PR #46) → `staging` (PR #49) | Chelsea Cllj | Fixed and on `dev` and `staging`. **Not yet on `main`.** Still needs the backend restart and password resets for staff who posted announcements. See `technical/announcements-password-hash-exposure/acceptance.md` |
+| SEC-02 | **Security: `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs`** | — | Chelsea Cllj | Logged, not fixed. Deferred by choice. See `technical/multer-dos-advisory/acceptance.md` |
 
 ---
 

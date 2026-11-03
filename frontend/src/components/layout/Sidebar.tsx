@@ -238,6 +238,11 @@ const sidebarConfig: Record<
             path: '/trainee/dashboard',
             icon: 'fa-solid fa-gauge-high',
           },
+          {
+            label: 'Announcements',
+            path: '/trainee/announcements',
+            icon: 'fa-solid fa-bullhorn',
+          },
         ],
       },
 
