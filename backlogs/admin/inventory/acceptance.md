@@ -9,7 +9,7 @@
 | **Sprint** | MP Sprint 3 |
 | **Branch** | `MP-35-uniform-inventory` |
 | **Routes** | `/admin/inventory`, `/registrar/inventory` (one shared page) |
-| **Migrations** | `20261019_add_inventory_transactions` (on `main`, applied to Supabase), `20261022_inventory_unique_program_size` (this branch, **already applied to Supabase**), `20261103_inventory_transactions_created_index` and `20261103_restore_mp24_indexes` (this branch, **not yet applied**) |
+| **Migrations** | `20261019_add_inventory_transactions` (on `main`, applied to Supabase), `20261022_inventory_unique_program_size` (this branch, **already applied to Supabase**), `20261103_inventory_transactions_created_index` and `20261103_restore_mp24_indexes` (this branch, **applied to Supabase 2026-11-03 14:55**) |
 
 Status key: PASS = verified. NOT TESTED = code exists and builds, but it was read, not run against a database or a browser. FAIL / NOT STARTED = missing.
 
@@ -74,7 +74,7 @@ The deduction is automatic. When staff submit the enrollment form with "Uniform 
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 16 | Backend and frontend lint and build pass. The migrations run on a fresh database and on one with existing inventory rows | PARTIAL | Lint and builds pass. `20261022` is already applied to Supabase and ran cleanly there (no program had two rows for the same size). The two newer migrations were not run anywhere. Not tested on a fresh database |
+| 16 | Backend and frontend lint and build pass. The migrations run on a fresh database and on one with existing inventory rows | PARTIAL | Lint and builds pass. `20261022` is already applied to Supabase and ran cleanly there (no program had two rows for the same size). The two newer migrations were applied to Supabase on 2026-11-03 and the database matches `schema.prisma` afterwards. Not tested on a fresh database |
 
 ---
 
@@ -95,8 +95,48 @@ Added after the review, from the senior-developer suggestions. Built and unit te
 
 - **Uniqueness differs from the ticket.** The ticket says program + item + size. The branch enforces program + size (`uq_inventory_program_size`) and always saves the item as `Uniform Shirt`. One program can have one row per size.
 - **MP-24 indexes dropped on Supabase.** `20261022_inventory_unique_program_size` was generated from a schema that did not list `idx_enrollments_enrolled_at` and `idx_insurance_coverage_trainee` (MP-24), so it also dropped them. It has already been applied to the shared Supabase database (checked 2026-11-03 with read-only queries: the checksum matches the original file and neither index exists there). Effect: slower trainee list sorting by enrolled date and slower insurance lookups. Nothing breaks.
-- **Fix.** An applied migration must not be edited, because Prisma compares checksums and `prisma migrate dev` would ask to reset the database. `20261022` is restored to its original content. The new migration `20261103_restore_mp24_indexes` recreates both indexes with `CREATE INDEX IF NOT EXISTS`. `schema.prisma` lists both indexes, so the schema matches the database after the migration runs. It is pending: run `npx prisma migrate deploy` on Supabase after the branch is merged.
+- **Fix.** An applied migration must not be edited, because Prisma compares checksums and `prisma migrate dev` would ask to reset the database. `20261022` is restored to its original content. The new migration `20261103_restore_mp24_indexes` recreates both indexes with `CREATE INDEX IF NOT EXISTS`. `schema.prisma` lists both indexes, so the schema matches the database after the migration runs. Applied to Supabase on 2026-11-03 14:55 with `npx prisma migrate deploy`. Both indexes exist again and `migrate diff` reports no difference between Supabase and `schema.prisma`.
 - **Prisma client.** Anyone pulling the branch must run `npx prisma generate`, otherwise `tsc` reports missing `inventory_transactions` types.
 - **Limited tests.** `inventory.service.spec.ts` covers the history filters, cursor, selected fields, last-restocked query and `deductAndLog`. Restock, adjust, duplicate handling and concurrency still have no automated tests.
 
 ## Summary: 1 PASS (code), 4 PARTIAL, 2 FAIL, 1 NOT STARTED, rest NOT TESTED. Additions A1 to A4 NOT TESTED
+
+---
+
+## Change Log
+
+All times are UTC+8. "User" is the person who made or ran the change. Commits are on `MP-35-uniform-inventory`.
+
+### Original branch work (before this review)
+
+| Date and time | User | Change | Commit |
+|---------------|------|--------|--------|
+| 2026-10-20 09:36 | erunzd (git author; Jira assignee is Rhoddz Gerunda) | Inventory transaction schema and migration `20261019_add_inventory_transactions` | `32b9a1d` |
+| 2026-10-20 20:07 | erunzd | Enrollment uniform deduction integrated | `94c3ec2` |
+| 2026-10-21 00:32 | erunzd | Stock management and enrollment deduction API endpoints | `e03c707` |
+| 2026-10-22 20:39 | erunzd | Inventory uniqueness by program and size (migration `20261022_inventory_unique_program_size`) | `77dc239` |
+| 2026-10-22 20:44 | erunzd | Standardized uniform shirt inventory creation | `837e2e7` |
+| 2026-10-22 22:50 | erunzd | Completed the uniform inventory module (page, API, history dialog) | `852657c` |
+
+### Review and changes (2026-11-03)
+
+| Time | User | Change | Commit |
+|------|------|--------|--------|
+| 14:26 | Chelsea Cllj | Merged `main` into the branch. One conflict in `app.module.ts`, kept all modules | `36af68b` |
+| 14:26 | Chelsea Cllj | First attempt at the migration fix: restored the MP-24 indexes in `schema.prisma` and removed the two `DROP INDEX` lines from `20261022`. **Superseded at 14:52**, because `20261022` was already applied to Supabase | `e2d69a5` |
+| 14:31 | Chelsea Cllj | Prettier formatting of the inventory module (backend lint 25 errors to 0) | `56d791d` |
+| 14:46 | Chelsea Cllj | Program-level stock log (`GET /inventory/history`, Stock Log dialog), recipient name and ID card on distributions, staff name and role on history rows, Last Restocked column, `idx_inventory_transactions_created` index and migration, 10 tests in `inventory.service.spec.ts` | `cbca15b` |
+| 14:46 | Chelsea Cllj | Added this file, with the review of all 24 ticket criteria | `555393c` |
+| 14:52 | Chelsea Cllj | Restored `20261022` to its original content (checksum matches Supabase). Added migration `20261103_restore_mp24_indexes` to recreate the two dropped MP-24 indexes | `d78af8f` |
+
+### Database (Supabase, shared)
+
+| Time | User | Change |
+|------|------|--------|
+| 2026-10-20 11:20 | Not recorded by Prisma | `20261019_add_inventory_transactions` applied: history table, opening-balance backfill, unique index on program + item + size |
+| 2026-10-22 20:32 | Not recorded by Prisma | `20261022_inventory_unique_program_size` applied (original version). Replaced the unique index with program + size and **dropped `idx_enrollments_enrolled_at` and `idx_insurance_coverage_trainee`** |
+| 2026-11-03 14:55 | Chelsea Cllj | `20261103_inventory_transactions_created_index` applied with `prisma migrate deploy` |
+| 2026-11-03 14:55 | Chelsea Cllj | `20261103_restore_mp24_indexes` applied with `prisma migrate deploy`. Both MP-24 indexes are back |
+| 2026-11-03 14:55 | Chelsea Cllj | Check after the deploy: `migrate status` reports up to date, `migrate diff` between Supabase and `schema.prisma` reports no difference |
+
+Read-only checks on Supabase on 2026-11-03 (Chelsea Cllj): applied migrations and checksums, and which indexes exist. Nothing was changed except the two migrations above.
