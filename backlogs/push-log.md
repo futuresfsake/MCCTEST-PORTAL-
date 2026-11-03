@@ -28,6 +28,7 @@
 | 2026-10-20 | — | Staging → main (push log updates, role permissions table) | PR #29 `staging` | — |
 | 2026-10-22 | MP-39 | Trainer Announcements Module | PR #30 `trainerannouncements` | Sprint 3 |
 | 2026-10-22 | MP-25 | Payments Module (admin + registrar) — backend + frontend | PR #34 `feature/MP-25` → `dev` | Sprint 3 |
+| 2026-11-03 | MP-50, MP-51 | Trainee Information for Trainer (own batches only, no insurance) and Encoder (all trainees), view-only | PR #39 `feature/MP-50-51-trainee-information-trainer-encoder` → `main` (merged straight to main; `dev` and `staging` synced afterwards) | Sprint 3 |
 
 ---
 
@@ -67,5 +68,17 @@
 
 | Ticket | Feature | Branch | Assignee | Status |
 |--------|---------|--------|----------|--------|
-| MP-25 | Payments Module (admin + registrar) | `feature/MP-25` | Vince Jon Gonzalez | Merged to dev (PR #34) — staging PR pending |
-| MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | Code Review Done (34/34 AC) — merged to dev (PR #30) |
+| MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
+| MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
+
+---
+
+## Trainee Information — Role Access
+
+| Action | Admin | Registrar | Trainer | Encoder | Trainee |
+|--------|-------|-----------|---------|---------|---------|
+| Open Trainees page | Yes | Yes | Yes (own batches only) | Yes | No (403) |
+| See all trainees | Yes | Yes | No | Yes | No |
+| Insurance filter and insurance details | Yes | Yes | No | Yes | No |
+| Edit trainee | No (view-only until MP-42) | No | No | No | No |
+| Route | `/admin/trainees` | `/registrar/trainees` | `/trainer/trainees` | `/encoder/trainees` | — |

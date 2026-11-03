@@ -288,3 +288,12 @@
 ## Summary: 30/30 — All PASS
 
 AC #22 marked PASS (design) — indexes and fixed query count are in place; needs load test against 50k rows to confirm the 500ms threshold.
+
+### Note: OR Number Unification
+
+The enrollment-time payment flow and the independent (external) payment flow are entirely different workflows:
+
+- **Enrollment payment** — auto-created during enrollment (`enrollments.service.ts`); tied to insurance coverage check; only for processing fee
+- **Independent/external payment** — manually recorded via the Payments module (`payments.service.ts`); supports 4 reasons (Processing Fee, Uniform/ID Fee, Assessment Deposit, External Fees)
+
+Both flows now share the same `generateOrNumber()` function (`or-number.ts`) and the `or_number_seq` table, producing a unified sequential format: `OR-{year}-{000001}`. Previously, enrollment used `OR-{year}-{uuid-fragment}` — that format is retired.

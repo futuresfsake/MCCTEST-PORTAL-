@@ -47,7 +47,7 @@ const TraineeListView: React.FC<TraineeListViewProps> = ({ role, basePath }) => 
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [options, setOptions] = useState<TraineeFilterOptions | null>(null);
-  const [showFilters, setShowFilters] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
 
   // The search box updates the URL after a pause in typing. When the URL
   // search changes from elsewhere (chip removed, Back), the box follows it.
@@ -153,9 +153,16 @@ const TraineeListView: React.FC<TraineeListViewProps> = ({ role, basePath }) => 
           </button>
         </div>
 
-        {showFilters && <TraineeFilterPanel filters={query} options={options} onChange={(patch) => update(patch)} />}
+        {showFilters && (
+          <TraineeFilterPanel
+            filters={query}
+            options={options}
+            onChange={(patch) => update(patch)}
+            showInsurance={role !== 'trainer'}
+          />
+        )}
 
-        <ActiveFilterChips filters={query} options={options} onRemove={(patch) => update(patch)} onClearAll={clearAll} />
+        <ActiveFilterChips filters={role === 'trainer' ? { ...query, insurance: '' } : query} options={options} onRemove={(patch) => update(patch)} onClearAll={clearAll} />
       </div>
 
       {error ? (

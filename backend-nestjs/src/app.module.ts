@@ -20,6 +20,8 @@ import { AdminEnrollmentsModule } from './users/admin/enrollments/enrollments.mo
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminTraineesModule } from './users/admin/trainee-information/trainees.module';
+import { TrainerTraineesModule } from './users/trainer/trainee-information/trainees.module';
+import { EncoderTraineesModule } from './users/encoder/trainee-information/trainees.module';
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { AdminTraineesModule } from './users/admin/trainee-information/trainees.
     AnnouncementsModule,
     PaymentsModule,
     AdminTraineesModule,
+    TrainerTraineesModule,
+    EncoderTraineesModule,
   ],
 
   controllers: [SessionsController, AppController],
