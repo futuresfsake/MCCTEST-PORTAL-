@@ -202,6 +202,11 @@ const sidebarConfig: Record<
         title: 'Records',
         items: [
           {
+            label: 'Trainees',
+            path: '/trainer/trainees',
+            icon: 'fa-solid fa-users',
+          },
+          {
             label: 'Trainee Records',
             path: '/trainer/records',
             icon: 'fa-solid fa-folder-open',
@@ -232,6 +237,11 @@ const sidebarConfig: Record<
             label: 'Dashboard',
             path: '/trainee/dashboard',
             icon: 'fa-solid fa-gauge-high',
+          },
+          {
+            label: 'Announcements',
+            path: '/trainee/announcements',
+            icon: 'fa-solid fa-bullhorn',
           },
         ],
       },
@@ -334,6 +344,11 @@ const sidebarConfig: Record<
       {
         title: 'Records',
         items: [
+          {
+            label: 'Trainees',
+            path: '/encoder/trainees',
+            icon: 'fa-solid fa-users',
+          },
           {
             label: 'Trainee Records',
             path: '/encoder/records',

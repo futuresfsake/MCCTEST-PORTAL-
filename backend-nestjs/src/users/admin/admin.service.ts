@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-console.log('AdminService loaded');
 @Injectable()
 export class AdminService {
   constructor(private readonly prisma: PrismaService) {}

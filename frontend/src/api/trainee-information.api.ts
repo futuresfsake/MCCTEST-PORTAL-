@@ -42,6 +42,8 @@ function createClient(role: TraineeInformationRole): AxiosInstance {
 const clients: Record<TraineeInformationRole, AxiosInstance> = {
   admin: createClient('admin'),
   registrar: createClient('registrar'),
+  trainer: createClient('trainer'),
+  encoder: createClient('encoder'),
 };
 
 /** Only non-empty values are sent, so the URL and the request stay minimal. */

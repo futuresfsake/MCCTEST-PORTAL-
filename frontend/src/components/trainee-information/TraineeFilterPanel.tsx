@@ -41,10 +41,12 @@ interface TraineeFilterPanelProps {
   filters: TraineeFilters;
   options: TraineeFilterOptions | null;
   onChange: (patch: Partial<TraineeFilters>) => void;
+  /** Insurance is hidden for roles that don't see insurance data (trainer). */
+  showInsurance?: boolean;
 }
 
 /** Every list filter except search. Batch choices are scoped to the selected program. */
-const TraineeFilterPanel: React.FC<TraineeFilterPanelProps> = ({ filters, options, onChange }) => {
+const TraineeFilterPanel: React.FC<TraineeFilterPanelProps> = ({ filters, options, onChange, showInsurance = true }) => {
   const programBatches = (options?.batches ?? []).filter((batch) => batch.programId === filters.programId);
   const toOptions = (values: readonly string[]) => values.map((value) => ({ value, label: enumLabel(value) }));
 
@@ -127,14 +129,16 @@ const TraineeFilterPanel: React.FC<TraineeFilterPanelProps> = ({ filters, option
         allLabel="All genders"
         options={toOptions(options?.genders ?? GENDERS)}
       />
-      <SelectField
-        id="filter-insurance"
-        label="Insurance"
-        value={filters.insurance}
-        onChange={(value) => onChange({ insurance: value as TraineeFilters['insurance'] })}
-        allLabel="Any insurance"
-        options={Object.entries(INSURANCE_LABELS).map(([value, label]) => ({ value, label }))}
-      />
+      {showInsurance && (
+        <SelectField
+          id="filter-insurance"
+          label="Insurance"
+          value={filters.insurance}
+          onChange={(value) => onChange({ insurance: value as TraineeFilters['insurance'] })}
+          allLabel="Any insurance"
+          options={Object.entries(INSURANCE_LABELS).map(([value, label]) => ({ value, label }))}
+        />
+      )}
       <SelectField
         id="filter-requirements"
         label="Requirements"

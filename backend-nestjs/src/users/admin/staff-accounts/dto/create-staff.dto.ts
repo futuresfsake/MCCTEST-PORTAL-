@@ -7,7 +7,6 @@ import {
   MinLength,
   Matches,
 } from 'class-validator';
-console.log('CreateStaffDto loaded');
 // Staff roles only — ADMIN and TRAINEE cannot be created from this endpoint
 export enum StaffRole {
   REGISTRAR = 'REGISTRAR',
