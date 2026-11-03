@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { InventoryService } from '../inventory/inventory.service';
 import {
   CreateEnrollmentDto,
   TraineeInfoDto,
@@ -140,7 +141,10 @@ function uniqueViolationMentions(error: { meta?: unknown }, column: string) {
 
 @Injectable()
 export class EnrollmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly inventoryService: InventoryService,
+  ) {}
 
   async searchTrainees(query: string) {
     if (!query || query.trim().length < 2) {
@@ -710,38 +714,6 @@ export class EnrollmentsService {
               throw new NotFoundException('Batch not found.');
             }
 
-            let inventoryId: string | null = null;
-            if (uniformGiven) {
-              const inventoryItem = await tx.inventory.findFirst({
-                where: {
-                  program_id: batch.program_id,
-                  sizes: uniformSize,
-                  quantity: { gt: 0 },
-                },
-                orderBy: { updated_at: 'asc' },
-                select: { id: true },
-              });
-
-              if (!inventoryItem) {
-                throw new BadRequestException(
-                  `No ${uniformSize} uniform is currently in stock for this program.`,
-                );
-              }
-
-              const stockUpdate = await tx.inventory.updateMany({
-                where: { id: inventoryItem.id, quantity: { gt: 0 } },
-                data: { quantity: { decrement: 1 } },
-              });
-
-              if (stockUpdate.count !== 1) {
-                throw new BadRequestException(
-                  'The selected uniform stock is no longer available. Please try again.',
-                );
-              }
-
-              inventoryId = inventoryItem.id;
-            }
-
             const idCardNumber = await this.generateIdCardNumber(
               tx,
               batch.program_id,
@@ -758,6 +730,19 @@ export class EnrollmentsService {
                 remarks,
               },
             });
+
+            // Deduct uniform stock and record its history in this same
+            // transaction, now that the enrollment ID is available.
+            let inventoryId: string | null = null;
+            if (uniformGiven) {
+              inventoryId = await this.inventoryService.deductAndLog(
+                tx,
+                batch.program_id,
+                uniformSize,
+                enrollment.id,
+                enrolledByUserId,
+              );
+            }
 
             await tx.requirement_checklist.create({
               data: {
