@@ -19,7 +19,8 @@ import AdminImportDataPage from '../pages/users/admin/import-data/AdminImportDat
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 import TrainerAnnouncementsPage from '../pages/users/trainer/announcements/TrainerAnnouncementsPage'
 
-import TraineeDashboard from '../pages/users/trainee/TraineeDashboard'
+import TraineeDashboard from '../pages/users/trainee/dashboard/TraineeDashboard'
+import TraineeAnnouncementsPage from '../pages/users/trainee/announcements/TraineeAnnouncementsPage'
 import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 import EncoderAnnouncementsPage from '../pages/users/encoder/announcements/EncoderAnnouncementsPage'
 
@@ -320,6 +321,15 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['TRAINEE']}>
         <TraineeDashboard />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/trainee/announcements"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINEE']}>
+        <TraineeAnnouncementsPage />
       </ProtectedRoute>
     }
   />

@@ -2,6 +2,7 @@
 import { useAuth } from '../../context/AuthContext'
 import mcctestLogo from '../../assets/mcctest-logo.png'
 import SignOutButton from '../auth/SignOutButton'
+import AnnouncementBell from '../Announcements/AnnouncementBell'
 
 function Header() {
   const { isAuthenticated } = useAuth()
@@ -64,7 +65,10 @@ function Header() {
 
         {/* Authentication */}
         {isAuthenticated ? (
-          <SignOutButton />
+          <div className="flex items-center gap-3">
+            <AnnouncementBell />
+            <SignOutButton />
+          </div>
         ) : (
           <a
             href="#home"
