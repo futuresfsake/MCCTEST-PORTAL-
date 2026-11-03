@@ -236,6 +236,7 @@ model enrollments {
   @@index([batch_id], map: "idx_enrollments_batch")
   @@index([enrollment_status], map: "idx_enrollments_status")
   @@index([trainee_id], map: "idx_enrollments_trainee")
+  @@index([enrolled_at], map: "idx_enrollments_enrolled_at")
 }
 
 model generated_certificate {
@@ -268,6 +269,8 @@ model insurance_coverage {
   official_receipt_id String            @db.Uuid
   official_receipts   official_receipts @relation(fields: [official_receipt_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   trainee             trainee           @relation(fields: [trainee_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([trainee_id], map: "idx_insurance_coverage_trainee")
 }
 
 model inventory {
