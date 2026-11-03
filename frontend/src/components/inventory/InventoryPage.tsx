@@ -2,46 +2,35 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import AdminPageShell from '../admin/AdminPageShell'
 import InventoryHistoryRow from './InventoryHistoryEntry'
 import InventoryStockLogDialog from './InventoryStockLogDialog'
-import InventoryAddItemDialog, { INVENTORY_SIZES } from './InventoryAddItemDialog'
+import InventoryAddItemDialog from './InventoryAddItemDialog'
+import InventoryProgramGroup, { type InventoryRowAction } from './InventoryProgramGroup'
 import {
   adjustInventory,
-  getInventory,
   getInventoryHistory,
   getInventorySummary,
   restockInventory,
   type InventoryHistoryEntry,
   type InventoryItem,
-  type InventoryListQuery,
-  type InventoryStockFilter,
   type InventorySummary,
 } from '../../api/inventory.api'
 
-type ActionType = 'restock' | 'adjust' | 'history'
+type ActionType = InventoryRowAction
 
-const PAGE_SIZE = 20
+/** Which programs the list shows, based on their stock totals. */
+type ProgramFilter = 'all' | 'has_stock' | 'low' | 'no_stock'
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
+const PROGRAM_FILTERS: { value: ProgramFilter; label: string }[] = [
+  { value: 'all', label: 'All programs' },
+  { value: 'has_stock', label: 'Has stock' },
+  { value: 'low', label: 'Has low stock' },
+  { value: 'no_stock', label: 'No stock yet' },
+]
 
-function stockLabel(level: InventoryItem['stock_level']) {
-  if (level === 'out_of_stock') return 'Out of stock'
-  if (level === 'low_stock') return 'Low stock'
-  return 'In stock'
-}
-
-function stockStyle(level: InventoryItem['stock_level']) {
-  if (level === 'out_of_stock') {
-    return 'bg-red-50 text-red-700 ring-red-200'
-  }
-  if (level === 'low_stock') {
-    return 'bg-amber-50 text-amber-800 ring-amber-200'
-  }
-  return 'bg-emerald-50 text-emerald-700 ring-emerald-200'
+function matchesFilter(program: InventorySummary, filter: ProgramFilter) {
+  if (filter === 'has_stock') return program.total_units > 0
+  if (filter === 'low') return program.low_stock_items > 0
+  if (filter === 'no_stock') return program.total_units === 0
+  return true
 }
 
 export type InventoryScope = 'admin' | 'registrar'
@@ -53,24 +42,15 @@ interface InventoryPageProps {
 
 /** Shared Uniform Inventory page, rendered by the Admin and Registrar wrappers. */
 export default function InventoryPage({ scope }: InventoryPageProps) {
-  const [items, setItems] = useState<InventoryItem[]>([])
   const [summary, setSummary] = useState<InventorySummary[]>([])
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [total, setTotal] = useState(0)
+  const [summaryLoading, setSummaryLoading] = useState(true)
 
-  const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
-  const [programId, setProgramId] = useState('')
-  const [size, setSize] = useState('')
-  const [stockLevel, setStockLevel] =
-    useState<InventoryStockFilter>('all')
-  const [sortBy, setSortBy] =
-    useState<NonNullable<InventoryListQuery['sortBy']>>('program')
-  const [sortOrder, setSortOrder] =
-    useState<NonNullable<InventoryListQuery['sortOrder']>>('asc')
+  const [programFilter, setProgramFilter] = useState<ProgramFilter>('all')
+  const [expanded, setExpanded] = useState<Set<string>>(new Set())
+  /** Bumped after a change so every open program reloads its sizes. */
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
 
@@ -91,85 +71,38 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
 
   const loadSummary = useCallback(async () => {
     try {
-      const data = await getInventorySummary()
-      setSummary(data)
-    } catch {
-      // The list request displays the main page error.
-    }
-  }, [])
-
-  const loadItems = useCallback(async () => {
-    setLoading(true)
-    setError('')
-
-    try {
-      const result = await getInventory({
-        page,
-        limit: PAGE_SIZE,
-        search: search || undefined,
-        programId: programId || undefined,
-        size: size || undefined,
-        stockLevel,
-        sortBy,
-        sortOrder,
-      })
-
-      setItems(result.data)
-      setTotal(result.meta.total)
-      setTotalPages(Math.max(1, result.meta.totalPages))
+      setSummary(await getInventorySummary())
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Unable to load inventory.',
       )
     } finally {
-      setLoading(false)
+      setSummaryLoading(false)
     }
-  }, [page, search, programId, size, stockLevel, sortBy, sortOrder])
+  }, [])
 
   useEffect(() => {
     void loadSummary()
   }, [loadSummary])
 
-  useEffect(() => {
-    void loadItems()
-  }, [loadItems])
-
-  // Automatically apply search after the user stops typing for 400 ms.
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      const trimmedSearch = searchInput.trim()
-
-      setSearch((currentSearch) =>
-        currentSearch === trimmedSearch ? currentSearch : trimmedSearch,
-      )
-
-      setPage(1)
-    }, 400)
-
-    return () => window.clearTimeout(timeoutId)
-  }, [searchInput])
-
-  function clearFilters() {
-    setSearchInput('')
-    setSearch('')
-    setProgramId('')
-    setSize('')
-    setStockLevel('all')
-    setSortBy('program')
-    setSortOrder('asc')
-    setPage(1)
+  /** Reload the program totals and the sizes of every open program. */
+  async function refresh() {
+    setRefreshKey((current) => current + 1)
+    await loadSummary()
   }
 
-  function toggleSort(
-    column: NonNullable<InventoryListQuery['sortBy']>,
-  ) {
-    if (sortBy === column) {
-      setSortOrder((current) => current === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortBy(column)
-      setSortOrder('asc')
-    }
-    setPage(1)
+  function toggleProgram(programId: string) {
+    setExpanded((current) => {
+      const next = new Set(current)
+      if (next.has(programId)) next.delete(programId)
+      else next.add(programId)
+      return next
+    })
+  }
+
+  function clearFilters() {
+    setSearch('')
+    setProgramFilter('all')
   }
 
   function openAction(type: ActionType, item: InventoryItem) {
@@ -265,7 +198,7 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
 
       setAction(null)
       setSelectedItem(null)
-      await Promise.all([loadItems(), loadSummary()])
+      await refresh()
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'Unable to update stock.',
@@ -292,12 +225,27 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
     0,
   )
 
-  const filtersActive = Boolean(
-    search || searchInput.trim() || programId || size || stockLevel !== 'all',
+  const term = search.trim().toLowerCase()
+  const visiblePrograms = summary.filter(
+    (program) =>
+      matchesFilter(program, programFilter) &&
+      (!term || program.program_name.toLowerCase().includes(term)),
   )
+  const filtersActive = Boolean(term || programFilter !== 'all')
+  const allVisibleOpen =
+    visiblePrograms.length > 0 &&
+    visiblePrograms.every((program) => expanded.has(program.program_id))
 
-  const firstItem = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
-  const lastItem = Math.min(page * PAGE_SIZE, total)
+  function toggleAllVisible() {
+    setExpanded((current) => {
+      const next = new Set(current)
+      for (const program of visiblePrograms) {
+        if (allVisibleOpen) next.delete(program.program_id)
+        else next.add(program.program_id)
+      }
+      return next
+    })
+  }
 
   return (
     <AdminPageShell
@@ -373,7 +321,8 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
               <div>
                 <h2 className="font-semibold text-slate-900">Uniform Stock</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  {total} record{total === 1 ? '' : 's'} found
+                  {visiblePrograms.length} of {summary.length} program
+                  {summary.length === 1 ? '' : 's'}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -393,8 +342,8 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={() => void Promise.all([loadItems(), loadSummary()])}
-                  disabled={loading}
+                  onClick={() => void refresh()}
+                  disabled={summaryLoading}
                   className="border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                 >
                   Refresh
@@ -403,210 +352,65 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
             </div>
           </div>
 
-          <div className="space-y-4 border-b border-slate-200 p-5">
-            <div>
-              <input
-                type="search"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search by program name..."
-                aria-label="Search inventory by program name"
-                className="w-full border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-700"
-              />
-              {searchInput.trim() !== search && (
-                <p className="mt-1 text-xs text-slate-500">
-                  Searching as you type...
-                </p>
-              )}
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <select
-                value={programId}
-                onChange={(event) => {
-                  setProgramId(event.target.value)
-                  setPage(1)
-                }}
-                className="border border-slate-300 bg-white px-3 py-2 text-sm"
-                aria-label="Filter by program"
-              >
-                <option value="">All programs</option>
-                {summary.map((program) => (
-                  <option key={program.program_id} value={program.program_id}>
-                    {program.program_name}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={size}
-                onChange={(event) => {
-                  setSize(event.target.value)
-                  setPage(1)
-                }}
-                className="border border-slate-300 bg-white px-3 py-2 text-sm"
-                aria-label="Filter by size"
-              >
-                <option value="">All sizes</option>
-                {INVENTORY_SIZES.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-
-              <select
-                value={stockLevel}
-                onChange={(event) => {
-                  setStockLevel(event.target.value as InventoryStockFilter)
-                  setPage(1)
-                }}
-                className="border border-slate-300 bg-white px-3 py-2 text-sm"
-                aria-label="Filter by stock level"
-              >
-                <option value="all">All stock levels</option>
-                <option value="in_stock">In stock</option>
-                <option value="low">Low stock</option>
-                <option value="out">Out of stock</option>
-              </select>
-
-              <button
-                type="button"
-                onClick={clearFilters}
-                disabled={!filtersActive && sortBy === 'program' && sortOrder === 'asc'}
-                className="border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
-              >
-                Clear filters
-              </button>
-            </div>
+          <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-center">
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by program name..."
+              aria-label="Search inventory by program name"
+              className="w-full border border-slate-300 px-3 py-2 text-sm outline-none focus:border-blue-700 sm:flex-1"
+            />
+            <select
+              value={programFilter}
+              onChange={(event) => setProgramFilter(event.target.value as ProgramFilter)}
+              aria-label="Filter programs by stock"
+              className="border border-slate-300 bg-white px-3 py-2 text-sm"
+            >
+              {PROGRAM_FILTERS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={toggleAllVisible}
+              disabled={visiblePrograms.length === 0}
+              className="border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+            >
+              {allVisibleOpen ? 'Collapse all' : 'Expand all'}
+            </button>
+            <button
+              type="button"
+              onClick={clearFilters}
+              disabled={!filtersActive}
+              className="border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40"
+            >
+              Clear filters
+            </button>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[960px] text-left text-sm">
-              <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
-                <tr>
-                  <th className="px-5 py-3">
-                    <button type="button" onClick={() => toggleSort('program')}>
-                      Program {sortBy === 'program' ? (sortOrder === 'asc' ? '↑' : '↓') : '↕'}
-                    </button>
-                  </th>
-                  <th className="px-5 py-3">
-                    <button type="button" onClick={() => toggleSort('item')}>
-                      Item {sortBy === 'item' ? (sortOrder === 'asc' ? '↑' : '↓') : '↕'}
-                    </button>
-                  </th>
-                  <th className="px-5 py-3">
-                    <button type="button" onClick={() => toggleSort('size')}>
-                      Size {sortBy === 'size' ? (sortOrder === 'asc' ? '↑' : '↓') : '↕'}
-                    </button>
-                  </th>
-                  <th className="px-5 py-3">
-                    <button type="button" onClick={() => toggleSort('quantity')}>
-                      Quantity {sortBy === 'quantity' ? (sortOrder === 'asc' ? '↑' : '↓') : '↕'}
-                    </button>
-                  </th>
-                  <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3">Last Restocked</th>
-                  <th className="px-5 py-3">Last Updated</th>
-                  <th className="px-5 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {loading ? (
-                  <tr>
-                    <td colSpan={8} className="px-5 py-12 text-center text-slate-500">
-                      Loading inventory...
-                    </td>
-                  </tr>
-                ) : items.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-5 py-12 text-center">
-                      <p className="font-semibold text-slate-700">No inventory records found</p>
-                      <p className="mt-1 text-slate-500">Try changing your search or filters.</p>
-                    </td>
-                  </tr>
-                ) : (
-                  items.map((item) => (
-                    <tr key={item.id} className="hover:bg-slate-50">
-                      <td className="px-5 py-4 font-medium text-slate-900">
-                        {item.programs?.name ?? 'Unknown program'}
-                      </td>
-                      <td className="px-5 py-4 text-slate-700">{item.item_name}</td>
-                      <td className="px-5 py-4 text-slate-700">{item.sizes}</td>
-                      <td className="px-5 py-4 font-semibold tabular-nums text-slate-900">
-                        {item.quantity}
-                      </td>
-                      <td className="px-5 py-4">
-                        <span className={`inline-flex whitespace-nowrap px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${stockStyle(item.stock_level)}`}>
-                          {stockLabel(item.stock_level)}
-                        </span>
-                      </td>
-                      <td className="px-5 py-4 whitespace-nowrap text-slate-500">
-                        {item.last_restocked_at ? formatDate(item.last_restocked_at) : 'Never'}
-                      </td>
-                      <td className="px-5 py-4 whitespace-nowrap text-slate-500">
-                        {formatDate(item.updated_at)}
-                      </td>
-                      <td className="px-5 py-4">
-                        <div className="flex justify-end gap-2">
-                          <button type="button" onClick={() => openAction('restock', item)} className="font-semibold text-blue-800 hover:underline">
-                            Restock
-                          </button>
-                          <button type="button" onClick={() => openAction('adjust', item)} className="font-semibold text-slate-600 hover:underline">
-                            Adjust
-                          </button>
-                          <button type="button" onClick={() => openAction('history', item)} className="font-semibold text-slate-600 hover:underline">
-                            History
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {!loading && (
-            <div className="mt-6 flex flex-col justify-between gap-4 px-5 pb-5 sm:flex-row sm:items-center">
-              <p className="text-xs text-slate-400">
-                {total > 0 ? (
-                  <>
-                    Showing{' '}
-                    <span className="font-semibold text-slate-600">
-                      {firstItem}–{lastItem}
-                    </span>{' '}
-                    of{' '}
-                    <span className="font-semibold text-slate-600">{total}</span>{' '}
-                    inventory record{total === 1 ? '' : 's'}
-                  </>
-                ) : (
-                  'No inventory records to display'
-                )}
-              </p>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  disabled={page <= 1}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
-                  className="border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-900 hover:text-blue-900 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  <i className="fa-solid fa-arrow-left mr-2 text-[9px]" />
-                  Previous
-                </button>
-
-                <button
-                  type="button"
-                  disabled={page >= totalPages}
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
-                  className="border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-600 transition hover:border-blue-900 hover:text-blue-900 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Next
-                  <i className="fa-solid fa-arrow-right ml-2 text-[9px]" />
-                </button>
-              </div>
+          {summaryLoading ? (
+            <p className="px-5 py-12 text-center text-slate-500">Loading inventory...</p>
+          ) : visiblePrograms.length === 0 ? (
+            <div className="px-5 py-12 text-center">
+              <p className="font-semibold text-slate-700">No programs found</p>
+              <p className="mt-1 text-slate-500">Try changing your search or filter.</p>
             </div>
+          ) : (
+            <ul>
+              {visiblePrograms.map((program) => (
+                <InventoryProgramGroup
+                  key={program.program_id}
+                  program={program}
+                  expanded={expanded.has(program.program_id)}
+                  onToggle={() => toggleProgram(program.program_id)}
+                  refreshKey={refreshKey}
+                  onAction={openAction}
+                />
+              ))}
+            </ul>
           )}
         </section>
 
@@ -767,7 +571,7 @@ export default function InventoryPage({ scope }: InventoryPageProps) {
             onCreated={() => {
               setAddItemOpen(false)
               setNotice('Item added successfully.')
-              void Promise.all([loadItems(), loadSummary()])
+              void refresh()
             }}
           />
         )}
