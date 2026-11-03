@@ -4,10 +4,10 @@
 |-------|-------|
 | **Jira** | MP-35 |
 | **Type** | Feature |
-| **Status** | In Review (not merged) |
+| **Status** | On `dev` (PR #52 and #53). Not on `staging` or `main`. Definition of Done: 2 of 6 met, 2 partial, 2 not met |
 | **Assignee** | Rhoddz Gerunda |
 | **Sprint** | MP Sprint 3 |
-| **Branch** | `MP-35-uniform-inventory` |
+| **Branch** | `MP-35-uniform-inventory` (merged into `dev`, PR #52). Later work: `docs/mp35-default-inventory-test-cases` (PR #53) and `feature/MP-35-inventory-program-groups` |
 | **Routes** | `/admin/inventory`, `/registrar/inventory` (one shared page) |
 | **Migrations** | `20261019_add_inventory_transactions` (on `main`, applied to Supabase), `20261022_inventory_unique_program_size` (this branch, **already applied to Supabase**), `20261103_inventory_transactions_created_index` and `20261103_restore_mp24_indexes` (this branch, **applied to Supabase 2026-11-03 14:55**), `20261104_default_inventory_for_every_program` (this branch, **applied to Supabase 2026-11-03 15:53**) |
 
@@ -308,6 +308,7 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 14:46 | Chelsea Cllj | Added this file, with the review of all 24 ticket criteria | `555393c` |
 | 14:52 | Chelsea Cllj | Restored `20261022` to its original content (checksum matches Supabase). Added migration `20261103_restore_mp24_indexes` to recreate the two dropped MP-24 indexes | `d78af8f` |
 | 15:20 | Chelsea Cllj | Moved the inventory page into the shared `components/inventory/InventoryPage.tsx`. `AdminInventoryPage` and a new `RegistrarInventoryPage` are 6-line wrappers. Each route is limited to its own role. `AdminPageShell` accepts an optional `variant` | `c22d500` |
+| 15:29 | Chelsea Cllj | **PR #52 merged into `dev`**: `MP-35-uniform-inventory` (the module, `main` merged in, migration fix, history improvements, shared page with thin role wrappers) | `7e61a69` |
 | 15:39 | Chelsea Cllj | **Review finding:** the inventory page cannot create inventory. The ticket's "add a new item" (criterion 4) is built in the backend only, the page has no Add control. Criterion 4 changed from NOT TESTED to FAIL (UI) | `docs/mp35-default-inventory-test-cases` |
 | 15:39 | Chelsea Cllj | **Review finding:** 5 of 7 programs have no inventory rows, so they do not appear on the page. Default rows for every program (quantity 0, with history) were not in the original ticket and not built. Added as criteria 25, 26, 27 and test cases TC-D1 to TC-D6, fix F8 | `docs/mp35-default-inventory-test-cases` |
 | 15:39 | Chelsea Cllj | **Review finding:** the size filter stops at XXL, the database also has XXXL. Added as criterion 28 and test case TC-D8, fix F9 | `docs/mp35-default-inventory-test-cases` |
@@ -315,9 +316,11 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 15:47 | Chelsea Cllj | **Fix F9:** "Add Item" button and dialog on the inventory page (calls the existing `createInventory`), and the size filter now lists XXXL (shared `INVENTORY_SIZES`) | `f00d685` |
 | 15:47 | Chelsea Cllj | Checks run before this commit. Read-only dry run of the backfill on Supabase: parses, adds 46 rows, 2 rows with stock untouched. Nothing was written to Supabase. Backend: 50 of 50 tests, `tsc`, ESLint, build and a boot with no errors. Frontend: ESLint, `tsc`, `vite build` pass | `f00d685` |
 | 15:53 | Chelsea Cllj | Applied the backfill migration to Supabase (details in the Database table). Checked with read-only queries: all 7 programs have 7 rows, existing stock and history unchanged | `docs/mp35-default-inventory-test-cases` |
+| 15:57 | Chelsea Cllj | **PR #53 merged into `dev`**: default inventory for every program, Add Item dialog, XXXL size filter, test cases, backlog | `d937b9c` |
 | 16:04 | Chelsea Cllj | **UI change:** the inventory list is grouped by program (collapsible, sizes loaded on demand) instead of one 49-row table. New `InventoryProgramGroup` component, `InventoryPage` simplified (no paging, column sorting or size filter). Search by program name and a stock filter added. No backend or database change. Lint, `tsc` and build pass. Criterion 18 updated, test cases TC-G1 to TC-G6 added | `9cb463e` |
 | 16:08 | Chelsea Cllj | **Design change to the program headers:** replaced the red "N out" and amber "N low" count badges (nearly every program read "7 out" because rows start at 0) with a size strip showing each size's quantity. Zero is muted grey, low is amber, red is no longer used for stock. Row status is a small dot and label instead of a filled pill. Backend: the summary query returns `sizes` (quantity and level per size). 2 new tests (52 of 52 pass). Lint, `tsc` and builds pass | `109140f` |
 | 16:12 | Chelsea Cllj | **Definition of Done audit** before the PR into `dev`: 2 of 6 DoD items met, 2 partial, 2 not met. Engineering checks all pass. Result in the "Definition of Done Audit" section | `fc3e250` |
+| 16:14 | Chelsea Cllj | Updated the push log, README and this file's status before opening the PR for `feature/MP-35-inventory-program-groups` into `dev`. Branch pushed to the remote | `feature/MP-35-inventory-program-groups` |
 
 ### Database (Supabase, shared)
 
