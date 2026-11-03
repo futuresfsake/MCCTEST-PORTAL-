@@ -28,6 +28,11 @@
 | 2026-10-20 | — | Staging → main (push log updates, role permissions table) | PR #29 `staging` | — |
 | 2026-10-22 | MP-39 | Trainer Announcements Module | PR #30 `trainerannouncements` | Sprint 3 |
 | 2026-10-22 | MP-25 | Payments Module (admin + registrar) — backend + frontend | PR #34 `feature/MP-25` → `dev` | Sprint 3 |
+| 2026-11-03 | MP-50, MP-51 | Trainee Information for Trainer (own batches only, no insurance) and Encoder (all trainees), view-only | PR #39 `feature/MP-50-51-trainee-information-trainer-encoder` → `main` (merged straight to main), then synced to `dev` (PR #40), `staging` (PR #42) | Sprint 3 |
+| 2026-11-03 | — | Pre-staging audit fixes (sessions route guarded, chatbot throttle, debug logging removed, dependency updates, type and lint fixes) | PR #41 `fix/predeploy-audit-fixes` → `dev` → PR #42 `staging` | Sprint 3 |
+| 2026-11-03 | — | Audit logs for `dev` and `staging` (MP-24, MP-50, MP-51) | `docs/staging-audit-logs` → `staging` | Sprint 3 |
+| 2026-11-03 | MP-24, MP-50, MP-51 | `staging` → `main`: Trainee Information for Trainer and Encoder, audit fixes, audit logs (main audited after merge, see `trainer/trainee-information/acceptance.md`) | PR #44 `staging` → `main` | Sprint 3 |
+| 2026-11-03 | — | Audit logs for `main` | `docs/main-audit-logs` → `main` | Sprint 3 |
 
 ---
 
@@ -69,3 +74,15 @@
 |--------|---------|--------|----------|--------|
 | MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
+
+---
+
+## Trainee Information — Role Access
+
+| Action | Admin | Registrar | Trainer | Encoder | Trainee |
+|--------|-------|-----------|---------|---------|---------|
+| Open Trainees page | Yes | Yes | Yes (own batches only) | Yes | No (403) |
+| See all trainees | Yes | Yes | No | Yes | No |
+| Insurance filter and insurance details | Yes | Yes | No | Yes | No |
+| Edit trainee | No (view-only until MP-42) | No | No | No | No |
+| Route | `/admin/trainees` | `/registrar/trainees` | `/trainer/trainees` | `/encoder/trainees` | — |

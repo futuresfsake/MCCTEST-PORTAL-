@@ -17,6 +17,8 @@ export const TRAINEE_INFORMATION_ACCESS: Record<
 > = {
   admin: { basePath: '/admin/trainees', canEdit: false, moduleLabel: 'Admin Module' },
   registrar: { basePath: '/registrar/trainees', canEdit: false, moduleLabel: 'Registrar Module' },
+  trainer: { basePath: '/trainer/trainees', canEdit: false, moduleLabel: 'Trainer Module' },
+  encoder: { basePath: '/encoder/trainees', canEdit: false, moduleLabel: 'Encoder Module' },
 };
 
 const TraineeInformationLayout: React.FC<{

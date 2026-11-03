@@ -106,8 +106,14 @@ function toTimeOfDay(value: Date): string {
   return value.toISOString().slice(11, 16);
 }
 
+/** Limits what a caller can see. Omitted for admin and registrar (no limit). */
+export interface TraineeScope {
+  /** users.id of a trainer; only trainees enrolled in their batches are visible. */
+  trainerUserId?: string;
+}
+
 /**
- * Read-only trainee records shared by the Admin and Registrar modules.
+ * Read-only trainee records shared by the Admin, Registrar and Trainer modules.
  * Controllers stay thin: they only add the role guard and route prefix.
  */
 @Injectable()
@@ -118,13 +124,21 @@ export class TraineeInformationService {
    * One row per trainee. Filtering, sorting and paging all run in the
    * database: the page and the total are two queries sent in parallel.
    */
-  async listTrainees(query: TraineeListQueryDto): Promise<TraineeListResponse> {
+  async listTrainees(
+    query: TraineeListQueryDto,
+    scope: TraineeScope = {},
+  ): Promise<TraineeListResponse> {
     const { page, limit } = query;
 
     // Conditions on a single enrollment. A trainee is listed when at least
     // one of their enrollments meets all of them, and that enrollment is the
     // one shown in the row.
     const enrollmentConditions: Prisma.Sql[] = [];
+    if (scope.trainerUserId) {
+      enrollmentConditions.push(
+        Prisma.sql`b.trainer_id IN (SELECT tr.id FROM trainer tr WHERE tr.user_id = ${scope.trainerUserId}::uuid)`,
+      );
+    }
     if (query.programId) {
       enrollmentConditions.push(
         Prisma.sql`b.program_id = ${query.programId}::uuid`,
@@ -254,7 +268,11 @@ export class TraineeInformationService {
       this.prisma.$queryRaw<TraineePageRow[]>(Prisma.sql`
         ${matchedEnrollments}
         SELECT page.*,
-          (SELECT COUNT(*)::int FROM enrollments ec WHERE ec.trainee_id = page.id) AS enrollment_count
+          (SELECT COUNT(*)::int FROM enrollments ec
+            ${scope.trainerUserId ? Prisma.sql`JOIN batch cb ON cb.id = ec.batch_id` : Prisma.empty}
+            WHERE ec.trainee_id = page.id
+            ${scope.trainerUserId ? Prisma.sql`AND cb.trainer_id IN (SELECT tr.id FROM trainer tr WHERE tr.user_id = ${scope.trainerUserId}::uuid)` : Prisma.empty}
+          ) AS enrollment_count
         FROM (
           SELECT
             t.id,
@@ -291,13 +309,20 @@ export class TraineeInformationService {
   }
 
   /** Dropdown values for the list filters (two small queries in parallel). */
-  async getFilterOptions(): Promise<TraineeFilterOptions> {
+  async getFilterOptions(
+    scope: TraineeScope = {},
+  ): Promise<TraineeFilterOptions> {
+    const ownBatch: Prisma.batchWhereInput = scope.trainerUserId
+      ? { trainer: { user_id: scope.trainerUserId } }
+      : {};
     const [programs, batches] = await Promise.all([
       this.prisma.programs.findMany({
+        where: scope.trainerUserId ? { batch: { some: ownBatch } } : {},
         select: { id: true, name: true, is_accredited: true },
         orderBy: { name: 'asc' },
       }),
       this.prisma.batch.findMany({
+        where: ownBatch,
         select: {
           id: true,
           batch_name: true,
@@ -327,9 +352,18 @@ export class TraineeInformationService {
   }
 
   /** Full read-only profile, loaded in one Prisma query. */
-  async getTraineeProfile(id: string): Promise<TraineeProfile> {
-    const trainee = await this.prisma.trainee.findUnique({
-      where: { id },
+  async getTraineeProfile(
+    id: string,
+    scope: TraineeScope = {},
+  ): Promise<TraineeProfile> {
+    const ownBatch: Prisma.enrollmentsWhereInput = scope.trainerUserId
+      ? { batch: { trainer: { user_id: scope.trainerUserId } } }
+      : {};
+    const trainee = await this.prisma.trainee.findFirst({
+      // A trainer only reaches trainees enrolled in their own batches.
+      where: scope.trainerUserId
+        ? { id, enrollments: { some: ownBatch } }
+        : { id },
       select: {
         id: true,
         contact_number: true,
@@ -380,6 +414,7 @@ export class TraineeInformationService {
           },
         },
         enrollments: {
+          where: ownBatch,
           orderBy: { enrolled_at: 'desc' },
           select: {
             id: true,
@@ -484,17 +519,20 @@ export class TraineeInformationService {
         address: beneficiary.address,
         idNumber: beneficiary.id_number,
       },
-      insurance: trainee.insurance_coverage.map((coverage) => {
-        const effectiveDate = toDateOnly(coverage.effective_date);
-        const expiryDate = toDateOnly(coverage.expiry_date);
-        return {
-          id: coverage.coverage_id,
-          effectiveDate,
-          expiryDate,
-          orNumber: coverage.official_receipts.or_number,
-          isActive: effectiveDate <= today && expiryDate >= today,
-        };
-      }),
+      // Trainers don't see insurance data.
+      insurance: (scope.trainerUserId ? [] : trainee.insurance_coverage).map(
+        (coverage) => {
+          const effectiveDate = toDateOnly(coverage.effective_date);
+          const expiryDate = toDateOnly(coverage.expiry_date);
+          return {
+            id: coverage.coverage_id,
+            effectiveDate,
+            expiryDate,
+            orNumber: coverage.official_receipts.or_number,
+            isActive: effectiveDate <= today && expiryDate >= today,
+          };
+        },
+      ),
       enrollments: trainee.enrollments.map((enrollment) => {
         const { batch } = enrollment;
         const checklist = enrollment.requirement_checklist;

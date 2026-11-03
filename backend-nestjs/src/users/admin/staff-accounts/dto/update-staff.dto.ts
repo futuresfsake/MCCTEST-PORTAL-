@@ -1,5 +1,4 @@
 import { IsOptional, IsString, MaxLength, Matches } from 'class-validator';
-console.log('UpdateStaffDto loaded');
 /**
  * Only allows updating profile fields stored in our users table.
  * Auth fields (email, password) are managed via Supabase Auth directly.

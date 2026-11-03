@@ -34,6 +34,10 @@ import AdminTraineesPage from '../pages/users/admin/trainee-information/AdminTra
 import AdminTraineeProfilePage from '../pages/users/admin/trainee-information/AdminTraineeProfilePage'
 import RegistrarTraineesPage from '../pages/users/registrar/trainee-information/RegistrarTraineesPage'
 import RegistrarTraineeProfilePage from '../pages/users/registrar/trainee-information/RegistrarTraineeProfilePage'
+import TrainerTraineesPage from '../pages/users/trainer/trainee-information/TrainerTraineesPage'
+import TrainerTraineeProfilePage from '../pages/users/trainer/trainee-information/TrainerTraineeProfilePage'
+import EncoderTraineesPage from '../pages/users/encoder/trainee-information/EncoderTraineesPage'
+import EncoderTraineeProfilePage from '../pages/users/encoder/trainee-information/EncoderTraineeProfilePage'
 
 function AppRouter() {
 return ( <Routes>
@@ -267,6 +271,42 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['TRAINER']}>
         <TrainerAnnouncementsPage />
+      </ProtectedRoute>
+    }
+  />
+
+  {/* Trainee Information: encoder sees all trainees, view-only */}
+  <Route
+    path="/encoder/trainees"
+    element={
+      <ProtectedRoute allowedRoles={['ENCODER']}>
+        <EncoderTraineesPage />
+      </ProtectedRoute>
+    }
+  />
+  <Route
+    path="/encoder/trainees/:id"
+    element={
+      <ProtectedRoute allowedRoles={['ENCODER']}>
+        <EncoderTraineeProfilePage />
+      </ProtectedRoute>
+    }
+  />
+
+  {/* Trainee Information (MP-24): trainer sees only their own batches' trainees */}
+  <Route
+    path="/trainer/trainees"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINER']}>
+        <TrainerTraineesPage />
+      </ProtectedRoute>
+    }
+  />
+  <Route
+    path="/trainer/trainees/:id"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINER']}>
+        <TrainerTraineeProfilePage />
       </ProtectedRoute>
     }
   />

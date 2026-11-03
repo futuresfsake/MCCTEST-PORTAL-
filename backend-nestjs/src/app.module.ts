@@ -21,6 +21,8 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AdminTraineesModule } from './users/admin/trainee-information/trainees.module';
 import { TraineeModule } from './users/trainee/trainee.module';
+import { TrainerTraineesModule } from './users/trainer/trainee-information/trainees.module';
+import { EncoderTraineesModule } from './users/encoder/trainee-information/trainees.module';
 
 @Module({
   imports: [
@@ -51,6 +53,8 @@ import { TraineeModule } from './users/trainee/trainee.module';
     PaymentsModule,
     AdminTraineesModule,
     TraineeModule,
+    TrainerTraineesModule,
+    EncoderTraineesModule,
   ],
 
   controllers: [SessionsController, AppController],
