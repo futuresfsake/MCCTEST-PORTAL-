@@ -31,7 +31,7 @@ Last reviewed 2026-11-03 against `main` at `4386ee7` after merging `main` into t
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 4 | Add an item for a program with a size and starting quantity. A duplicate is rejected with "restock it instead", enforced by the database | NOT TESTED | Unique index on program and size, `P2002` mapped to 409. The item name is always `Uniform Shirt` |
+| 4 | Add an item for a program with a size and starting quantity. A duplicate is rejected with "restock it instead", enforced by the database | FAIL (UI) | Backend works (`POST /inventory`, unique index on program and size, 409 on a duplicate). **The page has no Add control**: `createInventory` exists in `inventory.api.ts` but nothing calls it, so staff cannot add an item from the screen. Found 2026-11-03. Fix: F9 |
 | 5 | Restock adds to the quantity (10 + 20 = 30) | NOT TESTED | Atomic `quantity = quantity + n` |
 | 6 | A restock saves a `RESTOCK` history entry with the change, quantity after, user and time | NOT TESTED | Written in the same transaction |
 | 7 | Restock must be a positive whole number. Adjustments need a reason and cannot make stock negative | NOT TESTED | DTO and service checks, conditional update |
@@ -39,6 +39,10 @@ Last reviewed 2026-11-03 against `main` at `4386ee7` after merging `main` into t
 | 18 | List is paginated on the server. Search, filters and sorting work together and survive a refresh (URL state) | PARTIAL | Server side: yes. Filters are kept in component state, not the URL, and the shared list toolkit is not used |
 | 19 | The per-program summary matches the list and is calculated in the database | NOT TESTED | Raw SQL `GROUP BY` |
 | 22 | List endpoints run a fixed number of queries per request | NOT TESTED | `findMany` plus `count` in one transaction |
+| 25 | **Every program has inventory by default.** Each program has one row per size (XS, S, M, L, XL, XXL, XXXL), all at quantity 0, and each row has an `INITIAL` history entry of 0 | NOT STARTED | **Not in the original ticket**, which only says the table already holds one row per program, item and size. Not built in the original branch: nothing creates rows when a program is made. Added 2026-11-03 after finding 5 of 7 programs have no rows and so do not appear on the page. Fix: F8 |
+| 26 | A new program gets its seven size rows (quantity 0, with history) automatically, in the same transaction as the program | NOT STARTED | Hook in `programs.service.ts`. If seeding fails, the program is not created. Fix: F8 |
+| 27 | Existing programs without rows are backfilled by a migration. Rows that already exist are not changed | NOT STARTED | Needs a migration applied to the shared database. Fix: F8 |
+| 28 | The size filter lists all seven sizes, including XXXL | NOT STARTED | **Implied by the ticket**, which lists XS to XXXL, and the database enum has XXXL. The page's filter stops at XXL. Fix: F9 |
 
 ### Automatic Deduction on Enrollment
 
@@ -88,10 +92,20 @@ Added after the review, from the senior-developer suggestions. Built and unit te
 | A2 | A distribution shows who received it: the trainee's name and ID card number | NOT TESTED | Joined in the history query's `select` (`enrollments.trainee.users`), no query per row. Blank if the enrollment was deleted |
 | A3 | History shows who did each change: staff name and role | NOT TESTED | `users` select now includes `role`. Never selects the email or password hash (unit test) |
 | A4 | "Last Restocked" column on the main table | NOT TESTED | One grouped query per page for `RESTOCK` rows. Shows "Never" if the item has only an opening balance |
-| A5 | **Every program has inventory by default.** Each program has one row per size (XS, S, M, L, XL, XXL, XXXL), all at quantity 0, and each row has an `INITIAL` history entry of 0 | NOT STARTED | Found 2026-11-03: 5 of 7 programs have no inventory rows, so they do not appear on the page at all |
-| A6 | A new program gets its seven size rows (quantity 0, with history) automatically, in the same transaction as the program | NOT STARTED | Hook in `programs.service.ts`. Seeding must not fail the program creation |
-| A7 | Existing programs without rows are backfilled by a migration, without touching rows that already exist | NOT STARTED | Needs a migration applied to the shared database |
-| A8 | The inventory page can add a missing item (program + size), and the size filter lists all seven sizes including XXXL | NOT STARTED | Today the page has no "Add" control (`createInventory` exists in the API but is never called), and the size filter stops at XXL |
+
+---
+
+## Gaps Found Against the Ticket
+
+Found 2026-11-03 while checking why the inventory page could not create inventory. "Original branch" is the work on `MP-35-uniform-inventory` up to `852657c`.
+
+| Item | In the Jira ticket? | In the original branch? | Criterion | Fix |
+|------|---------------------|-------------------------|-----------|-----|
+| Every program has rows by default, at quantity 0 | No. The ticket only says the table already exists with one row per program, item and size | No. Nothing creates rows when a program is made | 25, 26, 27 | F8 |
+| Add a new item (program, size, starting quantity) from the page | Yes (Stock Management, criterion 4) | Backend only. The API function exists but the page has no Add control | 4 | F9 |
+| Size filter lists all sizes | Implied. The ticket lists XS to XXXL | No. The filter stops at XXL. The database enum also has XXXL | 28 | F9 |
+
+State of the data when found: 7 programs, 3 inventory rows, and 5 programs with no rows (so absent from the page). The seven sizes in the database enum would give 49 rows.
 
 ---
 
@@ -121,7 +135,7 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 - **Prisma client.** Anyone pulling the branch must run `npx prisma generate`, otherwise `tsc` reports missing `inventory_transactions` types.
 - **Limited tests.** `inventory.service.spec.ts` covers the history filters, cursor, selected fields, last-restocked query and `deductAndLog`. Restock, adjust, duplicate handling and concurrency still have no automated tests.
 
-## Summary: 1 PASS (code), 4 PARTIAL, 2 FAIL, 1 NOT STARTED, rest NOT TESTED. Additions A1 to A4 NOT TESTED, A5 to A8 NOT STARTED
+## Summary: 28 criteria. 1 PASS (code), 4 PARTIAL, 3 FAIL, 5 NOT STARTED, 15 NOT TESTED. Additions A1 to A4 NOT TESTED
 
 ---
 
@@ -191,8 +205,8 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 | F5 | Add tests for restock, adjust, duplicate handling (409) and concurrent restocks. Today only the history, last-restocked and `deductAndLog` logic has tests (`inventory.service.spec.ts`) | 4, 5, 7, 17 | Medium | NOT STARTED |
 | F6 | Keep the filters and sorting in the URL (survive a refresh) and use the shared list toolkit, as the ticket asks. The page keeps them in component state | 18 | Low | NOT STARTED |
 | F7 | `multer` denial-of-service advisory in the backend (SEC-02). Not specific to inventory, but the file upload routes depend on it. Logged and deferred. See `technical/multer-dos-advisory/acceptance.md` | — | High | LOGGED, NOT FIXED |
-| F8 | **Default inventory for every program (A5, A6, A7).** Seed seven size rows at quantity 0, each with an `INITIAL` 0 history entry, when a program is created, and backfill every existing program with a migration. Items that already exist are not changed | A5 to A7 | High | NOT STARTED |
-| F9 | **Add item on the inventory page, and the XXXL filter (A8).** Add a control that calls the existing `createInventory` API (program, size, starting quantity) and show `XXXL` in the size filter | A8, 4 | High | NOT STARTED |
+| F8 | **Fix: default inventory for every program (criteria 25, 26, 27).** Seed seven size rows at quantity 0, each with an `INITIAL` 0 history entry, when a program is created, and backfill every existing program with a migration. Items that already exist are not changed | 25, 26, 27 | High | NOT STARTED |
+| F9 | **Fix: Add item on the inventory page, and the XXXL filter (criteria 4 and 28).** Add a control that calls the existing `createInventory` API (program, size, starting quantity) and show `XXXL` in the size filter | 4, 28 | High | NOT STARTED |
 | F10 | Rename the "BPP Uniform" item to "Uniform Shirt" for consistency (one row was created before the name was standardized) | 4 | Low | NOT STARTED |
 
 ---
@@ -223,6 +237,9 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 14:46 | Chelsea Cllj | Added this file, with the review of all 24 ticket criteria | `555393c` |
 | 14:52 | Chelsea Cllj | Restored `20261022` to its original content (checksum matches Supabase). Added migration `20261103_restore_mp24_indexes` to recreate the two dropped MP-24 indexes | `d78af8f` |
 | 15:20 | Chelsea Cllj | Moved the inventory page into the shared `components/inventory/InventoryPage.tsx`. `AdminInventoryPage` and a new `RegistrarInventoryPage` are 6-line wrappers. Each route is limited to its own role. `AdminPageShell` accepts an optional `variant` | `c22d500` |
+| 15:39 | Chelsea Cllj | **Review finding:** the inventory page cannot create inventory. The ticket's "add a new item" (criterion 4) is built in the backend only, the page has no Add control. Criterion 4 changed from NOT TESTED to FAIL (UI) | `docs/mp35-default-inventory-test-cases` |
+| 15:39 | Chelsea Cllj | **Review finding:** 5 of 7 programs have no inventory rows, so they do not appear on the page. Default rows for every program (quantity 0, with history) were not in the original ticket and not built. Added as criteria 25, 26, 27 and test cases TC-D1 to TC-D6, fix F8 | `docs/mp35-default-inventory-test-cases` |
+| 15:39 | Chelsea Cllj | **Review finding:** the size filter stops at XXL, the database also has XXXL. Added as criterion 28 and test case TC-D8, fix F9 | `docs/mp35-default-inventory-test-cases` |
 
 ### Database (Supabase, shared)
 
