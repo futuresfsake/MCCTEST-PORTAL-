@@ -4,10 +4,10 @@
 |-------|-------|
 | **Jira** | MP-35 |
 | **Type** | Feature |
-| **Status** | In Review (not merged) |
+| **Status** | On `dev` (PR #52 and #53). Not on `staging` or `main`. Definition of Done: 2 of 6 met, 2 partial, 2 not met |
 | **Assignee** | Rhoddz Gerunda |
 | **Sprint** | MP Sprint 3 |
-| **Branch** | `MP-35-uniform-inventory` |
+| **Branch** | `MP-35-uniform-inventory` (merged into `dev`, PR #52). Later work: `docs/mp35-default-inventory-test-cases` (PR #53) and `feature/MP-35-inventory-program-groups` |
 | **Routes** | `/admin/inventory`, `/registrar/inventory` (one shared page) |
 | **Migrations** | `20261019_add_inventory_transactions` (on `main`, applied to Supabase), `20261022_inventory_unique_program_size` (this branch, **already applied to Supabase**), `20261103_inventory_transactions_created_index` and `20261103_restore_mp24_indexes` (this branch, **applied to Supabase 2026-11-03 14:55**), `20261104_default_inventory_for_every_program` (this branch, **applied to Supabase 2026-11-03 15:53**) |
 
@@ -36,7 +36,7 @@ Last reviewed 2026-11-03 against `main` at `4386ee7` after merging `main` into t
 | 6 | A restock saves a `RESTOCK` history entry with the change, quantity after, user and time | NOT TESTED | Written in the same transaction |
 | 7 | Restock must be a positive whole number. Adjustments need a reason and cannot make stock negative | NOT TESTED | DTO and service checks, conditional update |
 | 14 | Items at or below 5 show "Low stock", items at 0 show "Out of stock" | NOT TESTED | One `LOW_STOCK_THRESHOLD` constant |
-| 18 | List is paginated on the server. Search, filters and sorting work together and survive a refresh (URL state) | PARTIAL | Server side: yes. Filters are kept in component state, not the URL, and the shared list toolkit is not used |
+| 18 | List is paginated on the server. Search, filters and sorting work together and survive a refresh (URL state) | PARTIAL | **Changed 2026-11-03 (`9cb463e`):** the page is now grouped by program instead of one paged table, because the default rows made the table 49 rows long. Each program opens to show its sizes (loaded on demand with the server list endpoint, filtered by program, at most 100 rows). The page no longer pages, sorts by column or filters by size and stock level; it searches by program name and filters programs by stock (all, has stock, low stock, no stock yet). The server endpoint still supports pagination, filters and sorting. Search and filters are kept in component state, not the URL. The ticket's table layout is deliberately not followed |
 | 19 | The per-program summary matches the list and is calculated in the database | NOT TESTED | Raw SQL `GROUP BY` |
 | 22 | List endpoints run a fixed number of queries per request | NOT TESTED | `findMany` plus `count` in one transaction |
 | 25 | **Every program has inventory by default.** Each program has one row per size (XS, S, M, L, XL, XXL, XXXL), all at quantity 0, and each row has an `INITIAL` history entry of 0 | NOT TESTED | **Not in the original ticket.** Built (fix F8, `f00d685`): new programs get rows from the app, existing programs from the migration `20261104_default_inventory_for_every_program`. **Migration applied to Supabase 2026-11-03 15:53.** Checked with read-only queries afterwards: 7 programs, all with 7 rows (49 rows, was 3), 59 history entries (was 13), 49 `INITIAL`, no duplicate program + size, no negative quantity. Not yet seen on the page in a browser |
@@ -92,6 +92,7 @@ Added after the review, from the senior-developer suggestions. Built and unit te
 | A2 | A distribution shows who received it: the trainee's name and ID card number | NOT TESTED | Joined in the history query's `select` (`enrollments.trainee.users`), no query per row. Blank if the enrollment was deleted |
 | A3 | History shows who did each change: staff name and role | NOT TESTED | `users` select now includes `role`. Never selects the email or password hash (unit test) |
 | A4 | "Last Restocked" column on the main table | NOT TESTED | One grouped query per page for `RESTOCK` rows. Shows "Never" if the item has only an opening balance |
+| A5 | **List grouped by program.** Each program is one collapsible row showing its units in stock (or "No stock yet") and a **size strip**: one cell per size (XS to XXXL) with its quantity. Zero is shown in muted grey, low stock in amber, in stock in dark text. Red is not used for stock. Opening it loads that program's sizes with Restock, Adjust and History. Search by program name, a stock filter, and Expand all or Collapse all | NOT TESTED | The summary endpoint now also returns each size's quantity and level (one extra column, same low-stock threshold). No database change. Replaces the flat 49-row table. Not yet seen in a browser. Test cases TC-G1 to TC-G6 |
 
 ---
 
@@ -120,7 +121,7 @@ Follows the shared-module convention used by enrollments, payments and trainee i
 | Program hook | `src/users/admin/programs/programs.service.ts` calls `InventoryService.seedDefaultStock` | `ProgramsModule` imports `InventoryModule` (which exports `InventoryService`), the same way `EnrollmentsModule` does. Inventory does not depend on programs, so there is no circular dependency |
 | Frontend API | `src/api/inventory.api.ts` | Shared |
 | Frontend page | `src/components/inventory/InventoryPage.tsx` | Shared page. Takes `scope` (`admin` or `registrar`) |
-| Frontend parts | `src/components/inventory/InventoryHistoryEntry.tsx`, `InventoryStockLogDialog.tsx`, `InventoryAddItemDialog.tsx` | Shared. `InventoryAddItemDialog` also exports the shared `INVENTORY_SIZES` list |
+| Frontend parts | `src/components/inventory/InventoryHistoryEntry.tsx`, `InventoryStockLogDialog.tsx`, `InventoryAddItemDialog.tsx`, `InventoryProgramGroup.tsx` | Shared. `InventoryAddItemDialog` also exports the shared `INVENTORY_SIZES` list |
 | Admin wrapper | `src/pages/users/admin/inventory/AdminInventoryPage.tsx` | 6 lines, `scope="admin"` |
 | Registrar wrapper | `src/pages/users/registrar/inventory/RegistrarInventoryPage.tsx` | 6 lines, `scope="registrar"` |
 
@@ -136,7 +137,7 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 - **Prisma client.** Anyone pulling the branch must run `npx prisma generate`, otherwise `tsc` reports missing `inventory_transactions` types.
 - **Limited tests.** `inventory.service.spec.ts` covers the history filters, cursor, selected fields, last-restocked query and `deductAndLog`. Restock, adjust, duplicate handling and concurrency still have no automated tests.
 
-## Summary: 28 criteria. 1 PASS (code), 4 PARTIAL, 2 FAIL, 1 NOT STARTED, 20 NOT TESTED. Additions A1 to A4 NOT TESTED
+## Summary: 28 criteria. 1 PASS (code), 4 PARTIAL, 2 FAIL, 1 NOT STARTED, 20 NOT TESTED. Additions A1 to A5 NOT TESTED
 
 ---
 
@@ -185,6 +186,31 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 - **Steps:** Open the size filter on the inventory page.
 - **Expected:** XS, S, M, L, XL, XXL and XXXL are all listed. Selecting XXXL shows only XXXL rows.
 
+### TC-G1: Programs are grouped and collapsed by default
+- **Precondition:** The default rows exist, so every program has 7 sizes.
+- **Steps:** Open `/admin/inventory` and `/registrar/inventory`.
+- **Expected:** One row per program, all collapsed. Each header shows the program name, the units in stock (or "No stock yet" for a program with none), and a strip of seven cells, XS to XXXL, each with its quantity. Bread and Pastry Production shows 18 units with M 7 and L 11, the other sizes muted. Zero cells are grey, not red. A size at 1 to 5 shows amber. The strip is hidden on narrow screens, where the units line remains. The three summary cards at the top are unchanged.
+
+### TC-G2: Open a program
+- **Steps:** Click a program's header.
+- **Expected:** The row opens and shows its sizes in order XS, S, M, L, XL, XXL, XXXL, each with quantity, status, Last Restocked and Restock, Adjust and History. "Loading sizes..." shows briefly. Clicking the header again closes it. The chevron turns. The header button reports expanded and collapsed to screen readers.
+
+### TC-G3: Actions still work from an opened program
+- **Steps:** Restock size M by 10, then open History for it, then adjust it by -2 with a reason.
+- **Expected:** Quantity updates in the open program without a page reload, the header's units update, and the History shows the new entries. The other opened programs are reloaded too and stay open.
+
+### TC-G4: Search and filter
+- **Steps:** Type part of a program's name. Then choose "Has stock", "Has low stock" and "No stock yet" in the stock filter. Then press Clear filters.
+- **Expected:** Only matching programs are listed and the count reads "N of 7 programs". "Has stock" lists only programs with units. "No stock yet" lists the programs with zero units. Clear filters restores the full list.
+
+### TC-G5: Expand all and Collapse all
+- **Steps:** Press "Expand all", then "Collapse all".
+- **Expected:** Every listed program opens, each loading its own sizes. The button then reads "Collapse all" and closes them. With a filter active, it only affects the programs shown.
+
+### TC-G6: Error and empty states
+- **Steps:** Stop the backend, open a program. Then restart it and press "Try again". Separately, create a program that has no rows (or remove its rows).
+- **Expected:** An error with "Try again" appears inside that program only, and the rest of the page keeps working. A program with no rows says "No sizes yet for this program. Use 'Add Item' to add one."
+
 ---
 
 ## Still Not Verified
@@ -210,6 +236,49 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 | F8 | **Fix: default inventory for every program (criteria 25, 26, 27).** Seed seven size rows at quantity 0, each with an `INITIAL` 0 history entry, when a program is created, and backfill every existing program with a migration. Items that already exist are not changed | 25, 26, 27 | High | BUILT (`f00d685`) and migration applied to Supabase 2026-11-03 15:53. New-program seeding not tested against a database |
 | F9 | **Fix: Add item on the inventory page, and the XXXL filter (criteria 4 and 28).** Add a control that calls the existing `createInventory` API (program, size, starting quantity) and show `XXXL` in the size filter | 4, 28 | High | BUILT (`f00d685`). Not tested in a browser |
 | F10 | Rename the "BPP Uniform" item to "Uniform Shirt" for consistency (one row was created before the name was standardized) | 4 | Low | NOT STARTED |
+
+---
+
+## Definition of Done Audit (2026-11-03)
+
+Audited at 16:12 on branch `feature/MP-35-inventory-program-groups` (`fc3e250`), before its PR into `dev`. The first six rows are the "Definition of Done" listed in the Jira ticket.
+
+| # | Definition of Done (from the ticket) | Status | Evidence |
+|---|--------------------------------------|--------|----------|
+| 1 | Code reviewed and merged into `main` | NOT MET (in progress) | On `dev` through PR #52 and PR #53. This PR is next. Not on `staging` or `main` yet |
+| 2 | `add_inventory_transactions` migration committed and applied to the shared database with `prisma migrate deploy` | MET | The migration is `20261019_add_inventory_transactions`, applied to Supabase 2026-10-20. All 11 migrations are applied, `prisma migrate status` is up to date, `prisma migrate diff` shows no drift, and every migration checksum matches its file (older ones match their Windows line-ending version) |
+| 3 | Tested as admin and as registrar: create, restock, adjust and view history | PARTIAL | The history in Supabase shows both roles creating, restocking and adjusting through the API on the earlier version of the page (for example an Admin restock and a Registrar restock of +6 on 2026-11-03). Viewing history leaves no trace. The current page (program groups, size strip, Add Item) has **not** been clicked through |
+| 4 | Tested enrollment with stock available, with stock at 0 and with concurrent submissions | PARTIAL | Stock available: 3 enrollments are marked given, each has its own `DISTRIBUTED` entry and the quantities add up. A distribution took a row to 0, so the boundary worked. Rejection at 0 is covered only by a unit test with a mocked database. Concurrent submissions: **not tested** |
+| 5 | Tested parallel restocks and parallel adjustments | NOT MET | No test. The code uses atomic SQL (restock `quantity + n` with `RETURNING`, adjust with a `quantity + change >= 0` condition), but it has not been run in parallel |
+| 6 | No duplicated inventory page code between admin and registrar | MET | One shared `InventoryPage` (590 lines). `AdminInventoryPage` and `RegistrarInventoryPage` are 6-line wrappers. Each route allows only its own role |
+
+### Engineering checks
+
+| Check | Result |
+|-------|--------|
+| Merge of this branch into `dev` | No conflicts. 0 behind, 4 ahead |
+| This PR changes the schema or migrations | No |
+| Backend ESLint, `tsc`, `nest build`, `prisma validate` | Pass |
+| Backend tests | 52 of 52 pass (9 suites) |
+| Frontend ESLint, `tsc`, `vite build` | Pass |
+| Frontend `npm audit` | 0 vulnerabilities |
+| Backend `npm audit` | 2 high (`multer`, SEC-02, deferred) |
+| Secrets, AI mentions, debug logging, tracked `.env` or `text.txt` in the diff | None |
+| Inventory controller guarded | `JwtAuthGuard`, `RolesGuard`, `@Roles(ADMIN, REGISTRAR)`. No update or delete routes exist |
+| Real backend boot | No errors. All inventory routes return 401 without a token, and PUT, PATCH and DELETE return 404 |
+| Inventory queries never select a password or an email | Confirmed |
+| Data in Supabase | 7 programs, 49 rows, 59 history entries. No duplicates, no negatives, every quantity equals its history, every distribution has its entry |
+
+### Result
+
+- **Ready to merge into `dev`:** all engineering checks pass and this PR has no schema change.
+- **MP-35 is not Done yet.** Open before it can be closed:
+  1. DoD 1: `staging` and `main`.
+  2. DoD 3: click through the current page as Admin and as Registrar (TC-G1 to TC-G6, TC-D1 to TC-D8).
+  3. DoD 4 and 5: concurrency checks.
+  4. Criterion 12 (later handout, MP-53) and criterion 13 (stock in the enrollment form).
+
+
 
 ---
 
@@ -239,6 +308,7 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 14:46 | Chelsea Cllj | Added this file, with the review of all 24 ticket criteria | `555393c` |
 | 14:52 | Chelsea Cllj | Restored `20261022` to its original content (checksum matches Supabase). Added migration `20261103_restore_mp24_indexes` to recreate the two dropped MP-24 indexes | `d78af8f` |
 | 15:20 | Chelsea Cllj | Moved the inventory page into the shared `components/inventory/InventoryPage.tsx`. `AdminInventoryPage` and a new `RegistrarInventoryPage` are 6-line wrappers. Each route is limited to its own role. `AdminPageShell` accepts an optional `variant` | `c22d500` |
+| 15:29 | Chelsea Cllj | **PR #52 merged into `dev`**: `MP-35-uniform-inventory` (the module, `main` merged in, migration fix, history improvements, shared page with thin role wrappers) | `7e61a69` |
 | 15:39 | Chelsea Cllj | **Review finding:** the inventory page cannot create inventory. The ticket's "add a new item" (criterion 4) is built in the backend only, the page has no Add control. Criterion 4 changed from NOT TESTED to FAIL (UI) | `docs/mp35-default-inventory-test-cases` |
 | 15:39 | Chelsea Cllj | **Review finding:** 5 of 7 programs have no inventory rows, so they do not appear on the page. Default rows for every program (quantity 0, with history) were not in the original ticket and not built. Added as criteria 25, 26, 27 and test cases TC-D1 to TC-D6, fix F8 | `docs/mp35-default-inventory-test-cases` |
 | 15:39 | Chelsea Cllj | **Review finding:** the size filter stops at XXL, the database also has XXXL. Added as criterion 28 and test case TC-D8, fix F9 | `docs/mp35-default-inventory-test-cases` |
@@ -246,6 +316,11 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 15:47 | Chelsea Cllj | **Fix F9:** "Add Item" button and dialog on the inventory page (calls the existing `createInventory`), and the size filter now lists XXXL (shared `INVENTORY_SIZES`) | `f00d685` |
 | 15:47 | Chelsea Cllj | Checks run before this commit. Read-only dry run of the backfill on Supabase: parses, adds 46 rows, 2 rows with stock untouched. Nothing was written to Supabase. Backend: 50 of 50 tests, `tsc`, ESLint, build and a boot with no errors. Frontend: ESLint, `tsc`, `vite build` pass | `f00d685` |
 | 15:53 | Chelsea Cllj | Applied the backfill migration to Supabase (details in the Database table). Checked with read-only queries: all 7 programs have 7 rows, existing stock and history unchanged | `docs/mp35-default-inventory-test-cases` |
+| 15:57 | Chelsea Cllj | **PR #53 merged into `dev`**: default inventory for every program, Add Item dialog, XXXL size filter, test cases, backlog | `d937b9c` |
+| 16:04 | Chelsea Cllj | **UI change:** the inventory list is grouped by program (collapsible, sizes loaded on demand) instead of one 49-row table. New `InventoryProgramGroup` component, `InventoryPage` simplified (no paging, column sorting or size filter). Search by program name and a stock filter added. No backend or database change. Lint, `tsc` and build pass. Criterion 18 updated, test cases TC-G1 to TC-G6 added | `9cb463e` |
+| 16:08 | Chelsea Cllj | **Design change to the program headers:** replaced the red "N out" and amber "N low" count badges (nearly every program read "7 out" because rows start at 0) with a size strip showing each size's quantity. Zero is muted grey, low is amber, red is no longer used for stock. Row status is a small dot and label instead of a filled pill. Backend: the summary query returns `sizes` (quantity and level per size). 2 new tests (52 of 52 pass). Lint, `tsc` and builds pass | `109140f` |
+| 16:12 | Chelsea Cllj | **Definition of Done audit** before the PR into `dev`: 2 of 6 DoD items met, 2 partial, 2 not met. Engineering checks all pass. Result in the "Definition of Done Audit" section | `fc3e250` |
+| 16:14 | Chelsea Cllj | Updated the push log, README and this file's status before opening the PR for `feature/MP-35-inventory-program-groups` into `dev`. Branch pushed to the remote | `feature/MP-35-inventory-program-groups` |
 
 ### Database (Supabase, shared)
 

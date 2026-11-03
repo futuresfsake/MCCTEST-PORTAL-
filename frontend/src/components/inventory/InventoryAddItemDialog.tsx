@@ -1,8 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { createInventory } from '../../api/inventory.api'
-
-/** Every size a program can have stock for. Matches the database size enum. */
-export const INVENTORY_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'] as const
+import { INVENTORY_SIZES } from './inventory.constants'
 
 interface Props {
   programs: { id: string; name: string }[]
