@@ -23,7 +23,7 @@ backlogs/
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
     enrollment/acceptance.md                     — MP-33: Admin Enrollments Module (IN PROGRESS)
     payments/acceptance.md                       — MP-25: Payments Module (30/30 PASS)
-    inventory/acceptance.md                      — MP-35: Uniform Inventory (shared Admin and Registrar, ON DEV, not on staging or main)
+    inventory/acceptance.md                      — MP-35: Uniform Inventory (shared Admin and Registrar, ON DEV AND STAGING, not on main)
     uniform-distribution/acceptance.md           — MP-53: Uniform Distribution, reusable module for Admin and Registrar (NOT STARTED)
   registrar/
     dashboard/acceptance.md                      — Registrar Dashboard (placeholder)
@@ -66,7 +66,7 @@ backlogs/
 |--------|-------|---------|--------|
 | MP Sprint 1 | 2026-08-23 → 2026-08-30 | MP-4, MP-8 | All Done |
 | MP Sprint 2 | 2026-09-02 → 2026-10-12 | MP-13, MP-14, MP-15, MP-16, MP-20, MP-21, MP-22, MP-23, MP-26, MP-31 | All Done |
-| MP Sprint 3 | 2026-10-12 → 2026-10-18 | MP-24, MP-25, MP-33, MP-35, MP-50, MP-51 | MP-24 Done, MP-25 30/30 PASS, MP-33 In Progress, MP-50/51 merged, browser check pending, MP-35 on dev (browser check pending) |
+| MP Sprint 3 | 2026-10-12 → 2026-10-18 | MP-24, MP-25, MP-33, MP-35, MP-50, MP-51 | MP-24 Done, MP-25 30/30 PASS, MP-33 In Progress, MP-50/51 merged, browser check pending, MP-35 on dev and staging (browser check pending) |
 
 ---
 
