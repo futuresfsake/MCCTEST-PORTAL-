@@ -1,12 +1,10 @@
 import type {
-  announcement_scope_enum,
   attendance_status_enum,
   batch_status_enum,
   competency_category_enum,
   day_enum,
   enrollment_status_enum,
   outcome_status_enum,
-  user_role_enum,
 } from '../../../generated/prisma/client';
 
 /** Calendar dates are serialized as YYYY-MM-DD; times as HH:MM. */
@@ -79,17 +77,6 @@ export interface DashboardSession {
   topicsCovered: string | null;
 }
 
-export interface DashboardAnnouncement {
-  id: string;
-  scope: announcement_scope_enum;
-  content: string;
-  remarks: string | null;
-  postedAt: string;
-  postedBy: { name: string; role: user_role_enum };
-  program: { id: string; name: string } | null;
-  batch: { id: string; batchName: string } | null;
-}
-
 export interface DashboardEnrollmentDetail extends DashboardEnrollment {
   attendance: DashboardAttendance;
   competencies: DashboardCompetencyGroup[];
@@ -100,5 +87,4 @@ export interface TraineeDashboardPayload {
   /** First active enrollment, else the latest one; null when never enrolled. */
   defaultEnrollmentId: string | null;
   enrollments: DashboardEnrollmentDetail[];
-  announcements: DashboardAnnouncement[];
 }

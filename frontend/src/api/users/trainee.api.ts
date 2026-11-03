@@ -22,7 +22,7 @@ export const traineeApi = {
   // The trainee is resolved from the session on the server — no id is sent.
   dashboard: async () => {
     const payload = await request<TraineeDashboardPayload>('/trainee/dashboard')
-    if (!Array.isArray(payload?.enrollments) || !Array.isArray(payload?.announcements)) {
+    if (!Array.isArray(payload?.enrollments)) {
       throw new Error('The dashboard response is in an unexpected format. Please refresh or contact support.')
     }
     return payload

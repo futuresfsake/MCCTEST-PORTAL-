@@ -77,17 +77,6 @@ export interface DashboardSession {
   topicsCovered: string | null
 }
 
-export interface DashboardAnnouncement {
-  id: string
-  scope: AnnouncementScope
-  content: string
-  remarks: string | null
-  postedAt: string
-  postedBy: { name: string; role: string }
-  program: { id: string; name: string } | null
-  batch: { id: string; batchName: string } | null
-}
-
 export interface DashboardEnrollmentDetail extends DashboardEnrollment {
   attendance: DashboardAttendance
   competencies: DashboardCompetencyGroup[]
@@ -97,5 +86,4 @@ export interface DashboardEnrollmentDetail extends DashboardEnrollment {
 export interface TraineeDashboardPayload {
   defaultEnrollmentId: string | null
   enrollments: DashboardEnrollmentDetail[]
-  announcements: DashboardAnnouncement[]
 }

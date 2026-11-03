@@ -5,7 +5,6 @@ import {
   Logger,
 } from '@nestjs/common';
 import {
-  announcement_scope_enum,
   attendance_status_enum,
   competency_category_enum,
   enrollment_status_enum,
@@ -14,7 +13,6 @@ import {
 } from '../../../generated/prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import type {
-  DashboardAnnouncement,
   DashboardAttendance,
   DashboardCompetencyGroup,
   DashboardEnrollment,
@@ -23,7 +21,7 @@ import type {
   TraineeDashboardPayload,
 } from './dashboard.types';
 
-/** Statuses that tie the trainee to a batch's live schedule and announcements. */
+/** Statuses that tie the trainee to a batch's live schedule. */
 const ACTIVE_STATUSES: enrollment_status_enum[] = [
   enrollment_status_enum.ENROLLED,
   enrollment_status_enum.PENDING,
@@ -99,23 +97,14 @@ export class DashboardService {
   async getDashboard(userId: string): Promise<TraineeDashboardPayload> {
     try {
       const enrollments = await this.findEnrollments(userId);
-      const active = enrollments.filter((e) =>
-        ACTIVE_STATUSES.includes(e.enrollment_status),
+      const details = await Promise.all(
+        enrollments.map((e) => this.buildEnrollmentDetail(e)),
       );
-
-      const [details, announcements] = await Promise.all([
-        Promise.all(enrollments.map((e) => this.buildEnrollmentDetail(e))),
-        this.getAnnouncements(
-          active.map((e) => e.batch.program_id),
-          active.map((e) => e.batch_id),
-        ),
-      ]);
 
       return {
         // Active enrollments come first, so the first one is the default card.
         defaultEnrollmentId: enrollments[0]?.id ?? null,
         enrollments: details,
-        announcements,
       };
     } catch (error) {
       if (error instanceof HttpException) throw error;
@@ -317,64 +306,6 @@ export class DashboardService {
       sessionId: session.session_id,
       sessionDate: toDateOnly(session.session_date),
       topicsCovered: session.topics_covered,
-    }));
-  }
-
-  /**
-   * GLOBAL, plus PROGRAM/BATCH announcements matching any of the trainee's
-   * active programs and batches — fetched in a single query, newest first.
-   * The client narrows them to the selected enrollment.
-   */
-  private async getAnnouncements(
-    programIds: string[],
-    batchIds: string[],
-  ): Promise<DashboardAnnouncement[]> {
-    const scopes: Prisma.announcementsWhereInput[] = [
-      { scope: announcement_scope_enum.GLOBAL },
-    ];
-    if (programIds.length > 0) {
-      scopes.push({
-        scope: announcement_scope_enum.PROGRAM,
-        program_id: { in: programIds },
-      });
-    }
-    if (batchIds.length > 0) {
-      scopes.push({
-        scope: announcement_scope_enum.BATCH,
-        batch_id: { in: batchIds },
-      });
-    }
-
-    const announcements = await this.prisma.announcements.findMany({
-      where: { OR: scopes },
-      include: {
-        users: {
-          select: {
-            first_name: true,
-            middle_name: true,
-            last_name: true,
-            role: true,
-          },
-        },
-        programs: { select: { id: true, name: true } },
-        batch: { select: { id: true, batch_name: true } },
-      },
-      orderBy: { posted_at: 'desc' },
-    });
-
-    return announcements.map((item) => ({
-      id: item.id,
-      scope: item.scope,
-      content: item.content,
-      remarks: item.remarks,
-      postedAt: item.posted_at.toISOString(),
-      postedBy: { name: fullName(item.users), role: item.users.role },
-      program: item.programs
-        ? { id: item.programs.id, name: item.programs.name }
-        : null,
-      batch: item.batch
-        ? { id: item.batch.id, batchName: item.batch.batch_name }
-        : null,
     }));
   }
 }

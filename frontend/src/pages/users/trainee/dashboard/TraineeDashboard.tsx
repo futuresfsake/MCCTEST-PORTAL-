@@ -10,7 +10,6 @@ import EnrollmentCard from './components/EnrollmentCard'
 import AttendanceSummary from './components/AttendanceSummary'
 import CompetencyOutcomes from './components/CompetencyOutcomes'
 import UpcomingSessions from './components/UpcomingSessions'
-import TraineeAnnouncements from './components/TraineeAnnouncements'
 
 const NO_ATTENDANCE: DashboardAttendance = {
   counts: { PRESENT: 0, ABSENT: 0, LATE: 0, EXCUSED: 0 },
@@ -33,18 +32,6 @@ export default function TraineeDashboard() {
       data?.enrollments[0] ??
       null,
     [data, selectedId],
-  )
-
-  // GLOBAL, plus PROGRAM/BATCH announcements for the selected enrollment only.
-  const announcements = useMemo(
-    () =>
-      (data?.announcements ?? []).filter(
-        (item) =>
-          item.scope === 'GLOBAL' ||
-          (item.scope === 'PROGRAM' && item.program?.id === selected?.program.id) ||
-          (item.scope === 'BATCH' && item.batch?.id === selected?.batch.id),
-      ),
-    [data, selected],
   )
 
   const load = useCallback(() => {
@@ -91,7 +78,7 @@ export default function TraineeDashboard() {
                     <span className="block text-blue-900">Trainee Dashboard</span>
                   </h1>
                   <p className="mt-6 max-w-2xl text-base leading-7 text-slate-600 md:text-lg">
-                    View your enrollment, attendance, competency progress, and announcements.
+                    View your enrollment, attendance, and competency progress.
                   </p>
                 </div>
 
@@ -141,7 +128,6 @@ export default function TraineeDashboard() {
                     </div>
                     <div className="space-y-6">
                       <UpcomingSessions sessions={selected?.upcomingSessions ?? []} />
-                      <TraineeAnnouncements announcements={announcements} />
                     </div>
                   </div>
                 </div>
