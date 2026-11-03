@@ -221,6 +221,7 @@ model enrollments {
   attendance             attendance[]
   clearance              clearance[]
   distribution_checklist distribution_checklist?
+  inventory_transactions inventory_transactions[]
   batch                  batch                    @relation(fields: [batch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
   users                  users                    @relation(fields: [enrolled_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
   trainee                trainee                  @relation(fields: [trainee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
@@ -231,7 +232,7 @@ model enrollments {
   trainee_outcome_status trainee_outcome_status[]
   withdrawal_request     withdrawal_request[]
 
-  @@unique([trainee_id, batch_id], map: "enrollments_trainee_id_batch_id_key")
+  @@unique([trainee_id, batch_id])
   @@index([batch_id], map: "idx_enrollments_batch")
   @@index([enrollment_status], map: "idx_enrollments_status")
   @@index([trainee_id], map: "idx_enrollments_trainee")
@@ -281,10 +282,31 @@ model inventory {
   updated_by             String                   @db.Uuid
   updated_at             DateTime                 @default(now()) @db.Timestamptz(6)
   distribution_checklist distribution_checklist[]
+  inventory_transactions inventory_transactions[]
   programs               programs                 @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                  users                    @relation(fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
-  @@index([program_id], map: "idx_inventory_program")
+  @@unique([program_id, sizes], map: "uq_inventory_program_size")
+  @@index([program_id, sizes], map: "idx_inventory_program_size")
+}
+
+model inventory_transactions {
+  id              String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  inventory_id    String                          @db.Uuid
+  type            inventory_transaction_type_enum
+  quantity_change Int
+  quantity_after  Int
+  enrollment_id   String?                         @db.Uuid
+  performed_by    String                          @db.Uuid
+  remarks         String?
+  created_at      DateTime                        @default(now()) @db.Timestamptz(6)
+  inventory       inventory                       @relation(fields: [inventory_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments     enrollments?                    @relation(fields: [enrollment_id], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  users           users                           @relation(fields: [performed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([inventory_id, created_at(sort: Desc), id(sort: Desc)], map: "idx_inventory_transactions_history")
+  @@index([enrollment_id], map: "idx_inventory_transactions_enrollment")
+  @@index([created_at(sort: Desc), id(sort: Desc)], map: "idx_inventory_transactions_created")
 }
 
 model learning_outcome {
@@ -451,7 +473,7 @@ model trainee {
 
 model trainee_beneficiaries {
   id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  trainee_id     String  @unique(map: "trainee_beneficiaries_trainee_id_key") @db.Uuid
+  trainee_id     String  @unique @db.Uuid
   first_name     String  @db.VarChar(50)
   last_name      String  @db.VarChar(50)
   middle_name    String  @db.VarChar(50)
@@ -533,6 +555,7 @@ model users {
   enrollments                         enrollments[]
   generated_certificate               generated_certificate[]
   inventory                           inventory[]
+  inventory_transactions              inventory_transactions[]
   official_receipts                   official_receipts[]
   programs_programs_created_byTousers programs[]               @relation("programs_created_byTousers")
   programs_programs_updated_byTousers programs[]               @relation("programs_updated_byTousers")
@@ -704,6 +727,13 @@ enum request_status_enum {
   APPROVED
   REJECTED
   CANCELLED
+}
+
+enum inventory_transaction_type_enum {
+  INITIAL
+  RESTOCK
+  DISTRIBUTED
+  ADJUSTMENT
 }
 
 enum size_enum {

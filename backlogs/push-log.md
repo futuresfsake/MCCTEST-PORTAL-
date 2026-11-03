@@ -35,6 +35,10 @@
 | 2026-11-03 | — | Audit logs for `main` | `docs/main-audit-logs` → `main` | Sprint 3 |
 | 2026-11-03 | MP-30, SEC-01 | Trainee Dashboard, trainee announcements page and header bell, and the SEC-01 fix (announcements API no longer returns the poster's password hash) | PR #46 `feature/MP-30-trainee-dashboard` → `dev`, then PR #49 `dev` → `staging` (not yet on `main`) | Sprint 3 |
 | 2026-11-03 | — | Audit logs for `staging` (MP-30, SEC-01, SEC-02) | `docs/staging-audit-mp30-sec01` → `staging` | Sprint 3 |
+| 2026-11-03 | MP-35 | Uniform Inventory Module (admin + registrar): stock per program and size, restock, adjust with a reason, history of every change, automatic deduction when a trainee is enrolled with the uniform given | PR #52 `MP-35-uniform-inventory` → `dev` | Sprint 3 |
+| 2026-11-03 | MP-35 | Default inventory for every program (7 size rows at 0 and a backfill migration), Add Item dialog, XXXL in the size filter | PR #53 `docs/mp35-default-inventory-test-cases` → `dev` | Sprint 3 |
+| 2026-11-03 | MP-35 | Inventory list grouped by program with a size strip, program-level Stock Log fixes, Definition of Done audit | PR #54 `feature/MP-35-inventory-program-groups` → `dev` | Sprint 3 |
+| 2026-11-03 | — | Audit log for `dev` (MP-35: Definition of Done, migrations, data) | `docs/mp35-dev-audit` → `dev` | Sprint 3 |
 
 ---
 
@@ -75,6 +79,8 @@
 | Ticket | Feature | Branch | Assignee | Status |
 |--------|---------|--------|----------|--------|
 | MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
+| MP-35 | Uniform Inventory Module (admin + registrar) | `MP-35-uniform-inventory` → `dev` (PR #52, #53, #54) | Rhoddz Gerunda | On `dev`. **Not on `staging` or `main`.** All five MP-35 migrations are applied to Supabase (the last, default inventory for every program, on 2026-11-03 15:53). `dev` audited 2026-11-03 after PR #54 (checks, migrations and data all pass). Definition of Done: 2 of 6 met, 2 partial, 2 not met. Open: browser walkthrough as Admin and Registrar, concurrency tests, stock in the enrollment form (criterion 13), MP-53. See `admin/inventory/acceptance.md` |
+| MP-53 | Uniform Distribution: mark a uniform as distributed after enrollment and deduct stock (reusable module, Admin and Registrar) | not started | Chelsea Cllj (Jira default, reassign if needed) | Not started. Jira ticket and backlog written, depends on MP-35. See `admin/uniform-distribution/acceptance.md` |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
 | SEC-01 | **Security: announcements API exposed the poster's password hash to every logged-in role** | `feature/MP-30-trainee-dashboard` → `dev` (PR #46) → `staging` (PR #49) | Chelsea Cllj | Fixed and on `dev` and `staging`. **Not yet on `main`.** Still needs the backend restart and password resets for staff who posted announcements. See `technical/announcements-password-hash-exposure/acceptance.md` |
 | SEC-02 | **Security: `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs`** | — | Chelsea Cllj | Logged, not fixed. Deferred by choice. See `technical/multer-dos-advisory/acceptance.md` |
