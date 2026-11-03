@@ -14,6 +14,7 @@ backlogs/
   shared/
     authentication/acceptance.md                 — MP-4: Auth & Landing Page
     landing-page/acceptance.md                   — MP-20: Landing Page Chatbot
+    notifications/acceptance.md                  — MP-52: Notification Foundation (shared bell, notifications table, live push) (NOT STARTED)
   admin/
     dashboard/acceptance.md                      — MP-8: Admin Dashboard (placeholder)
     programs/acceptance.md                       — MP-13: Programs Module
@@ -25,21 +26,25 @@ backlogs/
     payments/acceptance.md                       — MP-25: Payments Module (30/30 PASS)
     inventory/acceptance.md                      — MP-35: Uniform Inventory (shared Admin and Registrar, ON DEV AND STAGING, not on main)
     uniform-distribution/acceptance.md           — MP-53: Uniform Distribution, reusable module for Admin and Registrar (NOT STARTED)
+    notifications/acceptance.md                  — MP-54: Notification Bell, Admin Events (NOT STARTED)
   registrar/
     dashboard/acceptance.md                      — Registrar Dashboard (placeholder)
     batches/acceptance.md                        — MP-15: Batch Configuration Module
     enrollment/acceptance.md                     — MP-16: Enrollment Form Module
     announcements/acceptance.md                  — MP-31: Registrar Announcements
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
+    notifications/acceptance.md                  — MP-55: Notification Bell, Registrar Events (NOT STARTED)
   trainer/
     dashboard/acceptance.md                      — Trainer Dashboard (placeholder, 7 pages planned)
     trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
+    notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
     dashboard-data-gaps/acceptance.md            — MP-30 follow-up: attendance, competencies, sessions not functional (NOT STARTED)
     account-generation/acceptance.md             — MP-26: Trainee Account Generation
   encoder/
     dashboard/acceptance.md                      — Encoder Dashboard (placeholder, 4 pages planned)
+    notifications/acceptance.md                  — MP-57: Notification Bell, Encoder Events (NOT STARTED)
   technical/
     announcements-password-hash-exposure/acceptance.md — SEC-01: password hash exposed by announcements API (FIXED, on dev and staging; main pending)
     multer-dos-advisory/acceptance.md            — SEC-02: multer denial-of-service advisory (LOGGED, not fixed)
