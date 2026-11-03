@@ -67,5 +67,5 @@
 
 | Ticket | Feature | Branch | Assignee | Status |
 |--------|---------|--------|----------|--------|
-| MP-25 | Payments Module (admin + registrar) | `feature/MP-25` | Vince Jon Gonzalez | Merged to dev (PR #34) — staging PR pending |
-| MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | Code Review Done (34/34 AC) — merged to dev (PR #30) |
+| MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
+| MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
