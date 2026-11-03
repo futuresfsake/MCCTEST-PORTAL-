@@ -7,7 +7,7 @@
 | Discovered  | 2026-11-03, while checking what the trainee announcements bell and page receive          |
 | Affected    | `GET /api/announcements`, `/active`, and the create and update responses                |
 | Affects     | Every logged-in role (Admin, Registrar, Encoder, Trainer, Trainee)                      |
-| Status      | **FIXED in the working tree on `feature/MP-30-trainee-dashboard` (uncommitted). NOT yet on `dev`, `staging` or `main`** |
+| Status      | **FIXED and on `dev` (PR #46). NOT yet on `staging` or `main`** |
 | Assignee    | Chelsea Cllj                                                                            |
 
 ---
