@@ -4,6 +4,8 @@ import Sidebar from '../layout/Sidebar'
 import Footer from '../layout/Footer'
 
 interface AdminPageShellProps {
+  /** Fallback sidebar menu. The sidebar normally follows the logged-in user's role. */
+  variant?: 'admin' | 'registrar'
   /** Small uppercase label above the title, e.g. "Finance" */
   eyebrow: string
   title: string
@@ -17,6 +19,7 @@ interface AdminPageShellProps {
  * footer. Pages that are not built yet render it without children.
  */
 export default function AdminPageShell({
+  variant = 'admin',
   eyebrow,
   title,
   description,
@@ -26,7 +29,7 @@ export default function AdminPageShell({
     <div className="flex min-h-screen flex-col bg-slate-50">
       <Header />
       <div className="relative flex min-h-0 flex-1">
-        <Sidebar variant="admin" />
+        <Sidebar variant={variant} />
         <main className="min-w-0 flex-1 border-b border-slate-200 bg-slate-50">
           <section>
             <div className="mx-auto max-w-7xl px-6 py-12 lg:px-8">

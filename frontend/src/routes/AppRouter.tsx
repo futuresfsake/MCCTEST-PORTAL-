@@ -13,6 +13,7 @@ import AdminBatchConfiguration from '../pages/users/admin/batches/AdminBatchConf
 import AdminAnnouncementsPage from '../pages/users/admin/announcements/AdminAnnouncementsPage'
 import AdminEnrollmentPage from '../pages/users/admin/enrollment/AdminEnrollmentPage'
 import AdminInventoryPage from '../pages/users/admin/inventory/AdminInventoryPage'
+import RegistrarInventoryPage from '../pages/users/registrar/inventory/RegistrarInventoryPage'
 import AdminReportsPage from '../pages/users/admin/reports/AdminReportsPage'
 import AdminImportDataPage from '../pages/users/admin/import-data/AdminImportDataPage'
 
@@ -157,7 +158,7 @@ return ( <Routes>
 <Route
   path="/admin/inventory"
   element={
-    <ProtectedRoute allowedRoles={['ADMIN', 'REGISTRAR']}>
+    <ProtectedRoute allowedRoles={['ADMIN']}>
       <AdminInventoryPage />
     </ProtectedRoute>
   }
@@ -213,8 +214,8 @@ return ( <Routes>
   <Route
   path="/registrar/inventory"
   element={
-    <ProtectedRoute allowedRoles={['ADMIN', 'REGISTRAR']}>
-      <AdminInventoryPage />
+    <ProtectedRoute allowedRoles={['REGISTRAR']}>
+      <RegistrarInventoryPage />
     </ProtectedRoute>
   }
 />
