@@ -31,6 +31,7 @@ backlogs/
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
   trainer/
     dashboard/acceptance.md                      — Trainer Dashboard (placeholder, 7 pages planned)
+    trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
     account-generation/acceptance.md             — MP-26: Trainee Account Generation
@@ -83,6 +84,7 @@ backlogs/
 | MP-16 | Enrollment Form | Registrar | Vince Jon Gonzalez | 7/7 PASS |
 | MP-31 | Announcements | Registrar | Chelsea Cllj | 28/28 PASS |
 | MP-24 | Trainee Information | Registrar | Aubrien Fuentes | 29 PASS, 4 PARTIAL |
+| MP-24 ext. | Trainee Information | Trainer | - | In review (own-batch scope, unverified) |
 | MP-26 | Account Generation | Trainee | Chelsea Cllj | 12/12 PASS |
 
 ### Placeholders (dashboard only, no feature pages)

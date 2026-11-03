@@ -69,3 +69,17 @@
 |--------|---------|--------|----------|--------|
 | MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
+| MP-50 | Trainee Information for Trainer (own batches only, no insurance) | `dev` | Chelsea Cllj | Pushed to `dev` — staging PR pending. Audited 2026-11-03, see `trainer/trainee-information/acceptance.md` |
+| MP-51 | Trainee Information for Encoder (all trainees, view-only) | `dev` | Chelsea Cllj | Pushed to `dev` — staging PR pending. Audited 2026-11-03, see `trainer/trainee-information/acceptance.md` |
+
+---
+
+## Trainee Information — Role Access
+
+| Action | Admin | Registrar | Trainer | Encoder | Trainee |
+|--------|-------|-----------|---------|---------|---------|
+| Open Trainees page | Yes | Yes | Yes (own batches only) | Yes | No (403) |
+| See all trainees | Yes | Yes | No | Yes | No |
+| Insurance filter and insurance details | Yes | Yes | No | Yes | No |
+| Edit trainee | No (view-only until MP-42) | No | No | No | No |
+| Route | `/admin/trainees` | `/registrar/trainees` | `/trainer/trainees` | `/encoder/trainees` | — |

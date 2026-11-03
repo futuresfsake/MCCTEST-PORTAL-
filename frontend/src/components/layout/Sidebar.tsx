@@ -202,6 +202,11 @@ const sidebarConfig: Record<
         title: 'Records',
         items: [
           {
+            label: 'Trainees',
+            path: '/trainer/trainees',
+            icon: 'fa-solid fa-users',
+          },
+          {
             label: 'Trainee Records',
             path: '/trainer/records',
             icon: 'fa-solid fa-folder-open',
@@ -334,6 +339,11 @@ const sidebarConfig: Record<
       {
         title: 'Records',
         items: [
+          {
+            label: 'Trainees',
+            path: '/encoder/trainees',
+            icon: 'fa-solid fa-users',
+          },
           {
             label: 'Trainee Records',
             path: '/encoder/records',
