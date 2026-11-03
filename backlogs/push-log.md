@@ -75,6 +75,7 @@
 | Ticket | Feature | Branch | Assignee | Status |
 |--------|---------|--------|----------|--------|
 | MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
+| MP-35 | Uniform Inventory Module (admin + registrar) | `MP-35-uniform-inventory` | Rhoddz Gerunda | In review, not merged. `main` merged into the branch 2026-11-03. Migrations `20261022`, `20261103_inventory_transactions_created_index` and `20261103_restore_mp24_indexes` are already applied to Supabase. See `admin/inventory/acceptance.md` |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
 | SEC-01 | **Security: announcements API exposed the poster's password hash to every logged-in role** | `feature/MP-30-trainee-dashboard` → `dev` (PR #46) → `staging` (PR #49) | Chelsea Cllj | Fixed and on `dev` and `staging`. **Not yet on `main`.** Still needs the backend restart and password resets for staff who posted announcements. See `technical/announcements-password-hash-exposure/acceptance.md` |
 | SEC-02 | **Security: `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs`** | — | Chelsea Cllj | Logged, not fixed. Deferred by choice. See `technical/multer-dos-advisory/acceptance.md` |
