@@ -10,9 +10,7 @@ import { TrainerTraineesController } from '../users/trainer/trainee-information/
 // Authentication is not under test here; RolesGuard is.
 jest.mock('../auth/guards/jwt-auth.guard', () => ({ JwtAuthGuard: class {} }));
 
-type ControllerClass = {
-  prototype: Record<string, (...args: never[]) => unknown>;
-};
+type ControllerClass = { prototype: object };
 
 /** Each trainee-information controller and the single role allowed to use it. */
 const CONTROLLERS: [string, ControllerClass, Role][] = [
@@ -30,7 +28,8 @@ function contextFor(
 ): ExecutionContext {
   return {
     getClass: () => controller,
-    getHandler: () => controller.prototype[handler],
+    getHandler: () =>
+      (controller.prototype as Record<string, unknown>)[handler],
     switchToHttp: () => ({ getRequest: () => ({ user: { role } }) }),
   } as unknown as ExecutionContext;
 }

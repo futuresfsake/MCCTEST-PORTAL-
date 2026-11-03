@@ -14,7 +14,6 @@ import { CreateStaffDto } from './dto/create-staff.dto';
 import { UpdateStaffDto } from './dto/update-staff.dto';
 import { user_role_enum } from '../../../generated/prisma/client';
 import * as bcrypt from 'bcrypt';
-console.log('StaffAccountsService loaded');
 // Staff roles that can be managed from this endpoint
 const STAFF_ROLES: user_role_enum[] = [
   user_role_enum.REGISTRAR,

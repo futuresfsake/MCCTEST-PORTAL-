@@ -31,8 +31,6 @@ export class ProgramsController {
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    console.log('PAGINATION QUERY:', { search, status, page, limit });
-
     return this.programsService.findAll(
       search,
       status,

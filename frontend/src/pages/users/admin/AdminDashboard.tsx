@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Header from '../../../components/layout/Header'
 import Sidebar from '../../../components/layout/Sidebar'
@@ -28,25 +28,6 @@ type Batch = {
 const AdminDashboard: React.FC = () => {
   const navigate = useNavigate()
   const [activePeriod, setActivePeriod] = useState('This Month')
-
-
-// Add this block to fetch from your new NestJS endpoint
-  useEffect(() => {
-    const fetchExpirations = async () => {
-      try {
-        //session track test
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
-        const response = await fetch(`${apiUrl}/sessions/expires`)
-        const data = await response.json()
-
-        console.log('Session Expirations:', data)
-      } catch (error) {
-        console.error('Error fetching sessions:', error)
-      }
-    }
-
-    fetchExpirations()
-  }, [])
   /* =============================================================
      DASHBOARD DATA
   ============================================================= */

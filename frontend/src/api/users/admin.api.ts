@@ -8,11 +8,6 @@ const BASE = '/api/admin/staff-accounts';
 async function handleResponse<T>(res: Response): Promise<T> {
   const text = await res.text();
 
-  console.log('HTTP status:', res.status);
-  console.log('HTTP URL:', res.url);
-  console.log('HTTP content-type:', res.headers.get('content-type'));
-  console.log('RAW RESPONSE:', text);
-
   let json: unknown;
 
   try {
@@ -97,8 +92,6 @@ export const adminApi = {
 
     const data = await handleResponse<unknown>(res);
 
-    console.log('listStaff API response:', data);
-    console.log('response is array:', Array.isArray(data));
 
     if (!Array.isArray(data)) {
       console.error('EXPECTED ARRAY, GOT:', data);
