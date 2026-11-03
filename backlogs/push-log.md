@@ -70,6 +70,7 @@
 |--------|---------|--------|----------|--------|
 | MP-25 | Payments Module (admin + registrar) | `feature/MP-25` → `dev` → `staging` | Vince Jon Gonzalez | On staging — PR to main pending |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
+| — | Pre-staging audit fixes (sessions route guarded, chatbot throttle, console logging removed, dependency updates, type and lint fixes) | `fix/predeploy-audit-fixes` → `dev` | Chelsea Cllj | PR to `dev` pending. Remaining: `multer` advisory (uploads unused), browser walkthrough per role |
 
 ---
 

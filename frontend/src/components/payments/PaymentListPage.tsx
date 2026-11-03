@@ -18,13 +18,6 @@ const reasonIcons: Record<string, string> = {
   EXTERNAL_FEES: 'fa-solid fa-arrow-up-right-from-square',
 };
 
-const methodIcons: Record<string, string> = {
-  CASH: 'fa-solid fa-money-bill-wave',
-  GCASH: 'fa-solid fa-mobile-screen',
-  BANK_TRANSFER: 'fa-solid fa-building-columns',
-  CHECK: 'fa-solid fa-money-check',
-};
-
 function formatCurrency(value: string | number | null | undefined) {
   const numeric = Number(value ?? 0);
   return new Intl.NumberFormat('en-PH', {
