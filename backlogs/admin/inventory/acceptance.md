@@ -92,7 +92,7 @@ Added after the review, from the senior-developer suggestions. Built and unit te
 | A2 | A distribution shows who received it: the trainee's name and ID card number | NOT TESTED | Joined in the history query's `select` (`enrollments.trainee.users`), no query per row. Blank if the enrollment was deleted |
 | A3 | History shows who did each change: staff name and role | NOT TESTED | `users` select now includes `role`. Never selects the email or password hash (unit test) |
 | A4 | "Last Restocked" column on the main table | NOT TESTED | One grouped query per page for `RESTOCK` rows. Shows "Never" if the item has only an opening balance |
-| A5 | **List grouped by program.** Each program is one collapsible row showing its totals (sizes, units in stock, how many sizes are out or low). Opening it loads that program's sizes with Restock, Adjust and History. Search by program name, a stock filter, and Expand all or Collapse all | NOT TESTED | Uses the existing summary and list endpoints, no backend change. Replaces the flat 49-row table. Not yet seen in a browser. Test cases TC-G1 to TC-G6 |
+| A5 | **List grouped by program.** Each program is one collapsible row showing its units in stock (or "No stock yet") and a **size strip**: one cell per size (XS to XXXL) with its quantity. Zero is shown in muted grey, low stock in amber, in stock in dark text. Red is not used for stock. Opening it loads that program's sizes with Restock, Adjust and History. Search by program name, a stock filter, and Expand all or Collapse all | NOT TESTED | The summary endpoint now also returns each size's quantity and level (one extra column, same low-stock threshold). No database change. Replaces the flat 49-row table. Not yet seen in a browser. Test cases TC-G1 to TC-G6 |
 
 ---
 
@@ -189,7 +189,7 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 ### TC-G1: Programs are grouped and collapsed by default
 - **Precondition:** The default rows exist, so every program has 7 sizes.
 - **Steps:** Open `/admin/inventory` and `/registrar/inventory`.
-- **Expected:** One row per program, all collapsed. Each header shows the program name, "7 sizes", the units in stock, and a red "N out" and an amber "N low" badge when there are any. Bread and Pastry Production shows 18 units. The three summary cards at the top are unchanged.
+- **Expected:** One row per program, all collapsed. Each header shows the program name, the units in stock (or "No stock yet" for a program with none), and a strip of seven cells, XS to XXXL, each with its quantity. Bread and Pastry Production shows 18 units with M 7 and L 11, the other sizes muted. Zero cells are grey, not red. A size at 1 to 5 shows amber. The strip is hidden on narrow screens, where the units line remains. The three summary cards at the top are unchanged.
 
 ### TC-G2: Open a program
 - **Steps:** Click a program's header.
@@ -273,6 +273,7 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 15:47 | Chelsea Cllj | Checks run before this commit. Read-only dry run of the backfill on Supabase: parses, adds 46 rows, 2 rows with stock untouched. Nothing was written to Supabase. Backend: 50 of 50 tests, `tsc`, ESLint, build and a boot with no errors. Frontend: ESLint, `tsc`, `vite build` pass | `f00d685` |
 | 15:53 | Chelsea Cllj | Applied the backfill migration to Supabase (details in the Database table). Checked with read-only queries: all 7 programs have 7 rows, existing stock and history unchanged | `docs/mp35-default-inventory-test-cases` |
 | 16:04 | Chelsea Cllj | **UI change:** the inventory list is grouped by program (collapsible, sizes loaded on demand) instead of one 49-row table. New `InventoryProgramGroup` component, `InventoryPage` simplified (no paging, column sorting or size filter). Search by program name and a stock filter added. No backend or database change. Lint, `tsc` and build pass. Criterion 18 updated, test cases TC-G1 to TC-G6 added | `9cb463e` |
+| 16:08 | Chelsea Cllj | **Design change to the program headers:** replaced the red "N out" and amber "N low" count badges (nearly every program read "7 out" because rows start at 0) with a size strip showing each size's quantity. Zero is muted grey, low is amber, red is no longer used for stock. Row status is a small dot and label instead of a filled pill. Backend: the summary query returns `sizes` (quantity and level per size). 2 new tests (52 of 52 pass). Lint, `tsc` and builds pass | `109140f` |
 
 ### Database (Supabase, shared)
 
