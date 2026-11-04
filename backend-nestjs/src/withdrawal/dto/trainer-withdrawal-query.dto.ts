@@ -11,10 +11,15 @@ import {
 } from 'class-validator';
 import { withdrawal_status_enum } from '../../generated/prisma/client';
 
-/** `ALL` shows every status. Left out, the list shows what needs the trainer. */
+/**
+ * `ALL` shows every status. `DECIDED` shows what the trainer already approved
+ * or rejected (the trainer's log). Left out, the list shows what needs the
+ * trainer.
+ */
 export const TRAINER_STATUS_FILTERS = [
   ...Object.values(withdrawal_status_enum),
   'ALL',
+  'DECIDED',
 ] as const;
 export type TrainerStatusFilter = (typeof TRAINER_STATUS_FILTERS)[number];
 
