@@ -19,9 +19,12 @@ import AdminImportDataPage from '../pages/users/admin/import-data/AdminImportDat
 
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 import TrainerAnnouncementsPage from '../pages/users/trainer/announcements/TrainerAnnouncementsPage'
+import TrainerWithdrawalPage from '../pages/users/trainer/withdrawal/TrainerWithdrawalPage'
 
 import TraineeDashboard from '../pages/users/trainee/dashboard/TraineeDashboard'
 import TraineeAnnouncementsPage from '../pages/users/trainee/announcements/TraineeAnnouncementsPage'
+import WithdrawalPage from '../pages/users/trainee/withdrawal/WithdrawalPage'
+import WithdrawalDetailPage from '../pages/users/trainee/withdrawal/WithdrawalDetailPage'
 import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 import EncoderAnnouncementsPage from '../pages/users/encoder/announcements/EncoderAnnouncementsPage'
 
@@ -306,6 +309,15 @@ return ( <Routes>
 
   {/* Trainee Information (MP-24): trainer sees only their own batches' trainees */}
   <Route
+    path="/trainer/withdrawal-requests"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINER']}>
+        <TrainerWithdrawalPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
     path="/trainer/trainees"
     element={
       <ProtectedRoute allowedRoles={['TRAINER']}>
@@ -340,6 +352,24 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['TRAINEE']}>
         <TraineeAnnouncementsPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/trainee/withdrawal"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINEE']}>
+        <WithdrawalPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/trainee/withdrawal/:id"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINEE']}>
+        <WithdrawalDetailPage />
       </ProtectedRoute>
     }
   />

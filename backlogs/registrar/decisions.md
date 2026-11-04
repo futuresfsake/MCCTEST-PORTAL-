@@ -17,6 +17,8 @@ A structured record of decisions that affect the Registrar, with the reason for 
 | D-03 | 2026-11-04 | MP-43 | Requirements Tracking is Registrar only. Bulk update capped at 100 rows, all or nothing | DECIDED |
 | D-04 | 2026-11-04 | MP-53, MP-59 | The restock reminder is split out of MP-53 into its own ticket, MP-59. Withdrawn and dropped trainees are shown greyed out as Inactive | DECIDED |
 | D-05 | 2026-11-04 | MP-42, MP-43 | Payment carries over on a program change (all programs have the same payment). Requirements page defaults to ENROLLED | DECIDED |
+| D-06 | 2026-11-04 | MP-45 to MP-49 | Withdrawal validation is sequential: Trainer first, then Registrar, then Admin. No race condition, `REGISTRAR_VALIDATED` removed | DECIDED |
+| D-07 | 2026-11-04 | MP-48 | A trainer must give a reason when rejecting a withdrawal request. Remarks stay optional when approving | DECIDED |
 
 ---
 
@@ -177,6 +179,83 @@ MP-53 first included a "Remind admin to order more" feature. It needs the notifi
 | 2 | Trainees are accepted and enrolled right away, so the work to follow up is on `ENROLLED` trainees. `PENDING` would add rows that need no follow-up |
 
 **Open:** whether the "record a new payment instead" option in MP-42 is still needed (logged as G-42-2 in `to-be-discussed.md`).
+
+---
+
+## D-06. Withdrawal validation is sequential: Trainer first, then Registrar, then Admin
+
+| Field | Value |
+|-------|-------|
+| **ID** | D-06 |
+| **Date** | 2026-11-04 |
+| **Ticket** | MP-45, MP-46, MP-47, MP-48, MP-49 |
+| **Status** | DECIDED |
+| **Registrar impact** | The Registrar can only validate a withdrawal request after the Trainer has validated it. The Registrar's validation sends the request to the Admin |
+| **Supersedes / Superseded by** | None. Replaces the earlier parallel design (Registrar and Trainer validating at the same time), which was never built |
+
+**Context**
+The first design had the Registrar and the Trainer validate in parallel, with the request going to the Admin once both were done. That needs the second validator to check the other side and move the status on, and two validators acting in the same second could leave a request stuck (a race condition).
+
+**Decision**
+The pipeline is sequential:
+
+`PENDING_VALIDATION` → (Trainer validates) `TRAINER_VALIDATED` → (Registrar validates) `PENDING_ADMIN_SIGNOFF` → (Admin signs off) `APPROVED`
+
+Any validator can reject (`REJECTED`). The trainee can cancel before completion (`CANCELLED`). The Admin only ever sees requests that both the Trainer and the Registrar have validated.
+
+**Rationale**
+
+| # | Reason |
+|---|--------|
+| 1 | No race condition. Only one validator can act at a time, so no row lock or conditional update is needed |
+| 2 | One straight status path with no branching, which is simpler to build, test and show to the trainee |
+| 3 | The Registrar's checklist (ID surrendered, finances cleared, documents submitted) is real paperwork. If the Trainer rejects first, the Registrar does none of it for nothing |
+
+**Options considered**
+
+| Option | For | Against |
+|--------|-----|---------|
+| A. Parallel (Trainer and Registrar at the same time) | Faster. The Registrar can work while the Trainer is away | Race condition. Branching status. Wasted Registrar work if the other rejects |
+| B. Trainer first, then Registrar (chosen) | Simple, no race, no wasted paperwork | Slower. A slow or absent Trainer stalls the request |
+
+**Consequences**
+- `REGISTRAR_VALIDATED` is removed from `withdrawal_status_enum`, since a Registrar validation now always leads straight to `PENDING_ADMIN_SIGNOFF`.
+- MP-48 (Trainer) acts only on `PENDING_VALIDATION`. MP-47 (Registrar) acts only on `TRAINER_VALIDATED`. Any other status returns 400.
+- The race-condition handling in MP-47 and MP-48 is no longer needed.
+
+**Open action** A Trainer who is slow or unavailable stalls the pipeline. Decide later whether the Admin may step in or reassign (not part of this decision).
+
+---
+
+## D-07. The trainer must give a reason when rejecting a withdrawal request
+
+| Field | Value |
+|-------|-------|
+| **ID** | D-07 |
+| **Date** | 2026-11-04 |
+| **Ticket** | MP-48 (Trainer: Validate Withdrawal Request) |
+| **Status** | DECIDED |
+| **Registrar impact** | None directly. The Registrar never sees a request the Trainer rejected, so the reason is for the trainee and the Admin |
+| **Supersedes / Superseded by** | Narrows MP-48, which said remarks were optional for both approve and reject |
+
+**Context**
+MP-48 said the trainer's remarks are optional. A rejected trainee would then see "Rejected" with no explanation, and the request ends there (nothing goes on to the Registrar or Admin).
+
+**Decision**
+Remarks are **required when the trainer rejects** and **optional when the trainer approves**. Blank or whitespace-only text counts as no remarks. Up to 1000 characters. The reason is saved on the request (`trainer_remarks`) and on the history row, which is what the trainee sees on the progress page.
+
+**Rationale**
+
+| # | Reason |
+|---|--------|
+| 1 | A rejection ends the request. The trainee has no other way to learn why |
+| 2 | The history already carries the reason to the trainee, so no new screen is needed |
+| 3 | Approving needs no explanation, so it stays quick |
+
+**Consequences**
+- The API refuses a reject with missing or blank remarks (400).
+- The trainer screen must make the reason field required when Reject is chosen.
+- The same question will come up for the Registrar (MP-47) and Admin (MP-49) rejections. Not decided here.
 
 ---
 
