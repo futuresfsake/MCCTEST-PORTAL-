@@ -119,6 +119,17 @@ describe('WithdrawalService (trainer)', () => {
       });
     });
 
+    it('DECIDED is the trainer log: own batches, already acted on, newest decision first', async () => {
+      await service.listForTrainer(TRAINER_USER, { status: 'DECIDED' });
+
+      const args = prisma.withdrawal_request.findMany.mock.calls[0][0];
+      expect(args.where).toEqual({
+        enrollments: { batch: { trainer: { user_id: TRAINER_USER } } },
+        trainer_validated_by: { not: null },
+      });
+      expect(args.orderBy[0]).toEqual({ trainer_validated_at: 'desc' });
+    });
+
     it('ALL removes the status filter, a status narrows it, a batch narrows the batch', async () => {
       await service.listForTrainer(TRAINER_USER, { status: 'ALL' });
       expect(

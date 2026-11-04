@@ -315,8 +315,9 @@ export class WithdrawalService {
   async listForTrainer(userId: string, query: TrainerWithdrawalQueryDto) {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
+    const decided = query.status === 'DECIDED';
     const status =
-      query.status === 'ALL'
+      query.status === 'ALL' || query.status === 'DECIDED'
         ? undefined
         : (query.status ?? withdrawal_status_enum.PENDING_VALIDATION);
 
@@ -346,6 +347,8 @@ export class WithdrawalService {
           : {}),
       },
       ...(status ? { withdrawal_status: status } : {}),
+      // The trainer's log: only requests this trainer already approved or rejected.
+      ...(decided ? { trainer_validated_by: { not: null } } : {}),
     };
 
     const [rows, total] = await this.prisma.$transaction([
@@ -353,7 +356,9 @@ export class WithdrawalService {
         where,
         include: trainerListInclude,
         orderBy: [
-          { date_requested: 'desc' },
+          ...(decided
+            ? [{ trainer_validated_at: 'desc' as const }]
+            : [{ date_requested: 'desc' as const }]),
           { withdrawal_request_id: 'desc' },
         ],
         skip: (page - 1) * limit,

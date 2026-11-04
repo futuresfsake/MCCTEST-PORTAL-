@@ -7,6 +7,7 @@ import { Pagination } from '../../../../components/common/Pagination'
 import { trainerWithdrawalApi } from '../../../../api/users/trainer-withdrawal.api'
 import type {
   TrainerStatusFilter,
+  TrainerWithdrawalListItem,
   TrainerWithdrawalListResponse,
   WithdrawalStatus,
 } from '../../../../types/withdrawal.type'
@@ -15,11 +16,72 @@ import { formatDate, STATUS_LABELS } from '../../../../components/withdrawal/wit
 import TrainerWithdrawalPanel from './components/TrainerWithdrawalPanel'
 
 const DEFAULT_LIMIT = 10
+const LOG_LIMIT = 10
 const STATUSES = Object.keys(STATUS_LABELS) as WithdrawalStatus[]
 
 function readStatus(value: string | null): TrainerStatusFilter {
   if (value === 'ALL') return 'ALL'
   return STATUSES.includes(value as WithdrawalStatus) ? (value as WithdrawalStatus) : ''
+}
+
+/** One row per request. Used by the main list and by the request log below it. */
+function RequestsTable({
+  items,
+  onOpen,
+  bare = false,
+}: {
+  items: TrainerWithdrawalListItem[]
+  onOpen: (id: string) => void
+  /** No outer border, for when the table sits inside a card that already has one. */
+  bare?: boolean
+}) {
+  return (
+    <div className={`overflow-x-auto bg-white ${bare ? '' : 'border border-slate-200'}`}>
+      <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
+        <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
+          <tr>
+            <th scope="col" className="whitespace-nowrap px-5 py-3">Trainee</th>
+            <th scope="col" className="whitespace-nowrap px-5 py-3">Program and batch</th>
+            <th scope="col" className="whitespace-nowrap px-5 py-3">Requested</th>
+            <th scope="col" className="whitespace-nowrap px-5 py-3">Status</th>
+            <th scope="col" className="whitespace-nowrap px-5 py-3">Reason</th>
+            <th scope="col" className="px-5 py-3"><span className="sr-only">Review</span></th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-100">
+          {items.map((item) => (
+            <tr key={item.id} className="hover:bg-slate-50">
+              <td className="px-5 py-4">
+                <p className="font-medium text-slate-900">{item.trainee.name ?? 'Unknown trainee'}</p>
+                {item.trainee.systemId && <p className="text-slate-500">{item.trainee.systemId}</p>}
+              </td>
+              <td className="px-5 py-4">
+                <p className="text-slate-900">{item.enrollment.programName}</p>
+                <p className="text-slate-500">{item.enrollment.batchName}</p>
+              </td>
+              <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDate(item.dateRequested)}</td>
+              <td className="px-5 py-4">
+                <WithdrawalStatusBadge status={item.status} />
+              </td>
+              <td className="max-w-xs px-5 py-4 text-slate-600">
+                <p className="truncate" title={item.reason}>{item.reason}</p>
+              </td>
+              <td className="whitespace-nowrap px-5 py-4 text-right">
+                <button
+                  type="button"
+                  onClick={() => onOpen(item.id)}
+                  className="font-semibold text-blue-800 hover:underline"
+                  aria-label={`Review the request from ${item.trainee.name ?? 'this trainee'}`}
+                >
+                  {item.status === 'PENDING_VALIDATION' ? 'Review' : 'View'}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
 }
 
 /**
@@ -33,12 +95,18 @@ export default function TrainerWithdrawalPage() {
   const status = readStatus(params.get('status'))
   const search = params.get('search') ?? ''
   const openId = params.get('request')
+  const logPage = Math.max(1, Number(params.get('logPage')) || 1)
+  const logSearch = params.get('logSearch') ?? ''
 
   const [result, setResult] = useState<TrainerWithdrawalListResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [logResult, setLogResult] = useState<TrainerWithdrawalListResponse | null>(null)
+  const [logError, setLogError] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState(0)
   const [searchInput, setSearchInput] = useState(search)
   const searchTimer = useRef<number | undefined>(undefined)
+  const [logSearchInput, setLogSearchInput] = useState(logSearch)
+  const logSearchTimer = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     let active = true
@@ -57,7 +125,31 @@ export default function TrainerWithdrawalPage() {
     }
   }, [page, limit, status, search, reloadKey])
 
-  useEffect(() => () => window.clearTimeout(searchTimer.current), [])
+  // The log: what the trainer already approved or rejected, so a decision never drops out of sight.
+  useEffect(() => {
+    let active = true
+    trainerWithdrawalApi
+      .list({ page: logPage, limit: LOG_LIMIT, status: 'DECIDED', search: logSearch })
+      .then((response) => {
+        if (!active) return
+        setLogResult(response)
+        setLogError(null)
+      })
+      .catch((err: unknown) => {
+        if (active) setLogError(err instanceof Error ? err.message : 'Unable to load the request log.')
+      })
+    return () => {
+      active = false
+    }
+  }, [logPage, logSearch, reloadKey])
+
+  useEffect(
+    () => () => {
+      window.clearTimeout(searchTimer.current)
+      window.clearTimeout(logSearchTimer.current)
+    },
+    [],
+  )
 
   const update = useCallback(
     (changes: Record<string, string | null>) => {
@@ -75,6 +167,15 @@ export default function TrainerWithdrawalPage() {
     setSearchInput(value)
     window.clearTimeout(searchTimer.current)
     searchTimer.current = window.setTimeout(() => update({ search: value.trim() || null, page: null }), 300)
+  }
+
+  function handleLogSearch(value: string) {
+    setLogSearchInput(value)
+    window.clearTimeout(logSearchTimer.current)
+    logSearchTimer.current = window.setTimeout(
+      () => update({ logSearch: value.trim() || null, logPage: null }),
+      300,
+    )
   }
 
   const closePanel = useCallback(() => update({ request: null }), [update])
@@ -163,51 +264,7 @@ export default function TrainerWithdrawalPage() {
 
             {result && result.data.length > 0 && (
               <>
-                <div className="overflow-x-auto border border-slate-200 bg-white">
-                  <table className="min-w-full divide-y divide-slate-200 text-left text-sm">
-                    <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-600">
-                      <tr>
-                        <th scope="col" className="px-5 py-3">Trainee</th>
-                        <th scope="col" className="px-5 py-3">Program and batch</th>
-                        <th scope="col" className="px-5 py-3">Requested</th>
-                        <th scope="col" className="px-5 py-3">Status</th>
-                        <th scope="col" className="px-5 py-3">Reason</th>
-                        <th scope="col" className="px-5 py-3"><span className="sr-only">Review</span></th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {result.data.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-50">
-                          <td className="px-5 py-4">
-                            <p className="font-medium text-slate-900">{item.trainee.name ?? 'Unknown trainee'}</p>
-                            {item.trainee.systemId && <p className="text-slate-500">{item.trainee.systemId}</p>}
-                          </td>
-                          <td className="px-5 py-4">
-                            <p className="text-slate-900">{item.enrollment.programName}</p>
-                            <p className="text-slate-500">{item.enrollment.batchName}</p>
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-4 text-slate-700">{formatDate(item.dateRequested)}</td>
-                          <td className="px-5 py-4">
-                            <WithdrawalStatusBadge status={item.status} />
-                          </td>
-                          <td className="max-w-xs px-5 py-4 text-slate-600">
-                            <p className="truncate" title={item.reason}>{item.reason}</p>
-                          </td>
-                          <td className="whitespace-nowrap px-5 py-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => update({ request: item.id })}
-                              className="font-semibold text-blue-800 hover:underline"
-                              aria-label={`Review the request from ${item.trainee.name ?? 'this trainee'}`}
-                            >
-                              {item.status === 'PENDING_VALIDATION' ? 'Review' : 'View'}
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <RequestsTable items={result.data} onOpen={(id) => update({ request: id })} />
                 <div className="mt-4">
                   <Pagination
                     page={result.meta.page}
@@ -219,6 +276,62 @@ export default function TrainerWithdrawalPage() {
                   />
                 </div>
               </>
+            )}
+
+            {(
+              <section aria-labelledby="trainer-wd-log" className="mt-12 border border-slate-200 bg-white">
+                <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 px-5 py-5">
+                  <div className="min-w-0">
+                    <h2 id="trainer-wd-log" className="text-xl font-bold text-slate-900">
+                      Request history
+                    </h2>
+                    <p className="mt-1 max-w-xl text-sm text-slate-600">
+                      The requests you already approved or rejected, newest decision first. New requests stay at the
+                      top.
+                    </p>
+                  </div>
+                  <div className="w-full sm:w-72">
+                    <label htmlFor="trainer-wd-log-search" className="block text-sm font-medium text-slate-700">
+                      Search trainee
+                    </label>
+                    <input
+                      id="trainer-wd-log-search"
+                      type="search"
+                      value={logSearchInput}
+                      onChange={(e) => handleLogSearch(e.target.value)}
+                      placeholder="Name or system ID"
+                      maxLength={100}
+                      className="mt-1 w-full border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-blue-700 focus:outline-none focus:ring-1 focus:ring-blue-700"
+                    />
+                  </div>
+                </div>
+                {logError && (
+                  <div role="alert" className="m-5 border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                    {logError}
+                  </div>
+                )}
+                {!logResult && !logError && <p className="px-5 py-6 text-sm text-slate-500">Loading history…</p>}
+                {logResult && logResult.data.length === 0 && (
+                  <p className="px-5 py-10 text-center text-sm text-slate-600">
+                    {logSearch ? 'No requests match your search.' : 'You have not approved or rejected any request yet.'}
+                  </p>
+                )}
+                {logResult && logResult.data.length > 0 && (
+                  <>
+                    <RequestsTable bare items={logResult.data} onOpen={(id) => update({ request: id })} />
+                    <div className="border-t border-slate-200 px-5 py-4">
+                      <Pagination
+                        page={logResult.meta.page}
+                        limit={logResult.meta.limit}
+                        total={logResult.meta.total}
+                        totalPages={logResult.meta.totalPages}
+                        onPageChange={(next) => update({ logPage: next > 1 ? String(next) : null })}
+                        onLimitChange={() => {}}
+                      />
+                    </div>
+                  </>
+                )}
+              </section>
             )}
           </section>
         </main>
