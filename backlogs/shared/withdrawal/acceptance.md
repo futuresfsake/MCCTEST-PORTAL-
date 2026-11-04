@@ -133,7 +133,7 @@ The parallel design had a race condition (two validators approving in the same s
 
 ## Audit of `dev` after the trainee API and UI merge (2026-11-04)
 
-A fuller audit (code, tests, security, leaks, dependencies, data) is in `audit-pre-staging.md`. This section is the shorter first pass.
+A fuller audit (code, tests, security, leaks, dependencies, data) is in `audit-pre-staging.md`. This section is the shorter first pass. The same checks run again on the `staging` branch after the merge are in `audit-staging.md`.
 
 `dev` at `a8e0c33` (PRs #62, #63, #64). Run from a fresh pull.
 
