@@ -12,6 +12,8 @@ import {
 } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
+import { TrainerWithdrawalQueryDto } from './dto/trainer-withdrawal-query.dto';
+import { ValidateWithdrawalTrainerDto } from './dto/validate-withdrawal-trainer.dto';
 import { WithdrawalQueryDto } from './dto/withdrawal-query.dto';
 
 /**
@@ -20,8 +22,8 @@ import { WithdrawalQueryDto } from './dto/withdrawal-query.dto';
  * PENDING_ADMIN_SIGNOFF -> admin -> APPROVED. Any validator can REJECT and the
  * trainee can CANCEL while the request is still PENDING_VALIDATION.
  *
- * This service is shared by every role. This file holds the trainee side; the
- * trainer, registrar and admin methods are added by their own tickets.
+ * This service is shared by every role. This file holds the trainee and trainer
+ * sides; the registrar and admin methods are added by their own tickets.
  */
 
 /** A request in any of these states is still "open" for its enrollment. */
@@ -51,8 +53,8 @@ const listInclude = {
   },
 } satisfies Prisma.withdrawal_requestInclude;
 
-const detailInclude = {
-  ...listInclude,
+/** Who acted at each stage, plus the full history. Shared by every role's detail. */
+const pipelineInclude = {
   trainer_validator: actorSelect,
   registrar_validator: actorSelect,
   admin_signer: actorSelect,
@@ -69,11 +71,57 @@ const detailInclude = {
   },
 } satisfies Prisma.withdrawal_requestInclude;
 
+const detailInclude = {
+  ...listInclude,
+  ...pipelineInclude,
+} satisfies Prisma.withdrawal_requestInclude;
+
+/**
+ * The trainer also sees who the trainee is. Name and ID only: no contact
+ * details, no password hash.
+ */
+const trainerListInclude = {
+  enrollments: {
+    select: {
+      id: true,
+      enrollment_status: true,
+      batch: {
+        select: {
+          id: true,
+          batch_name: true,
+          programs: { select: { name: true } },
+        },
+      },
+      trainee: {
+        select: {
+          users: {
+            select: { first_name: true, last_name: true, system_id: true },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.withdrawal_requestInclude;
+
+const trainerDetailInclude = {
+  ...trainerListInclude,
+  ...pipelineInclude,
+} satisfies Prisma.withdrawal_requestInclude;
+
 type ListRow = Prisma.withdrawal_requestGetPayload<{
   include: typeof listInclude;
 }>;
 type DetailRow = Prisma.withdrawal_requestGetPayload<{
   include: typeof detailInclude;
+}>;
+type TrainerListRow = Prisma.withdrawal_requestGetPayload<{
+  include: typeof trainerListInclude;
+}>;
+type TrainerDetailRow = Prisma.withdrawal_requestGetPayload<{
+  include: typeof trainerDetailInclude;
+}>;
+type PipelineRow = Prisma.withdrawal_requestGetPayload<{
+  include: typeof pipelineInclude;
 }>;
 type Actor = { first_name: string; last_name: string; role: string };
 
@@ -85,7 +133,9 @@ function todayInManila(): Date {
   return new Date(`${iso}T00:00:00.000Z`);
 }
 
-function actorName(actor: Actor | null): string | null {
+function actorName(
+  actor: Pick<Actor, 'first_name' | 'last_name'> | null,
+): string | null {
   return actor ? `${actor.first_name} ${actor.last_name}`.trim() : null;
 }
 
@@ -255,6 +305,164 @@ export class WithdrawalService {
     return this.getForTrainee(userId, requestId);
   }
 
+  // ---------------------------------------------------------------- trainer
+
+  /**
+   * Requests from trainees in the trainer's own batches. Left without a status
+   * it shows what needs the trainer (PENDING_VALIDATION); `ALL` shows every
+   * status so past decisions can be reviewed.
+   */
+  async listForTrainer(userId: string, query: TrainerWithdrawalQueryDto) {
+    const page = query.page ?? DEFAULT_PAGE;
+    const limit = query.limit ?? DEFAULT_LIMIT;
+    const status =
+      query.status === 'ALL'
+        ? undefined
+        : (query.status ?? withdrawal_status_enum.PENDING_VALIDATION);
+
+    // Each word must match the first, middle or last name or the system ID.
+    const terms = (query.search ?? '').split(/\s+/).filter(Boolean).slice(0, 5);
+    const where: Prisma.withdrawal_requestWhereInput = {
+      enrollments: {
+        batch: {
+          trainer: { user_id: userId },
+          ...(query.batchId ? { id: query.batchId } : {}),
+        },
+        ...(terms.length
+          ? {
+              trainee: {
+                users: {
+                  AND: terms.map((term) => ({
+                    OR: [
+                      { first_name: { contains: term, mode: 'insensitive' } },
+                      { middle_name: { contains: term, mode: 'insensitive' } },
+                      { last_name: { contains: term, mode: 'insensitive' } },
+                      { system_id: { contains: term, mode: 'insensitive' } },
+                    ],
+                  })),
+                },
+              },
+            }
+          : {}),
+      },
+      ...(status ? { withdrawal_status: status } : {}),
+    };
+
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.withdrawal_request.findMany({
+        where,
+        include: trainerListInclude,
+        orderBy: [
+          { date_requested: 'desc' },
+          { withdrawal_request_id: 'desc' },
+        ],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.withdrawal_request.count({ where }),
+    ]);
+
+    return {
+      data: rows.map((row) => this.serializeTrainerListRow(row)),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+    };
+  }
+
+  /** One request from the trainer's own batches, with its full history. */
+  async getForTrainer(userId: string, requestId: string) {
+    await this.assertTrainerOwns(this.prisma, userId, requestId);
+    const row = await this.prisma.withdrawal_request.findUniqueOrThrow({
+      where: { withdrawal_request_id: requestId },
+      include: trainerDetailInclude,
+    });
+    return this.serializeTrainerDetail(row);
+  }
+
+  /**
+   * First validation step. Only a request that is still waiting for the
+   * trainer can be validated. Approve moves it on to the registrar
+   * (TRAINER_VALIDATED); reject ends it (REJECTED) and needs a reason.
+   */
+  async validateByTrainer(
+    userId: string,
+    requestId: string,
+    dto: ValidateWithdrawalTrainerDto,
+  ) {
+    const approve = dto.action === 'APPROVE';
+    const next = approve
+      ? withdrawal_status_enum.TRAINER_VALIDATED
+      : withdrawal_status_enum.REJECTED;
+
+    await this.prisma.$transaction(async (tx) => {
+      await this.assertTrainerOwns(tx, userId, requestId);
+
+      // Conditional update: if the trainee cancels at the same moment, only
+      // one of the two writes wins and the other gets a clean 400.
+      const updated = await tx.withdrawal_request.updateMany({
+        where: {
+          withdrawal_request_id: requestId,
+          withdrawal_status: withdrawal_status_enum.PENDING_VALIDATION,
+        },
+        data: {
+          withdrawal_status: next,
+          trainer_validated: approve,
+          trainer_validated_by: userId,
+          trainer_validated_at: new Date(),
+          trainer_remarks: dto.remarks ?? null,
+        },
+      });
+      if (updated.count === 0) {
+        throw new BadRequestException(
+          'Only a request that is waiting for the trainer can be validated',
+        );
+      }
+      await tx.withdrawal_status_history.create({
+        data: {
+          withdrawal_request_id: requestId,
+          old_status: withdrawal_status_enum.PENDING_VALIDATION,
+          new_status: next,
+          changed_by: userId,
+          remarks: dto.remarks ?? null,
+        },
+      });
+    });
+
+    return this.getForTrainer(userId, requestId);
+  }
+
+  /**
+   * The request must exist (404) and belong to a batch assigned to this
+   * trainer (403). A role check alone is not enough: another trainer's
+   * request must not be readable or actionable.
+   */
+  private async assertTrainerOwns(
+    db: Prisma.TransactionClient,
+    userId: string,
+    requestId: string,
+  ): Promise<void> {
+    const row = await db.withdrawal_request.findUnique({
+      where: { withdrawal_request_id: requestId },
+      select: {
+        enrollments: {
+          select: {
+            batch: { select: { trainer: { select: { user_id: true } } } },
+          },
+        },
+      },
+    });
+    if (!row) throw new NotFoundException('Withdrawal request not found');
+    if (row.enrollments.batch.trainer.user_id !== userId) {
+      throw new ForbiddenException(
+        'This request is not from one of your batches',
+      );
+    }
+  }
+
   // ---------------------------------------------------------------- helpers
 
   private async requireTraineeId(userId: string): Promise<string> {
@@ -313,6 +521,41 @@ export class WithdrawalService {
   private serializeDetail(row: DetailRow) {
     return {
       ...this.serializeListRow(row),
+      ...this.serializePipeline(row),
+    };
+  }
+
+  private serializeTrainerListRow(row: TrainerListRow) {
+    const user = row.enrollments.trainee.users;
+    return {
+      id: row.withdrawal_request_id,
+      status: row.withdrawal_status,
+      reason: row.requested_reason,
+      dateRequested: row.date_requested.toISOString().slice(0, 10),
+      trainee: {
+        name: user ? actorName(user) : null,
+        systemId: user?.system_id ?? null,
+      },
+      enrollment: {
+        id: row.enrollments.id,
+        status: row.enrollments.enrollment_status,
+        batchId: row.enrollments.batch.id,
+        batchName: row.enrollments.batch.batch_name,
+        programName: row.enrollments.batch.programs.name,
+      },
+    };
+  }
+
+  private serializeTrainerDetail(row: TrainerDetailRow) {
+    return {
+      ...this.serializeTrainerListRow(row),
+      ...this.serializePipeline(row),
+    };
+  }
+
+  /** Stages and history, the same for every role that can open a request. */
+  private serializePipeline(row: PipelineRow) {
+    return {
       stages: {
         trainer: {
           validated: row.trainer_validated,
