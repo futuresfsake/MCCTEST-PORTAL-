@@ -7,7 +7,7 @@
 | **File** | `backend-nestjs/prisma/migrations/20261104_withdrawal_pipeline_schema/migration.sql` |
 | **Type** | Additive. No column, table or index is dropped or altered |
 | **Tested** | 2026-11-04, on a throwaway local PostgreSQL 17 (not Supabase) |
-| **Applied to Supabase** | **No.** Run `npx prisma migrate deploy` when ready (see Rollout) |
+| **Applied to Supabase** | **Yes, 2026-11-04** with `npx prisma migrate deploy`. Only this migration was pending. `withdrawal_request` had 0 rows and 10 columns before, 23 after. Verified: status up to date, enum, both indexes, history table, no withdrawal drift |
 
 Context and flow: see `acceptance.md` and decision D-06 in `registrar/decisions.md`.
 
@@ -100,7 +100,7 @@ Setup: all 11 earlier migrations applied, 4 legacy rows seeded (one per `request
 
 ---
 
-## 5. Rollout
+## 5. Rollout (done 2026-11-04, kept as the record of the steps)
 
 1. Merge the branch to `dev`.
 2. Back up (Supabase point-in-time or a dump) before applying to the shared database.

@@ -52,7 +52,7 @@ The parallel design had a race condition (two validators approving in the same s
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 1 | The migration runs cleanly on a database that already has `withdrawal_request` rows | PASS | Tested 2026-11-04 on a local PostgreSQL 17 with 4 seeded legacy rows. **Not yet applied to Supabase.** See `migration.md` |
+| 1 | The migration runs cleanly on a database that already has `withdrawal_request` rows | PASS | Tested 2026-11-04 on a local PostgreSQL 17 with 4 seeded legacy rows. Applied to Supabase 2026-11-04 (table was empty). See `migration.md` |
 | 2 | `npx prisma generate` produces no errors | PASS | Generated 2026-11-04 |
 | 3 | All new enums and tables are accessible through the Prisma client | PASS | Client regenerated |
 | 4 | Existing rows keep their data (additive, not destructive) | PASS | Verified on the local test database. Legacy columns kept |
@@ -64,14 +64,14 @@ The parallel design had a race condition (two validators approving in the same s
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| T-1 | Trainee can submit a withdrawal request for their own `ENROLLED` enrollment | NOT STARTED | |
-| T-2 | Submitting for a non-enrolled or non-own enrollment returns 400/403 | NOT STARTED | |
-| T-3 | Submitting a duplicate open request (`PENDING_VALIDATION`, `TRAINER_VALIDATED` or `PENDING_ADMIN_SIGNOFF`) returns 409 | NOT STARTED | Widened from "pending" because of the longer pipeline |
-| T-4 | Trainee sees all their requests with enrollment and program context | NOT STARTED | |
-| T-5 | The pipeline view shows the stages in the order Request, Trainer, Registrar, Admin, with real-time status | NOT STARTED | D-06 |
-| T-6 | Trainee can cancel only while `PENDING_VALIDATION`; otherwise 400 | NOT STARTED | |
-| T-7 | All responses exclude `password_hash`; non-trainee roles get 403 | NOT STARTED | |
-| T-8 | Pages type-check, build and lint with 0 problems | NOT STARTED | |
+| T-1 | Trainee can submit a withdrawal request for their own `ENROLLED` enrollment | PASS (API) | Backend branch `feature/withdrawal-trainee-request-api`. Tested against a real local database |
+| T-2 | Submitting for a non-enrolled or non-own enrollment returns 400/403 | PASS (API) | Not enrolled: 400. Not own or missing: 403 (same answer, so ids are not revealed) |
+| T-3 | Submitting a duplicate open request (`PENDING_VALIDATION`, `TRAINER_VALIDATED` or `PENDING_ADMIN_SIGNOFF`) returns 409 | PASS (API) | Widened from "pending" because of the longer pipeline. Two simultaneous submits: 60 of 60 races gave one winner and a 409 |
+| T-4 | Trainee sees all their requests with enrollment and program context | PASS (API) | List is scoped to the caller, paginated, optional status filter |
+| T-5 | The pipeline view shows the stages in the order Request, Trainer, Registrar, Admin, with real-time status | NOT STARTED | D-06. API already returns the stages and history. UI is the next branch |
+| T-6 | Trainee can cancel only while `PENDING_VALIDATION`; otherwise 400 | PASS (API) | Conditional update, so a cancel and a trainer action at the same moment cannot both win |
+| T-7 | All responses exclude `password_hash`; non-trainee roles get 403 | PASS (API) | Responses select named fields only. Role guard `@Roles(TRAINEE)` on the controller. Another trainee's request returns 404 |
+| T-8 | Pages type-check, build and lint with 0 problems | PARTIAL | Backend: tsc, build and eslint pass, 72 of 72 unit tests pass. Pages not built yet |
 
 ## Acceptance Criteria (MP-48, Trainer, first validation)
 
@@ -125,6 +125,7 @@ The parallel design had a race condition (two validators approving in the same s
 
 | Date | Change |
 |------|--------|
+| 2026-11-04 | Trainee backend (MP-46, API half) built on `feature/withdrawal-trainee-request-api`: shared `WithdrawalService`, trainee controller, 20 unit tests, plus a throwaway real-database run (10 scenarios and a 60-race stress test). Found and fixed an error-mapping bug in that run. UI half still to do |
 | 2026-11-04 | Pipeline changed from parallel to sequential (Trainer, then Registrar, then Admin), decision D-06. Jira tickets MP-45 to MP-49 rewritten to match. `REGISTRAR_VALIDATED` removed. MP-48 is now ticket 3 of 5 and MP-47 ticket 4 of 5 |
 
 ---
