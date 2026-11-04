@@ -12,10 +12,11 @@
 
 ## Verdict
 
-**The code is ready for `main`. The feature is not finished, and nobody has seen the pages run.** Every engineering check passes and the database is clean. Two things decide whether to merge now:
+**The code is ready for `main` as a per-task release of MP-45, MP-46 and MP-48.** Every engineering check passes and the database is clean. One thing is still open:
 
 1. **No browser check exists** for any withdrawal page (trainee list, form and pipeline; trainer list, panel, Request history). Every UI criterion is "PASS by build and server render", not by use.
-2. **A request cannot finish.** MP-47 (Registrar) and MP-49 (Admin) are not built. A trainee can submit, and the trainer can approve, but then the request sits at `TRAINER_VALIDATED` with nobody able to act. On `main` this would be live to real users.
+
+Releases are per task, so MP-47 (Registrar) and MP-49 (Admin) ship in their own releases. Until then a request stops at `TRAINER_VALIDATED` (A-12, informational).
 
 ## 1. Engineering checks (run on the `staging` checkout)
 
@@ -99,11 +100,10 @@ The migration `20261104_withdrawal_pipeline_schema` was applied on 2026-11-04 an
 | A-4 to A-9 | Low / Info | Open | As in `audit-pre-staging.md` |
 | A-10 | Low | Open | `DECIDED` means "a trainer decided", not "this trainer". If a batch is reassigned, the new trainer sees the old trainer's decisions in the history. Probably what is wanted, but to confirm |
 | A-11 | Low | Open | The history table's page size is fixed at 10. The page-size selector in the shared pagination does nothing there |
-| A-12 (new) | Medium | Open | **The pipeline cannot complete.** MP-47 and MP-49 are not built, so every approved request stops at `TRAINER_VALIDATED`. Trainees see "waiting for registrar" with no one to act |
+| A-12 (new) | Info | Expected | Until MP-47 and MP-49 are released, every approved request stops at `TRAINER_VALIDATED`. Not a blocker: releases are per task |
 
 ## 5. Before merging `staging` into `main`
 
-1. **Decide on A-12.** Either accept that the feature is half live on `main` (trainees can submit, trainers can approve, nothing else), or hold `main` until MP-47 and MP-49 exist.
-2. **Do the browser check on staging** (about 10 minutes): as a trainee, submit and view the pipeline; as the trainer, approve and reject (with a reason), then check the Request history table, its search box, the URL state after reload, and "View" opening the panel with no Approve or Reject buttons. Record the result in `acceptance.md`.
-3. Merge `main` into `staging` first, or let the PR do it. A trial merge shows no conflicts, and `main`'s extra commit changes no files.
-4. After the merge to `main`, update the push log Release Status row for MP-45, MP-46 and MP-48.
+1. **Do the browser check on staging** (about 10 minutes): as a trainee, submit and view the pipeline; as the trainer, approve and reject (with a reason), then check the Request history table, its search box, the URL state after reload, and "View" opening the panel with no Approve or Reject buttons. Record the result in `acceptance.md`.
+2. Merge `main` into `staging` first, or let the PR do it. A trial merge shows no conflicts, and `main`'s extra commit changes no files.
+3. After the merge to `main`, update the push log Release Status row for MP-45, MP-46 and MP-48.
