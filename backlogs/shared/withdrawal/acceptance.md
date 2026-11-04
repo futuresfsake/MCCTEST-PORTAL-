@@ -131,6 +131,40 @@ The parallel design had a race condition (two validators approving in the same s
 
 ---
 
+## Audit of `dev` after the trainee API and UI merge (2026-11-04)
+
+`dev` at `a8e0c33` (PRs #62, #63, #64). Run from a fresh pull.
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | Backend `tsc --noEmit`, `eslint` (whole project), `nest build` | PASS, 0 problems |
+| 2 | Backend unit tests | PASS, 72 of 72 (10 suites) |
+| 3 | Frontend `tsc -b`, `eslint .`, `vite build` | PASS, 0 problems |
+| 4 | Supabase `prisma migrate status` | PASS, up to date. `20261104_withdrawal_pipeline_schema` finished, not rolled back |
+| 5 | No withdrawal-related drift between Supabase and `schema.prisma` | PASS |
+| 6 | `withdrawal_request` and `withdrawal_status_history` row counts | 0 and 0 (no real requests yet) |
+| 7 | Status and legacy `request_status` mismatches, requests without a history row | 0 and 0 |
+| 8 | Test accounts left on Supabase | 0. All testing used throwaway local databases |
+| 9 | API over real HTTP (earlier run, branch tip equals the merged code) | PASS, 30 of 30 |
+| 10 | Pipeline stage logic (10 cases) and server-rendered components (6 states) | PASS |
+| 11 | **Pages in a real browser** | **NOT DONE.** No browser was available. Use the checklist below |
+
+### Manual browser checklist (trainee with an `ENROLLED` enrollment)
+
+1. `/trainee/withdrawal` shows the empty state when there are no requests. The sidebar link is under My Training.
+2. "New withdrawal request" opens the form. With one enrollment it is preselected. With none it says so. Submit stays disabled until a reason is typed.
+3. Submit goes to the detail page. The stepper reads Request, Trainer, Registrar, Admin. Request is done, Trainer is in progress, the other two are not reached yet.
+4. A second submit for the same enrollment shows the "already in progress" message in the form.
+5. The list shows the request, the filter by status works, and the page, limit and status are kept in the URL after a reload.
+6. On the detail page, "Cancel this request" asks to confirm. After "Yes, cancel it" the status is Cancelled and the history shows both steps.
+7. After a cancel a new request can be submitted for the same enrollment.
+8. Open the detail URL while logged in as a different trainee: "Withdrawal request not found".
+9. Logged out or as another role: the routes redirect or are refused.
+10. Narrow the window to phone width: the table scrolls sideways and nothing overlaps. Tab through the form and the cancel buttons by keyboard.
+11. Trainer, registrar and admin steps cannot be completed yet (their tickets are not built), so a request stays at Waiting for trainer. Test the other stepper states by changing `withdrawal_status` on a test row in a non-shared database.
+
+---
+
 ## Open Gaps
 
 | # | Gap | Where |
