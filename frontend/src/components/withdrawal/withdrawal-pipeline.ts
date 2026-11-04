@@ -1,4 +1,4 @@
-import type { WithdrawalDetail, WithdrawalStatus } from '../../../../types/withdrawal.type'
+import type { WithdrawalDetail, WithdrawalStatus } from '../../types/withdrawal.type'
 
 // Turns a request's status + history into the four stages the trainee sees.
 // Pure (no React) so the logic can be checked on its own.
