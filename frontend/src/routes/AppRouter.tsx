@@ -19,6 +19,7 @@ import AdminImportDataPage from '../pages/users/admin/import-data/AdminImportDat
 
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 import TrainerAnnouncementsPage from '../pages/users/trainer/announcements/TrainerAnnouncementsPage'
+import TrainerWithdrawalPage from '../pages/users/trainer/withdrawal/TrainerWithdrawalPage'
 
 import TraineeDashboard from '../pages/users/trainee/dashboard/TraineeDashboard'
 import TraineeAnnouncementsPage from '../pages/users/trainee/announcements/TraineeAnnouncementsPage'
@@ -307,6 +308,15 @@ return ( <Routes>
   />
 
   {/* Trainee Information (MP-24): trainer sees only their own batches' trainees */}
+  <Route
+    path="/trainer/withdrawal-requests"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINER']}>
+        <TrainerWithdrawalPage />
+      </ProtectedRoute>
+    }
+  />
+
   <Route
     path="/trainer/trainees"
     element={

@@ -18,6 +18,7 @@ A structured record of decisions that affect the Registrar, with the reason for 
 | D-04 | 2026-11-04 | MP-53, MP-59 | The restock reminder is split out of MP-53 into its own ticket, MP-59. Withdrawn and dropped trainees are shown greyed out as Inactive | DECIDED |
 | D-05 | 2026-11-04 | MP-42, MP-43 | Payment carries over on a program change (all programs have the same payment). Requirements page defaults to ENROLLED | DECIDED |
 | D-06 | 2026-11-04 | MP-45 to MP-49 | Withdrawal validation is sequential: Trainer first, then Registrar, then Admin. No race condition, `REGISTRAR_VALIDATED` removed | DECIDED |
+| D-07 | 2026-11-04 | MP-48 | A trainer must give a reason when rejecting a withdrawal request. Remarks stay optional when approving | DECIDED |
 
 ---
 
@@ -223,6 +224,38 @@ Any validator can reject (`REJECTED`). The trainee can cancel before completion 
 - The race-condition handling in MP-47 and MP-48 is no longer needed.
 
 **Open action** A Trainer who is slow or unavailable stalls the pipeline. Decide later whether the Admin may step in or reassign (not part of this decision).
+
+---
+
+## D-07. The trainer must give a reason when rejecting a withdrawal request
+
+| Field | Value |
+|-------|-------|
+| **ID** | D-07 |
+| **Date** | 2026-11-04 |
+| **Ticket** | MP-48 (Trainer: Validate Withdrawal Request) |
+| **Status** | DECIDED |
+| **Registrar impact** | None directly. The Registrar never sees a request the Trainer rejected, so the reason is for the trainee and the Admin |
+| **Supersedes / Superseded by** | Narrows MP-48, which said remarks were optional for both approve and reject |
+
+**Context**
+MP-48 said the trainer's remarks are optional. A rejected trainee would then see "Rejected" with no explanation, and the request ends there (nothing goes on to the Registrar or Admin).
+
+**Decision**
+Remarks are **required when the trainer rejects** and **optional when the trainer approves**. Blank or whitespace-only text counts as no remarks. Up to 1000 characters. The reason is saved on the request (`trainer_remarks`) and on the history row, which is what the trainee sees on the progress page.
+
+**Rationale**
+
+| # | Reason |
+|---|--------|
+| 1 | A rejection ends the request. The trainee has no other way to learn why |
+| 2 | The history already carries the reason to the trainee, so no new screen is needed |
+| 3 | Approving needs no explanation, so it stays quick |
+
+**Consequences**
+- The API refuses a reject with missing or blank remarks (400).
+- The trainer screen must make the reason field required when Reject is chosen.
+- The same question will come up for the Registrar (MP-47) and Admin (MP-49) rejections. Not decided here.
 
 ---
 

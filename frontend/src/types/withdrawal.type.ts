@@ -56,3 +56,41 @@ export interface CreateWithdrawalInput {
   enrollment_id: string
   requested_reason: string
 }
+
+// ---- Trainer side (backend-nestjs/src/users/trainer/withdrawal)
+
+export interface TrainerWithdrawalListItem {
+  id: string
+  status: WithdrawalStatus
+  reason: string
+  /** YYYY-MM-DD */
+  dateRequested: string
+  trainee: { name: string | null; systemId: string | null }
+  enrollment: {
+    id: string
+    status: string
+    batchId: string
+    batchName: string
+    programName: string
+  }
+}
+
+export interface TrainerWithdrawalDetail extends TrainerWithdrawalListItem {
+  stages: WithdrawalDetail['stages']
+  history: WithdrawalHistoryEntry[]
+}
+
+export interface TrainerWithdrawalListResponse {
+  data: TrainerWithdrawalListItem[]
+  meta: WithdrawalListResponse['meta']
+}
+
+/** `''` = what is waiting for the trainer (the API default), `ALL` = every status. */
+export type TrainerStatusFilter = WithdrawalStatus | 'ALL' | ''
+
+export type TrainerAction = 'APPROVE' | 'REJECT'
+
+export interface TrainerValidateInput {
+  action: TrainerAction
+  remarks?: string
+}
