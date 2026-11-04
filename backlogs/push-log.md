@@ -41,6 +41,11 @@
 | 2026-11-03 | — | Audit log for `dev` (MP-35: Definition of Done, migrations, data) | `docs/mp35-dev-audit` → `dev` | Sprint 3 |
 | 2026-11-03 | MP-35 | `dev` → `staging`: Uniform Inventory (admin + registrar), default inventory for every program, program-grouped list, audit logs. Four migrations, all already applied to Supabase | PR #56 `dev` → `staging` (PRs #52 to #55 came with it) | Sprint 3 |
 | 2026-11-03 | — | Audit logs for `staging` (MP-35: Definition of Done, migrations, data) | `docs/mp35-staging-audit` → `staging` | Sprint 3 |
+| 2026-11-04 | MP-45 | Withdrawal pipeline schema: `withdrawal_status_enum`, 13 columns on `withdrawal_request`, `withdrawal_status_history`, backfill. One additive migration, **applied to Supabase 2026-11-04** (table had 0 rows) | PR #62 `feature/MP-45-withdrawal-schema` → `dev` | — |
+| 2026-11-04 | MP-46 | Trainee withdrawal API: submit, list, detail, cancel under `/api/trainee/withdrawal-requests`, shared `WithdrawalService`, 20 unit tests | PR #63 `feature/withdrawal-trainee-request-api` → `dev` | — |
+| 2026-11-04 | MP-46 | Trainee withdrawal pages: list with filter and pagination, request form, four-stage progress view with history and cancel | PR #64 `feature/withdrawal-trainee-request-ui` → `dev` | — |
+| 2026-11-04 | — | Audit log for `dev` (withdrawal trainee API and pages) and the first live request on Supabase | PR #65 `docs/withdrawal-trainee-audit` → `dev` | — |
+| 2026-11-04 | — | Pre-staging audit of the withdrawal trainee work (code, tests, security, leaks, dependencies, data) and five new open gaps (items 10 to 14 in `to-be-discussed.md`) | `docs/withdrawal-pre-staging-audit` → `dev` | — |
 
 ---
 
