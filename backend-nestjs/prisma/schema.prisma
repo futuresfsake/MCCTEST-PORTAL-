@@ -567,6 +567,10 @@ model users {
   training_session                    training_session[]
   user_role                           user_role[]
   withdrawal_request                  withdrawal_request[]
+  withdrawal_registrar_validations    withdrawal_request[]     @relation("withdrawal_registrar_validated_by")
+  withdrawal_trainer_validations      withdrawal_request[]     @relation("withdrawal_trainer_validated_by")
+  withdrawal_admin_signoffs           withdrawal_request[]     @relation("withdrawal_admin_signed_off_by")
+  withdrawal_status_changes           withdrawal_status_history[] @relation("withdrawal_history_changed_by")
 
   @@index([system_id(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_users_system_id_trgm")
 
@@ -585,10 +589,62 @@ model withdrawal_request {
   reviewed_by           String?             @db.Uuid
   date_reviewed         DateTime?           @db.Date
   remarks               String?
+
+  // Multi-role approval pipeline (MP-45). reviewed_by / date_reviewed / remarks are
+  // legacy: kept until confirmed removable, new code uses the role-specific columns
+  // below. surrendered_id (above) is reused as the registrar's "ID surrendered"
+  // checklist item, so the existing name stays.
+  //
+  // Flow (decision D-06, sequential): PENDING_VALIDATION -> trainer validates ->
+  // TRAINER_VALIDATED -> registrar validates -> PENDING_ADMIN_SIGNOFF -> admin signs
+  // off -> APPROVED. The admin only sees requests both have validated. The registrar
+  // can act only on TRAINER_VALIDATED; the trainer only on PENDING_VALIDATION.
+  withdrawal_status      withdrawal_status_enum @default(PENDING_VALIDATION)
+  finances_cleared       Boolean                @default(false)
+  documents_submitted    Boolean                @default(false)
+  registrar_remarks      String?
+  registrar_validated_by String?                @db.Uuid
+  registrar_validated_at DateTime?              @db.Timestamptz(6)
+  trainer_validated      Boolean                @default(false)
+  trainer_remarks        String?
+  trainer_validated_by   String?                @db.Uuid
+  trainer_validated_at   DateTime?              @db.Timestamptz(6)
+  admin_signed_off_by    String?                @db.Uuid
+  admin_signed_off_at    DateTime?              @db.Timestamptz(6)
+  admin_remarks          String?
+
   enrollments           enrollments         @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   users                 users?              @relation(fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  registrar_validator   users?              @relation("withdrawal_registrar_validated_by", fields: [registrar_validated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  trainer_validator     users?              @relation("withdrawal_trainer_validated_by", fields: [trainer_validated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  admin_signer          users?              @relation("withdrawal_admin_signed_off_by", fields: [admin_signed_off_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status_history        withdrawal_status_history[]
 
   @@index([enrollment_id], map: "idx_withdrawal_enrollment")
+  @@index([withdrawal_status], map: "idx_withdrawal_status")
+}
+
+model withdrawal_status_history {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  withdrawal_request_id String                  @db.Uuid
+  old_status            withdrawal_status_enum?
+  new_status            withdrawal_status_enum
+  changed_by            String                  @db.Uuid
+  changed_at            DateTime                @default(now()) @db.Timestamptz(6)
+  remarks               String?
+  withdrawal_request    withdrawal_request      @relation(fields: [withdrawal_request_id], references: [withdrawal_request_id], onDelete: NoAction, onUpdate: NoAction)
+  changed_by_user       users                   @relation("withdrawal_history_changed_by", fields: [changed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([withdrawal_request_id, changed_at(sort: Desc)], map: "idx_withdrawal_history_request_changed")
+}
+
+enum withdrawal_status_enum {
+  PENDING_VALIDATION
+  TRAINER_VALIDATED
+  PENDING_ADMIN_SIGNOFF
+  APPROVED
+  REJECTED
+  CANCELLED
 }
 
 enum announcement_scope_enum {

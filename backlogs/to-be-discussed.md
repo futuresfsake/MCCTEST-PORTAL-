@@ -146,6 +146,34 @@ Items that need a team decision before they become a ticket or a backlog.
 
 ---
 
+## 9. Withdrawal pipeline: what happens to the trainee's account after approval (MP-49)
+
+| Field | Value |
+|-------|-------|
+| **Related** | MP-49 (Admin final sign-off), MP-45 (schema), MP-42 (program change creates a new enrollment), MP-57 (Encoder notifications) |
+| **Added** | 2026-11-04 |
+| **Status** | OPEN GAP |
+
+**Question:** When the admin approves a withdrawal, the enrollment becomes `WITHDRAWN`. Should the trainee also be blocked from logging in?
+
+**Current plan:** option A. MP-49 sets only the enrollment to `WITHDRAWN`, leaves the account as is, and carries a TODO in the service ("Account deactivation after withdrawal, decision pending").
+
+**Options**
+
+| # | Option | Effect | Trade-off |
+|---|--------|--------|-----------|
+| A | Enrollment only (current plan) | A withdrawn trainee can still log in and sees a WITHDRAWN status | Simplest. Keeps their history viewable |
+| B | Deactivate the account on approval | Set `users.is_active = false` in the same transaction as the sign-off. The login guard then rejects them | Could lock out a trainee who just shifted programs (MP-42), because one trainee can hold several enrollments |
+| C | Deactivate only if no other active enrollment remains | Same as B, but only when the trainee has no other `PENDING` or `ENROLLED` enrollment | Safest if deactivation is wanted. Slightly more logic |
+
+**Facts checked in the code**
+- `users.is_active` already exists (`Boolean @default(true)`), so B and C need no schema change.
+- Login already rejects inactive accounts: `auth.service.ts` checks `is_active` at login and `jwt.strategy.ts` checks it on every request, so B and C take effect immediately, including for already-issued tokens.
+
+**To answer:** A, B or C. Suggestion: C if deactivation is wanted, otherwise stay on A. Decide before MP-49 is built, then update the MP-49 ticket.
+
+---
+
 ## Gap Summary (all open gaps on 2026-11-04)
 
 | Gap | Ticket | Where logged |
@@ -161,3 +189,4 @@ Items that need a team decision before they become a ticket or a backlog.
 | G-42-2 Is "record a new payment instead" still needed | MP-42 | item 6 |
 | Sprint placement for MP-41, MP-42, MP-43, MP-59 | several | item 7 |
 | Can a PENDING enrollment receive a uniform | MP-53 | item 8 |
+| Withdrawal approved: deactivate the trainee's account or not (A, B or C) | MP-49 | item 9 |
