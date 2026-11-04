@@ -1,5 +1,5 @@
-import type { WithdrawalStatus } from '../../types/withdrawal.type'
-import { STATUS_LABELS } from './withdrawal-pipeline'
+import type { WithdrawalStatus } from '../../../../../types/withdrawal.type'
+import { STATUS_LABELS } from '../withdrawal-pipeline'
 
 const CLASSES: Record<WithdrawalStatus, string> = {
   PENDING_VALIDATION: 'border-amber-200 bg-amber-50 text-amber-800',

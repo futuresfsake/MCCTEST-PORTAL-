@@ -7,8 +7,8 @@ import { Pagination } from '../../../../components/common/Pagination'
 import { traineeWithdrawalApi } from '../../../../api/users/trainee-withdrawal.api'
 import type { WithdrawalListResponse, WithdrawalStatus } from '../../../../types/withdrawal.type'
 import WithdrawalRequestForm from './components/WithdrawalRequestForm'
-import WithdrawalStatusBadge from '../../../../components/withdrawal/WithdrawalStatusBadge'
-import { formatDate, STATUS_LABELS } from '../../../../components/withdrawal/withdrawal-pipeline'
+import WithdrawalStatusBadge from './components/WithdrawalStatusBadge'
+import { formatDate, STATUS_LABELS } from './withdrawal-pipeline'
 
 const DEFAULT_LIMIT = 10
 const STATUSES = Object.keys(STATUS_LABELS) as WithdrawalStatus[]

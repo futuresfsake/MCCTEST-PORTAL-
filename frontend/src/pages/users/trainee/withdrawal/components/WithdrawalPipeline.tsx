@@ -1,6 +1,6 @@
 import { Check, Clock, Minus, X } from 'lucide-react'
-import type { WithdrawalDetail } from '../../types/withdrawal.type'
-import { buildPipeline, formatDateTime, type PipelineStage, type StageState } from './withdrawal-pipeline'
+import type { WithdrawalDetail } from '../../../../../types/withdrawal.type'
+import { buildPipeline, formatDateTime, type PipelineStage, type StageState } from '../withdrawal-pipeline'
 
 const DOT: Record<StageState, string> = {
   done: 'border-green-600 bg-green-600 text-white',

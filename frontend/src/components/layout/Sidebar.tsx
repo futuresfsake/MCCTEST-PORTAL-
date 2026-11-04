@@ -195,11 +195,6 @@ const sidebarConfig: Record<
             path: '/trainer/grades',
             icon: 'fa-solid fa-clipboard-check',
           },
-          {
-            label: 'Withdrawal Requests',
-            path: '/trainer/withdrawal-requests',
-            icon: 'fa-solid fa-right-from-bracket',
-          },
         ],
       },
 
