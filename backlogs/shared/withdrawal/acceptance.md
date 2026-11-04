@@ -77,13 +77,13 @@ The parallel design had a race condition (two validators approving in the same s
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| TR-1 | Trainer sees only requests from trainees in their own batches; other batches return 403 | NOT STARTED | |
-| TR-2 | Default view shows `PENDING_VALIDATION` | NOT STARTED | |
-| TR-3 | Trainer can approve or reject with optional remarks, only when the status is `PENDING_VALIDATION` (400 otherwise) | NOT STARTED | |
-| TR-4 | Approval sets `TRAINER_VALIDATED`. Rejection sets `REJECTED` | NOT STARTED | |
-| TR-5 | Every action writes a history row, in one transaction | NOT STARTED | |
-| TR-6 | Responses exclude `password_hash`; non-trainer roles get 403 | NOT STARTED | |
-| TR-7 | Pages type-check, build and lint with 0 problems | NOT STARTED | |
+| TR-1 | Trainer sees only requests from trainees in their own batches; other batches return 403 | PASS (API) | List is scoped by `batch.trainer.user_id` (the same rule as Trainee Information). Another trainer's request: read and validate both 403, and nothing changes. Missing id: 404 |
+| TR-2 | Default view shows `PENDING_VALIDATION` | PASS (API) | `status=ALL` shows everything. Also filters by status, batch and trainee name or system ID (every word must match), paginated |
+| TR-3 | Trainer can approve or reject, only when the status is `PENDING_VALIDATION` (400 otherwise). Remarks are optional on approve and **required on reject** | PASS (API) | D-07. Reject without or with blank remarks: 400. The status guard is inside the update, so a cancel at the same moment cannot also succeed |
+| TR-4 | Approval sets `TRAINER_VALIDATED`. Rejection sets `REJECTED` | PASS (API) | Records who validated and when. The client cannot set the status, the registrar or admin fields, or another validator: those fields in the request are ignored |
+| TR-5 | Every action writes a history row, in one transaction | PASS (API) | Checked in 60 simultaneous trainer-versus-trainee and trainer-versus-trainer races: exactly one winner and a consistent history every time |
+| TR-6 | Responses exclude `password_hash`; non-trainer roles get 403 | PASS (API) | The trainer sees the trainee's name and system ID only: no contact details or other personal data. Trainee, admin: 403 |
+| TR-7 | Pages type-check, build and lint with 0 problems | PARTIAL | Backend: `tsc`, build and ESLint pass, 101 of 101 tests, 53 of 53 real-HTTP checks. Pages (trainer list and side panel) not built yet |
 
 ## Acceptance Criteria (MP-47, Registrar, after the Trainer)
 
@@ -125,6 +125,7 @@ The parallel design had a race condition (two validators approving in the same s
 
 | Date | Change |
 |------|--------|
+| 2026-11-04 | Trainer backend (MP-48, API half) built on `feature/withdrawal-trainer-validation-api`: trainer list, detail and validate under `/api/trainer/withdrawal-requests` (D-07: reason required on reject). 29 new unit tests (101 in total), 53 real-HTTP checks with two trainers on a throwaway database, and a race sweep (24 trials, both outcomes occurred, all consistent). UI half still to do |
 | 2026-11-04 | Trainee UI (MP-46, UI half) built on `feature/withdrawal-trainee-request-ui`: list page with status filter and pagination in the URL, request form (own ENROLLED enrollments only), detail page with the four-stage stepper, history and cancel, sidebar link. Checked: pipeline logic (10 cases), server-rendered components, full frontend build and lint, and the API over real HTTP (30 checks). **Not checked in a browser** |
 | 2026-11-04 | Trainee backend (MP-46, API half) built on `feature/withdrawal-trainee-request-api`: shared `WithdrawalService`, trainee controller, 20 unit tests, plus a throwaway real-database run (10 scenarios and a 60-race stress test). Found and fixed an error-mapping bug in that run. UI half still to do |
 | 2026-11-04 | Pipeline changed from parallel to sequential (Trainer, then Registrar, then Admin), decision D-06. Jira tickets MP-45 to MP-49 rewritten to match. `REGISTRAR_VALIDATED` removed. MP-48 is now ticket 3 of 5 and MP-47 ticket 4 of 5 |
