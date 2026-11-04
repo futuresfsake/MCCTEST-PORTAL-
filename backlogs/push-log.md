@@ -48,6 +48,7 @@
 | 2026-11-04 | MP-48 | Trainer withdrawal API (first validation): list, detail and validate under `/api/trainer/withdrawal-requests`, scoped to the trainer's own batches. A reason is required to reject (D-07) | PR #68 `feature/withdrawal-trainer-validation-api` → `dev` | — |
 | 2026-11-04 | MP-48 | Trainer withdrawal pages: list, side panel to approve or reject. Merged in PR #69, reverted in PR #70, restored in PR #71 (the content is the same as PR #69) | PR #69 `feature/withdrawal-trainer-validation-ui` → `dev`; PR #70 revert; PR #71 `fix/restore-trainer-withdrawal-pages` → `dev` | — |
 | 2026-11-04 | MP-48 | `dev` → `staging`: withdrawal trainer API and pages (merged directly, not through a PR). Nothing to apply on deploy, the migration was already on Supabase | merge commit `16838f9` on `staging` | — |
+| 2026-11-04 | SEC-02 | Security: `helmet` security headers (removes `X-Powered-By`) and `multer` pinned to 2.5.0. Backend `npm audit` now reports 0 vulnerabilities | PR #75 `fix/security-headers-multer-staging` → `dev` | — |
 
 ---
 
@@ -68,6 +69,7 @@ When each task reached `dev`, `staging` and `main`. Times are the time of the me
 | MP-45 | Withdrawal schema and migration | 2026-11-04 10:38 (PR #62) | 2026-11-04 11:18 (PR #66) | Not on `main` |
 | MP-46 | Withdrawal, trainee request API and pages | 2026-11-04 10:59 (PR #63, API), 11:00 (PR #64, pages) | 2026-11-04 11:18 (PR #66) | Not on `main` |
 | MP-48 | Withdrawal, trainer API and pages | 2026-11-04 11:37 (PR #68, API), 11:37 (PR #69, pages), restored 11:40 (PR #71) | 2026-11-04 13:15 (merge commit `16838f9`) | Not on `main` |
+| SEC-02 | Security headers (`helmet`) and `multer` 2.5.0 | 2026-11-04 14:06 (PR #75) | Not yet on `staging` | Not on `main` |
 
 Tasks before MP-24 (MP-4 to MP-16, MP-21, MP-22, MP-23, MP-26, MP-31) are in the Merged table by date only. They were not recomputed here.
 
@@ -123,11 +125,11 @@ Tasks before MP-24 (MP-4 to MP-16, MP-21, MP-22, MP-23, MP-26, MP-31) are in the
 | MP-45 | Withdrawal pipeline schema and migration | `feature/MP-45-withdrawal-schema` | Chelsea Cllj | On `dev` (PR #62, 2026-11-04 10:38) and `staging` (2026-11-04 11:18). **Not on `main`.** Migration applied to Supabase 2026-11-04 (23 columns, enum, 2 indexes, history table). See `shared/withdrawal/migration.md` |
 | MP-46 | Withdrawal, Trainee: submit request and pipeline view | `feature/withdrawal-trainee-request-api`, `feature/withdrawal-trainee-request-ui` | Chelsea Cllj | On `dev` (PRs #63, #64, 2026-11-04 10:59 and 11:00) and `staging` (2026-11-04 11:18). **Not on `main`.** A real trainee submitted a request on Supabase 2026-11-04. Pages not yet checked in a browser. See `shared/withdrawal/acceptance.md` |
 | MP-47 | Withdrawal, Registrar: validate withdrawal request | not started | Chelsea Cllj | Not started. Acts only on requests the trainer has approved (D-06). Depends on MP-48 |
-| MP-48 | Withdrawal, Trainer: validate withdrawal request (first step) | `feature/withdrawal-trainer-validation-api`, `feature/withdrawal-trainer-validation-ui` | Chelsea Cllj | On `dev` (PRs #68, #69, restored in #71, 2026-11-04 11:37 to 11:40) and `staging` (2026-11-04 13:15). **Not on `main`.** Reason required to reject (D-07). Pages not yet checked in a browser. No batch filter on the page yet. See `shared/withdrawal/acceptance.md` |
+| MP-48 | Withdrawal, Trainer: validate withdrawal request (first step) | `feature/withdrawal-trainer-validation-api`, `feature/withdrawal-trainer-validation-ui` | Chelsea Cllj | On `dev` (PRs #68, #69, restored in #71, 2026-11-04 11:37 to 11:40) and `staging` (2026-11-04 13:15). **Not on `main`.** Reason required to reject (D-07). Pages not yet checked in a browser. No batch filter on the page yet. A real trainer (`MCCTP-26-017`) approved the live request on Supabase 2026-11-04 13:13; it now stays at `TRAINER_VALIDATED` until MP-47 is built. See `shared/withdrawal/acceptance.md` |
 | MP-49 | Withdrawal, Admin: final sign-off and set trainee inactive | not started | Chelsea Cllj | Not started. Depends on MP-45 to MP-48. Open: what happens to the trainee's account after approval (`to-be-discussed.md` item 9). A request can't finish until MP-47 and MP-49 exist |
 | MP-39 | Trainer Announcements Module | `trainerannouncements` → `dev` → `staging` → `main` | Chelsea Cllj | Done. On `dev`, `staging` and `main` (PR #32, 2026-10-22 08:53). See Release Status by Task |
 | SEC-01 | **Security: announcements API exposed the poster's password hash to every logged-in role** | `feature/MP-30-trainee-dashboard` → `dev` (PR #46) → `staging` (PR #49) | Chelsea Cllj | Fixed. On `dev`, `staging` and `main` (PR #51, 2026-11-03 14:07). Still needs the backend restart and password resets for staff who posted announcements. See `technical/announcements-password-hash-exposure/acceptance.md` |
-| SEC-02 | **Security: `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs`** | — | Chelsea Cllj | Logged, not fixed. Deferred by choice. See `technical/multer-dos-advisory/acceptance.md` |
+| SEC-02 | **Security: `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs`** | `fix/security-headers-multer-staging` → `dev` (PR #75) | Chelsea Cllj | **Fixed on `dev`** (PR #75, 2026-11-04 14:06, with the `helmet` security headers). Not yet on `staging` or `main`. See `technical/multer-dos-advisory/acceptance.md` |
 
 ---
 

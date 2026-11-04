@@ -8,7 +8,7 @@
 | Affected    | `backend-nestjs`: `multer` 2.0.0 – 2.4.0, pulled in by `@nestjs/platform-express`        |
 | Advisory    | GHSA-q7qp-rjg7-q26m — denial of service through a pending asynchronous `fileFilter` after the request is torn down |
 | Frontend    | Not affected (`npm audit` reports 0 vulnerabilities)                                    |
-| Status      | **LOGGED, NOT FIXED. Deliberately deferred.**                                           |
+| Status      | **FIXED on `dev` 2026-11-04 (PR #75). Not yet on `staging` or `main`.**                  |
 | Assignee    | Chelsea Cllj                                                                            |
 
 ---
@@ -29,8 +29,8 @@ exposed to the denial of service.
 
 | # | Criterion | Status | Notes |
 |---|-----------|--------|-------|
-| 1 | `npm audit --omit=dev` in `backend-nestjs` reports 0 high or critical findings | NOT STARTED | Deferred by choice |
-| 2 | Backend builds, lints and passes `jest` after the update | NOT STARTED | |
-| 3 | File upload routes still work after the update | NOT STARTED | |
+| 1 | `npm audit --omit=dev` in `backend-nestjs` reports 0 high or critical findings | PASS | 2026-11-04: 0 vulnerabilities. `multer` pinned to 2.5.0 with an `overrides` entry in `package.json`, lockfile updated (PR #75) |
+| 2 | Backend builds, lints and passes `jest` after the update | PASS | `tsc`, ESLint, `nest build` and 101 of 101 tests pass on `dev` at `64e85d7` |
+| 3 | File upload routes still work after the update | NOT APPLICABLE | The backend has no upload routes today. Re-check when the first one is added (MP-41 photo upload) |
 
-## Summary: 0/3 PASS — NOT STARTED
+## Summary: 2/3 PASS, 1 not applicable. FIXED on `dev` (PR #75)

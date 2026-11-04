@@ -196,13 +196,13 @@ Items that need a team decision before they become a ticket or a backlog.
 |-------|-------|
 | **Related** | Withdrawal pre-staging audit A-1. App-wide, not caused by the withdrawal work |
 | **Added** | 2026-11-04 |
-| **Status** | OPEN GAP |
+| **Status** | **RESOLVED 2026-11-04** (PR #75, on `dev`) |
 
 **Question:** Do we add `helmet` and turn off `X-Powered-By` in `main.ts`?
 
 **Current:** the server replies `X-Powered-By: Express` and sends no `X-Content-Type-Options`, frame protection or HSTS.
 
-**To answer:** yes or no, and who takes it. Check the frontend still works behind the headers.
+**Resolved:** `helmet` was added in `main.ts` (PR #75). `X-Powered-By` is gone and the standard security headers are sent. CORS and a cross-origin login were checked on real responses. A real login on the app is still worth doing once after it reaches `staging`. See `shared/withdrawal/audit-dev-retest.md`.
 
 ---
 
@@ -271,7 +271,7 @@ Items that need a team decision before they become a ticket or a backlog.
 | Can a PENDING enrollment receive a uniform | MP-53 | item 8 |
 | Withdrawal approved: deactivate the trainee's account or not (A, B or C) | MP-49 | item 9 |
 | Supabase RLS is off on every table: confirm the REST API cannot read or write | audit A-2 | item 10 |
-| Add `helmet` and remove `X-Powered-By` | audit A-1 | item 11 |
+| ~~Add `helmet` and remove `X-Powered-By`~~ Resolved 2026-11-04 (PR #75) | audit A-1 | item 11 |
 | Withdrawal tests not in the repo (integration and frontend) | audit A-4 | item 12 |
 | Trainee sees staff names and remarks | audit A-8, MP-46 | item 13 |
 | Keep or retire the old `request_status` | audit A-9, MP-45, MP-49 | item 14 |
