@@ -22,6 +22,8 @@ import TrainerAnnouncementsPage from '../pages/users/trainer/announcements/Train
 
 import TraineeDashboard from '../pages/users/trainee/dashboard/TraineeDashboard'
 import TraineeAnnouncementsPage from '../pages/users/trainee/announcements/TraineeAnnouncementsPage'
+import WithdrawalPage from '../pages/users/trainee/withdrawal/WithdrawalPage'
+import WithdrawalDetailPage from '../pages/users/trainee/withdrawal/WithdrawalDetailPage'
 import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 import EncoderAnnouncementsPage from '../pages/users/encoder/announcements/EncoderAnnouncementsPage'
 
@@ -340,6 +342,24 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['TRAINEE']}>
         <TraineeAnnouncementsPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/trainee/withdrawal"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINEE']}>
+        <WithdrawalPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/trainee/withdrawal/:id"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINEE']}>
+        <WithdrawalDetailPage />
       </ProtectedRoute>
     }
   />
