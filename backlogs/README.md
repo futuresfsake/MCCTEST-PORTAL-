@@ -14,6 +14,8 @@ backlogs/
   shared/
     authentication/acceptance.md                 — MP-4: Auth & Landing Page
     landing-page/acceptance.md                   — MP-20: Landing Page Chatbot
+    notifications/acceptance.md                  — MP-52: Notification Foundation (shared bell, notifications table, live push) (NOT STARTED)
+  to-be-discussed.md                           — Open decisions and gaps, with a summary table (photo storage, restock reminder, MP-58, MP-41, MP-42)
   admin/
     dashboard/acceptance.md                      — MP-8: Admin Dashboard (placeholder)
     programs/acceptance.md                       — MP-13: Programs Module
@@ -22,24 +24,34 @@ backlogs/
     batches/acceptance.md                        — MP-22/23: Batch Management + Trainee Management
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
     enrollment/acceptance.md                     — MP-33: Admin Enrollments Module (IN PROGRESS)
+    trainee-edit/acceptance.md                   — MP-42: Admin Edit Trainee, batch and program changes with history (NOT STARTED)
     payments/acceptance.md                       — MP-25: Payments Module (30/30 PASS)
-    inventory/acceptance.md                      — MP-35: Uniform Inventory (shared Admin and Registrar, ON DEV, not on staging or main)
-    uniform-distribution/acceptance.md           — MP-53: Uniform Distribution, reusable module for Admin and Registrar (NOT STARTED)
+    inventory/acceptance.md                      — MP-35: Uniform Inventory (shared Admin and Registrar, ON DEV AND STAGING, not on main)
+    notifications/acceptance.md                  — MP-54: Notification Bell, Admin Events (NOT STARTED)
   registrar/
     dashboard/acceptance.md                      — Registrar Dashboard (placeholder)
     batches/acceptance.md                        — MP-15: Batch Configuration Module
     enrollment/acceptance.md                     — MP-16: Enrollment Form Module
     announcements/acceptance.md                  — MP-31: Registrar Announcements
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
+    notifications/acceptance.md                  — MP-55: Notification Bell, Registrar Events (NOT STARTED)
+    enrollment-uniform-deduction-bug/acceptance.md — MP-58: Bug, enrollment does not deduct uniform stock (NOT STARTED)
+    decisions.md                                 — Registrar decisions and the reasons (MP-42 history, MP-53, MP-43)
+    requirements/acceptance.md                   — MP-43: Requirements Tracking, Registrar only (NOT STARTED)
+    uniform-distribution/acceptance.md           — MP-53: Uniform Distribution page, Registrar only (NOT STARTED)
+    uniform-restock-reminder/acceptance.md       — MP-59: Registrar reminds the Admin to order more uniforms (NOT STARTED)
   trainer/
     dashboard/acceptance.md                      — Trainer Dashboard (placeholder, 7 pages planned)
     trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
+    notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
+    profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (NOT STARTED)
     dashboard-data-gaps/acceptance.md            — MP-30 follow-up: attendance, competencies, sessions not functional (NOT STARTED)
     account-generation/acceptance.md             — MP-26: Trainee Account Generation
   encoder/
     dashboard/acceptance.md                      — Encoder Dashboard (placeholder, 4 pages planned)
+    notifications/acceptance.md                  — MP-57: Notification Bell, Encoder Events (NOT STARTED)
   technical/
     announcements-password-hash-exposure/acceptance.md — SEC-01: password hash exposed by announcements API (FIXED, on dev and staging; main pending)
     multer-dos-advisory/acceptance.md            — SEC-02: multer denial-of-service advisory (LOGGED, not fixed)
@@ -66,7 +78,8 @@ backlogs/
 |--------|-------|---------|--------|
 | MP Sprint 1 | 2026-08-23 → 2026-08-30 | MP-4, MP-8 | All Done |
 | MP Sprint 2 | 2026-09-02 → 2026-10-12 | MP-13, MP-14, MP-15, MP-16, MP-20, MP-21, MP-22, MP-23, MP-26, MP-31 | All Done |
-| MP Sprint 3 | 2026-10-12 → 2026-10-18 | MP-24, MP-25, MP-33, MP-35, MP-50, MP-51 | MP-24 Done, MP-25 30/30 PASS, MP-33 In Progress, MP-50/51 merged, browser check pending, MP-35 on dev (browser check pending) |
+| MP Sprint 3 | 2026-10-12 → 2026-10-18 | MP-24, MP-25, MP-33, MP-35, MP-50, MP-51 | MP-24 Done, MP-25 30/30 PASS, MP-33 In Progress, MP-50/51 merged, browser check pending, MP-35 on dev and staging (browser check pending) |
+| MP Sprint 4 | 2026-11-03 → 2026-11-09 | MP-53, MP-58 | Not started |
 
 ---
 
@@ -108,6 +121,12 @@ backlogs/
 |--------|--------|----------|--------|------|
 | MP-33 | Admin Enrollments | Chelsea Cllj | In Progress | 8 FAIL, 2 PARTIAL — 7 critical gaps |
 | MP-30 follow-up | Trainee dashboard: Attendance Summary, Competency Outcomes, Upcoming Sessions | Unassigned | Not Started | Tables are empty and nothing can write them (0 sessions, 0 attendance, 0 competencies, 0 outcomes). See `trainee/dashboard-data-gaps` |
+| MP-41 | Trainee Profile Page (view, edit, photo upload) | Vince Jon Gonzalez | Not Started | See `trainee/profile`. Photo storage is open in `to-be-discussed.md` |
+| MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Unassigned | Not Started | See `admin/trainee-edit`. Depends on MP-24 |
+| MP-43 | Requirements Tracking (Registrar only) | Chelsea Cllj | Not Started | See `registrar/requirements` |
+| MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
+| MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | Not Started | See `registrar/uniform-distribution` |
+| MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
 
 ### Technical Debt
 

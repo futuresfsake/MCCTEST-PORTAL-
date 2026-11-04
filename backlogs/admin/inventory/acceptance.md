@@ -4,10 +4,10 @@
 |-------|-------|
 | **Jira** | MP-35 |
 | **Type** | Feature |
-| **Status** | On `dev` (PR #52, #53 and #54). Not on `staging` or `main`. `dev` audited 2026-11-03. Definition of Done: 2 of 6 met, 2 partial, 2 not met |
+| **Status** | On `dev` and `staging` (PRs #52 to #56). Not on `main`. `dev` and `staging` audited 2026-11-03. Definition of Done: 2 of 6 met, 2 partial, 2 not met |
 | **Assignee** | Rhoddz Gerunda |
 | **Sprint** | MP Sprint 3 |
-| **Branch** | `MP-35-uniform-inventory` (PR #52). Later work merged into `dev`: `docs/mp35-default-inventory-test-cases` (PR #53) and `feature/MP-35-inventory-program-groups` (PR #54) |
+| **Branch** | `MP-35-uniform-inventory` (PR #52). Later work merged into `dev`: `docs/mp35-default-inventory-test-cases` (PR #53) and `feature/MP-35-inventory-program-groups` (PR #54). `dev` merged into `staging` with PR #56 |
 | **Routes** | `/admin/inventory`, `/registrar/inventory` (one shared page) |
 | **Migrations** | `20261019_add_inventory_transactions` (on `main`, applied to Supabase), `20261022_inventory_unique_program_size` (this branch, **already applied to Supabase**), `20261103_inventory_transactions_created_index` and `20261103_restore_mp24_indexes` (this branch, **applied to Supabase 2026-11-03 14:55**), `20261104_default_inventory_for_every_program` (this branch, **applied to Supabase 2026-11-03 15:53**) |
 
@@ -227,7 +227,7 @@ Each URL is limited to its own role: `/admin/inventory` allows ADMIN, `/registra
 | # | Follow-up | Related criteria | Priority | Status |
 |---|-----------|------------------|----------|--------|
 | F1 | Show the available quantity for the chosen program and size in the enrollment wizard. The endpoint `GET /inventory/availability` and the API function `getUniformAvailability` already exist, but the wizard never calls them. Today staff only learn a size is empty after submitting the whole form | 13, 21 | High | NOT STARTED |
-| F2 | Deduct stock when a uniform is marked given after enrollment. If staff choose "not distributed" at enrollment and hand out the shirt later, nothing reduces the stock. Needs an enrollment edit flow, so it depends on MP-42. Reuse `InventoryService.deductAndLog`. Written up as its own backlog: MP-53, `admin/uniform-distribution/acceptance.md` | 12 | High | NOT STARTED (MP-53 created) |
+| F2 | Deduct stock when a uniform is marked given after enrollment. If staff choose "not distributed" at enrollment and hand out the shirt later, nothing reduces the stock. Built as a Registrar-only Uniform Distribution page that calls `InventoryService.deductAndLog`, with a restock reminder to the admin. Written up as its own backlog: MP-53, `registrar/uniform-distribution/acceptance.md` | 12 | High | NOT STARTED (MP-53 created) |
 | F3 | Update the Jira ticket MP-35 text to say one row per program and size, and that the item is always "Uniform Shirt". The ticket still says program + item + size. The code and the database (`uq_inventory_program_size`) use program + size on purpose, and no duplicates existed | 4 | Medium | NOT STARTED |
 | F4 | Run the browser walkthrough and the enrollment checks listed under "Still Not Verified", then update the statuses in this file | most | High | NOT STARTED |
 | F5 | Add tests for restock, adjust, duplicate handling (409) and concurrent restocks. Today only the history, last-restocked and `deductAndLog` logic has tests (`inventory.service.spec.ts`) | 4, 5, 7, 17 | Medium | NOT STARTED |
@@ -245,7 +245,7 @@ Audited at 16:12 on branch `feature/MP-35-inventory-program-groups` (`fc3e250`),
 
 | # | Definition of Done (from the ticket) | Status | Evidence |
 |---|--------------------------------------|--------|----------|
-| 1 | Code reviewed and merged into `main` | NOT MET (in progress) | On `dev` through PR #52 and PR #53. This PR is next. Not on `staging` or `main` yet |
+| 1 | Code reviewed and merged into `main` | NOT MET (in progress) | On `dev` (PRs #52, #53, #54, #55) and on `staging` (PR #56, 2026-11-03 16:21). Not on `main` yet |
 | 2 | `add_inventory_transactions` migration committed and applied to the shared database with `prisma migrate deploy` | MET | The migration is `20261019_add_inventory_transactions`, applied to Supabase 2026-10-20. All 11 migrations are applied, `prisma migrate status` is up to date, `prisma migrate diff` shows no drift, and every migration checksum matches its file (older ones match their Windows line-ending version) |
 | 3 | Tested as admin and as registrar: create, restock, adjust and view history | PARTIAL | The history in Supabase shows both roles creating, restocking and adjusting through the API on the earlier version of the page (for example an Admin restock and a Registrar restock of +6 on 2026-11-03). Viewing history leaves no trace. The current page (program groups, size strip, Add Item) was reviewed on screen by Chelsea Cllj, who approved the layout (2026-11-03, about 16:10). A click-through of restock, adjust, History, Stock Log and Add Item on the current page, as each role, is **not recorded** (TC-G1 to TC-G6, TC-D1 to TC-D8) |
 | 4 | Tested enrollment with stock available, with stock at 0 and with concurrent submissions | PARTIAL | Stock available: 3 enrollments are marked given, each has its own `DISTRIBUTED` entry and the quantities add up. A distribution took a row to 0, so the boundary worked. Rejection at 0 is covered only by a unit test with a mocked database. Concurrent submissions: **not tested** |
@@ -306,6 +306,43 @@ Run on `dev` at `01e853c` (merge of PR #54). `dev` has the same files as the PR 
 
 **Before `staging`:** nothing in the code or the database blocks it. The browser walkthrough and the concurrency tests are still open and are better done on `dev` or `staging` before `main`.
 
+
+### Audit of `staging` after PR #56 (2026-11-03, 16:24)
+
+Run on `staging` at `99a7210` (merge of PR #56, `dev` into `staging`). `staging` has exactly the same files as the audited `dev` (`e0ce8c7`).
+
+| Check | Result |
+|-------|--------|
+| `staging` into `main` | No conflicts. 0 behind, 38 ahead (29 commits of work) |
+| Backend ESLint, `tsc`, `nest build`, `prisma validate` | Pass |
+| Backend tests | 52 of 52 pass (9 suites) |
+| Frontend ESLint, `tsc`, `vite build` | Pass |
+| Frontend `npm audit` | 0 vulnerabilities |
+| Backend `npm audit` | 2 high (`multer`, SEC-02, deferred) |
+| Secrets, AI mentions, tracked `.env` or `text.txt` | None. Only the database connection log remains |
+| Role guards | Every controller guarded, except the chatbot (public on purpose, rate limited) |
+| Migrations | 11 in the repo, all applied to Supabase. `prisma migrate status` up to date. Every checksum matches its file. `prisma migrate diff` between Supabase and `schema.prisma`: no difference. The four MP-35 migrations that are new to `staging` were already applied, so nothing is pending |
+| Data in Supabase | 7 programs, 49 rows, 59 history entries. No duplicate program + size, no negative quantities, every quantity equals its history |
+| Distributions | 3 enrollments marked given, 3 `DISTRIBUTED` entries, all linked |
+| Page header data | Bread and Pastry Production 18 units (M 7, L 11), the other six at 0 |
+| Real backend boot | No errors. All inventory routes return 401 without a token. PUT, PATCH and DELETE on inventory return 404 |
+| Page structure | One shared `InventoryPage` (590 lines), two 6-line wrappers. `/admin/inventory` allows ADMIN, `/registrar/inventory` allows REGISTRAR |
+
+#### Definition of Done on `staging`
+
+| # | Definition of Done (from the ticket) | Status | Change since the `dev` audit |
+|---|--------------------------------------|--------|------------------------------|
+| 1 | Code reviewed and merged into `main` | NOT MET (in progress) | Now also on `staging`. `main` is the remaining step |
+| 2 | `add_inventory_transactions` migration committed and applied with `prisma migrate deploy` | MET | None. All 11 migrations applied, no drift |
+| 3 | Tested as admin and as registrar: create, restock, adjust and view history | PARTIAL | None. The history shows both roles creating, restocking and adjusting through the API. The layout of the current page was approved on screen. A click-through of the current page as each role is not recorded |
+| 4 | Tested enrollment with stock available, with stock at 0 and with concurrent submissions | PARTIAL | None. Stock available is evidenced in the data. Rejection at 0 is a mocked unit test. Concurrent submissions not tested |
+| 5 | Tested parallel restocks and parallel adjustments | NOT MET | None. Atomic SQL, never run in parallel |
+| 6 | No duplicated inventory page code between admin and registrar | MET | None. One shared page, two 6-line wrappers |
+
+**Definition of Done on `staging`: unchanged.** 2 of 6 met, 2 partial, 2 not met.
+
+**Before `main`:** nothing in the code or the database blocks it. The browser walkthrough as Admin and as Registrar (TC-G1 to TC-G6, TC-D1 to TC-D8) and the concurrency tests are still open. `staging` is the right place to do them. Criterion 13 (stock in the enrollment form) and criterion 12 (later handouts, MP-53) are open follow-ups. The backend must be deployed with this code for new programs to get their 7 rows automatically.
+
 ---
 
 ## Change Log
@@ -349,6 +386,8 @@ All times are UTC+8. "User" is the person who made or ran the change. Commits ar
 | 16:14 | Chelsea Cllj | Updated the push log, README and this file's status before opening the PR for `feature/MP-35-inventory-program-groups` into `dev`. Branch pushed to the remote | `feature/MP-35-inventory-program-groups` |
 | 16:15 | Chelsea Cllj | **PR #54 merged into `dev`**: `feature/MP-35-inventory-program-groups` (list grouped by program, size strip, Definition of Done audit, log updates) | `01e853c` |
 | 16:18 | Chelsea Cllj | **Audit of `dev` after PR #54:** code, migrations, data and a real backend boot all pass. Definition of Done unchanged. Recorded in the "Audit of `dev` after PR #54" section | `docs/mp35-dev-audit` |
+| 16:21 | Chelsea Cllj | **PR #56 merged into `staging`**: `dev` into `staging` (MP-35 and its logs, 29 commits, four migrations already applied to Supabase) | `99a7210` |
+| 16:24 | Chelsea Cllj | **Audit of `staging` after PR #56:** code, migrations, data and a real backend boot all pass. Definition of Done re-audited and unchanged: 2 met, 2 partial, 2 not met. Recorded in the "Audit of `staging` after PR #56" section | `docs/mp35-staging-audit` |
 
 ### Database (Supabase, shared)
 
