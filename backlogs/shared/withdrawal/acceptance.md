@@ -68,10 +68,10 @@ The parallel design had a race condition (two validators approving in the same s
 | T-2 | Submitting for a non-enrolled or non-own enrollment returns 400/403 | PASS (API) | Not enrolled: 400. Not own or missing: 403 (same answer, so ids are not revealed) |
 | T-3 | Submitting a duplicate open request (`PENDING_VALIDATION`, `TRAINER_VALIDATED` or `PENDING_ADMIN_SIGNOFF`) returns 409 | PASS (API) | Widened from "pending" because of the longer pipeline. Two simultaneous submits: 60 of 60 races gave one winner and a 409 |
 | T-4 | Trainee sees all their requests with enrollment and program context | PASS (API) | List is scoped to the caller, paginated, optional status filter |
-| T-5 | The pipeline view shows the stages in the order Request, Trainer, Registrar, Admin, with real-time status | NOT STARTED | D-06. API already returns the stages and history. UI is the next branch |
+| T-5 | The pipeline view shows the stages in the order Request, Trainer, Registrar, Admin, with real-time status | PASS (not yet checked in a browser) | Stepper built. Stage logic checked on 10 cases (every status, rejection at each stage, cancel). Components server-rendered for all 6 states. The page re-checks every 30 s while a request is open. **Not yet looked at in a real browser** |
 | T-6 | Trainee can cancel only while `PENDING_VALIDATION`; otherwise 400 | PASS (API) | Conditional update, so a cancel and a trainer action at the same moment cannot both win |
 | T-7 | All responses exclude `password_hash`; non-trainee roles get 403 | PASS (API) | Responses select named fields only. Role guard `@Roles(TRAINEE)` on the controller. Another trainee's request returns 404 |
-| T-8 | Pages type-check, build and lint with 0 problems | PARTIAL | Backend: tsc, build and eslint pass, 72 of 72 unit tests pass. Pages not built yet |
+| T-8 | Pages type-check, build and lint with 0 problems | PASS | Backend: tsc, build, eslint, 72 of 72 unit tests, plus a 30-check real HTTP run. Frontend: `tsc -b`, `vite build` and `eslint .` all pass |
 
 ## Acceptance Criteria (MP-48, Trainer, first validation)
 
@@ -125,6 +125,7 @@ The parallel design had a race condition (two validators approving in the same s
 
 | Date | Change |
 |------|--------|
+| 2026-11-04 | Trainee UI (MP-46, UI half) built on `feature/withdrawal-trainee-request-ui`: list page with status filter and pagination in the URL, request form (own ENROLLED enrollments only), detail page with the four-stage stepper, history and cancel, sidebar link. Checked: pipeline logic (10 cases), server-rendered components, full frontend build and lint, and the API over real HTTP (30 checks). **Not checked in a browser** |
 | 2026-11-04 | Trainee backend (MP-46, API half) built on `feature/withdrawal-trainee-request-api`: shared `WithdrawalService`, trainee controller, 20 unit tests, plus a throwaway real-database run (10 scenarios and a 60-race stress test). Found and fixed an error-mapping bug in that run. UI half still to do |
 | 2026-11-04 | Pipeline changed from parallel to sequential (Trainer, then Registrar, then Admin), decision D-06. Jira tickets MP-45 to MP-49 rewritten to match. `REGISTRAR_VALIDATED` removed. MP-48 is now ticket 3 of 5 and MP-47 ticket 4 of 5 |
 
