@@ -3,7 +3,7 @@
 | Field | Value |
 |-------|-------|
 | **Date** | 2026-11-04 |
-| **Audited** | Branch `fix/security-headers-multer-staging`, cut from `staging` at `16838f9`, with uncommitted changes (not yet pushed) |
+| **Audited** | Branch `fix/security-headers-multer-staging`, cut from `staging` at `16838f9`, with uncommitted changes (not yet pushed). **Since merged to `dev`:** helmet and multer in PR #75 (14:06), the history table in PR #76 (14:18), 2026-11-04. Re-checked on merged `dev`: backend 102 of 102 tests, `tsc` clean, frontend build and lint clean. Still not on `staging`, and the browser check is still open |
 | **Changes covered** | (1) trainer Request history table and its search (`status=DECIDED`), (2) `helmet` in `main.ts` (finding A-1), (3) `multer` override to 2.5.0 (finding A-3), (4) MP-48 ticket text and acceptance criteria |
 | **Builds on** | `audit-dev-trainer.md`, `audit-staging.md`, `audit-pre-staging.md` |
 | **Ticket** | MP-48 (Trainer: Validate Withdrawal Request) |
