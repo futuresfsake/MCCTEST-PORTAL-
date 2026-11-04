@@ -142,12 +142,30 @@ The parallel design had a race condition (two validators approving in the same s
 | 3 | Frontend `tsc -b`, `eslint .`, `vite build` | PASS, 0 problems |
 | 4 | Supabase `prisma migrate status` | PASS, up to date. `20261104_withdrawal_pipeline_schema` finished, not rolled back |
 | 5 | No withdrawal-related drift between Supabase and `schema.prisma` | PASS |
-| 6 | `withdrawal_request` and `withdrawal_status_history` row counts | 0 and 0 (no real requests yet) |
+| 6 | `withdrawal_request` and `withdrawal_status_history` row counts | 0 and 0 at the time of the audit. Became 1 and 1 after the live test in the next section |
 | 7 | Status and legacy `request_status` mismatches, requests without a history row | 0 and 0 |
 | 8 | Test accounts left on Supabase | 0. All testing used throwaway local databases |
 | 9 | API over real HTTP (earlier run, branch tip equals the merged code) | PASS, 30 of 30 |
 | 10 | Pipeline stage logic (10 cases) and server-rendered components (6 states) | PASS |
-| 11 | **Pages in a real browser** | **NOT DONE.** No browser was available. Use the checklist below |
+| 11 | **Pages in a real browser** | **PARTLY DONE.** No browser was available to me. A trainee then submitted a request through the UI and it reached Supabase correctly (see the live test below). The visual checks (layout, stepper look, phone width, keyboard) are still the checklist below |
+
+### Live test on Supabase (2026-11-04, after the migration and the merge)
+
+A real trainee account, `tes.trainee_mcctest` (Test Trainee, TRAINEE, active, one `ENROLLED` enrollment: Bread and Pastry Production, BPP-4Th Batch), submitted a withdrawal request through the trainee page. Read back from Supabase (read-only):
+
+| Item | Result |
+|------|--------|
+| Requests for this trainee | 1: `ce316375-0817-469a-acf0-d46aaf64951f`, status `PENDING_VALIDATION`, requested 2026-11-04 |
+| Reason stored | "I am withdrawing due to time constraint" |
+| Trainer, registrar and admin fields | All empty, as expected before anyone acts |
+| History rows | 1: `NULL` to `PENDING_VALIDATION`, 2026-11-04 03:03:25 UTC (11:03 Philippine time), no remarks |
+| Totals on Supabase | 1 request, 1 history row. This is the only withdrawal data |
+
+What this proves: the form, the API, the request row and its history row all work against the real database with a real login.
+
+What it does not prove: how the pages look, and every stepper state. The request is stuck at "Waiting for trainer" until the trainer step (MP-48) is built.
+
+**This is a real row on the shared database.** Leave it as the first record for testing the trainer step, or cancel it from the trainee page (that writes a second history row, `PENDING_VALIDATION` to `CANCELLED`).
 
 ### Manual browser checklist (trainee with an `ENROLLED` enrollment)
 
