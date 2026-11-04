@@ -85,8 +85,11 @@ export interface TrainerWithdrawalListResponse {
   meta: WithdrawalListResponse['meta']
 }
 
-/** `''` = what is waiting for the trainer (the API default), `ALL` = every status. */
-export type TrainerStatusFilter = WithdrawalStatus | 'ALL' | ''
+/**
+ * `''` = what is waiting for the trainer (the API default), `ALL` = every status,
+ * `DECIDED` = what the trainer already approved or rejected (the log).
+ */
+export type TrainerStatusFilter = WithdrawalStatus | 'ALL' | 'DECIDED' | ''
 
 export type TrainerAction = 'APPROVE' | 'REJECT'
 
