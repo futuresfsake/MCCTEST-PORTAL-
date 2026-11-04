@@ -5,9 +5,9 @@ import Sidebar from '../../../../components/layout/Sidebar'
 import Footer from '../../../../components/layout/Footer'
 import { traineeWithdrawalApi } from '../../../../api/users/trainee-withdrawal.api'
 import { OPEN_WITHDRAWAL_STATUSES, type WithdrawalDetail } from '../../../../types/withdrawal.type'
-import WithdrawalPipeline from './components/WithdrawalPipeline'
-import WithdrawalStatusBadge from './components/WithdrawalStatusBadge'
-import { formatDate, formatDateTime, STATUS_LABELS } from './withdrawal-pipeline'
+import WithdrawalPipeline from '../../../../components/withdrawal/WithdrawalPipeline'
+import WithdrawalStatusBadge from '../../../../components/withdrawal/WithdrawalStatusBadge'
+import { formatDate, formatDateTime, STATUS_LABELS } from '../../../../components/withdrawal/withdrawal-pipeline'
 
 /** While a request is still open the page re-checks it, so progress shows up without a reload. */
 const REFRESH_MS = 30_000
