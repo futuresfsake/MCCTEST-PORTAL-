@@ -46,6 +46,8 @@
 | 2026-11-04 | MP-46 | Trainee withdrawal pages: list with filter and pagination, request form, four-stage progress view with history and cancel | PR #64 `feature/withdrawal-trainee-request-ui` → `dev` | — |
 | 2026-11-04 | — | Audit log for `dev` (withdrawal trainee API and pages) and the first live request on Supabase | PR #65 `docs/withdrawal-trainee-audit` → `dev` | — |
 | 2026-11-04 | — | Pre-staging audit of the withdrawal trainee work (code, tests, security, leaks, dependencies, data) and five new open gaps (items 10 to 14 in `to-be-discussed.md`) | `docs/withdrawal-pre-staging-audit` → `dev` | — |
+| 2026-11-04 | MP-45, MP-46 | `dev` → `staging`: withdrawal schema, trainee API and pages, audit logs. Reached `staging` through PR #66, which carried `dev`'s commits. Migration was already applied to Supabase, so nothing to apply on deploy | PR #66 `docs/withdrawal-pre-staging-audit` → `staging` | — |
+| 2026-11-04 | — | Audit log for `staging` (withdrawal trainee work: build, tests, security, dependencies, data) | `docs/withdrawal-staging-audit` → `staging` | — |
 
 ---
 
