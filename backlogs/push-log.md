@@ -41,6 +41,11 @@
 | 2026-11-03 | — | Audit log for `dev` (MP-35: Definition of Done, migrations, data) | `docs/mp35-dev-audit` → `dev` | Sprint 3 |
 | 2026-11-03 | MP-35 | `dev` → `staging`: Uniform Inventory (admin + registrar), default inventory for every program, program-grouped list, audit logs. Four migrations, all already applied to Supabase | PR #56 `dev` → `staging` (PRs #52 to #55 came with it) | Sprint 3 |
 | 2026-11-03 | — | Audit logs for `staging` (MP-35: Definition of Done, migrations, data) | `docs/mp35-staging-audit` → `staging` | Sprint 3 |
+| 2026-11-04 | MP-45 | Withdrawal pipeline schema: `withdrawal_status_enum`, 13 columns on `withdrawal_request`, `withdrawal_status_history`, backfill. One additive migration, **applied to Supabase 2026-11-04** (table had 0 rows) | PR #62 `feature/MP-45-withdrawal-schema` → `dev` | — |
+| 2026-11-04 | MP-46 | Trainee withdrawal API: submit, list, detail, cancel under `/api/trainee/withdrawal-requests`, shared `WithdrawalService`, 20 unit tests | PR #63 `feature/withdrawal-trainee-request-api` → `dev` | — |
+| 2026-11-04 | MP-46 | Trainee withdrawal pages: list with filter and pagination, request form, four-stage progress view with history and cancel | PR #64 `feature/withdrawal-trainee-request-ui` → `dev` | — |
+| 2026-11-04 | — | Audit log for `dev` (withdrawal trainee API and pages) and the first live request on Supabase | PR #65 `docs/withdrawal-trainee-audit` → `dev` | — |
+| 2026-11-04 | — | Pre-staging audit of the withdrawal trainee work (code, tests, security, leaks, dependencies, data) and five new open gaps (items 10 to 14 in `to-be-discussed.md`) | `docs/withdrawal-pre-staging-audit` → `dev` | — |
 
 ---
 
@@ -93,6 +98,7 @@
 | MP-55 | Notification bell: Registrar events (batch changes, trainees added or removed) | not started | Chelsea Cllj (Jira default, reassign if needed) | Not started. Depends on MP-52. See `registrar/notifications/acceptance.md` |
 | MP-56 | Notification bell: Trainer events (batch assigned, removed, schedule changed, closed or cancelled) | not started | Chelsea Cllj (Jira default, reassign if needed) | Not started. Depends on MP-52. See `trainer/notifications/acceptance.md` |
 | MP-57 | Notification bell: Encoder events (enrollment completed, dropped or withdrawn) | not started | Chelsea Cllj (Jira default, reassign if needed) | Not started. Depends on MP-52. See `encoder/notifications/acceptance.md` |
+| MP-45 to MP-49 | Withdrawal approval pipeline (schema, Trainee, Registrar, Trainer, Admin) | `feature/MP-45-withdrawal-schema` | Chelsea Cllj | MP-45 schema merged to `dev` (PR #62), **migration applied to Supabase 2026-11-04** (23 columns, enum, 2 indexes, history table verified; the table had no rows). MP-46 trainee backend on `feature/withdrawal-trainee-request-api` and UI on `feature/withdrawal-trainee-request-ui`, both merged to `dev` (PRs #63, #64). First live request submitted on Supabase 2026-11-04 (tes.trainee_mcctest), see the audit in `shared/withdrawal/acceptance.md`. MP-47 to MP-49 not started. Validation is sequential: Trainer, then Registrar, then Admin (D-06 in `registrar/decisions.md`). Open: account deactivation after approval. See `shared/withdrawal/acceptance.md` |
 | MP-39 | Trainer Announcements Module | `staging` | Chelsea Cllj | On staging — PR to main pending |
 | SEC-01 | **Security: announcements API exposed the poster's password hash to every logged-in role** | `feature/MP-30-trainee-dashboard` → `dev` (PR #46) → `staging` (PR #49) | Chelsea Cllj | Fixed and on `dev` and `staging`. **Not yet on `main`.** Still needs the backend restart and password resets for staff who posted announcements. See `technical/announcements-password-hash-exposure/acceptance.md` |
 | SEC-02 | **Security: `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs`** | — | Chelsea Cllj | Logged, not fixed. Deferred by choice. See `technical/multer-dos-advisory/acceptance.md` |

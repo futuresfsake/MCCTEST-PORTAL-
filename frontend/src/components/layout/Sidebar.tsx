@@ -269,6 +269,11 @@ const sidebarConfig: Record<
             path: '/trainee/grades',
             icon: 'fa-solid fa-chart-line',
           },
+          {
+            label: 'Withdrawal',
+            path: '/trainee/withdrawal',
+            icon: 'fa-solid fa-right-from-bracket',
+          },
         ],
       },
 

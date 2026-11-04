@@ -146,6 +146,114 @@ Items that need a team decision before they become a ticket or a backlog.
 
 ---
 
+## 9. Withdrawal pipeline: what happens to the trainee's account after approval (MP-49)
+
+| Field | Value |
+|-------|-------|
+| **Related** | MP-49 (Admin final sign-off), MP-45 (schema), MP-42 (program change creates a new enrollment), MP-57 (Encoder notifications) |
+| **Added** | 2026-11-04 |
+| **Status** | OPEN GAP |
+
+**Question:** When the admin approves a withdrawal, the enrollment becomes `WITHDRAWN`. Should the trainee also be blocked from logging in?
+
+**Current plan:** option A. MP-49 sets only the enrollment to `WITHDRAWN`, leaves the account as is, and carries a TODO in the service ("Account deactivation after withdrawal, decision pending").
+
+**Options**
+
+| # | Option | Effect | Trade-off |
+|---|--------|--------|-----------|
+| A | Enrollment only (current plan) | A withdrawn trainee can still log in and sees a WITHDRAWN status | Simplest. Keeps their history viewable |
+| B | Deactivate the account on approval | Set `users.is_active = false` in the same transaction as the sign-off. The login guard then rejects them | Could lock out a trainee who just shifted programs (MP-42), because one trainee can hold several enrollments |
+| C | Deactivate only if no other active enrollment remains | Same as B, but only when the trainee has no other `PENDING` or `ENROLLED` enrollment | Safest if deactivation is wanted. Slightly more logic |
+
+**Facts checked in the code**
+- `users.is_active` already exists (`Boolean @default(true)`), so B and C need no schema change.
+- Login already rejects inactive accounts: `auth.service.ts` checks `is_active` at login and `jwt.strategy.ts` checks it on every request, so B and C take effect immediately, including for already-issued tokens.
+
+**To answer:** A, B or C. Suggestion: C if deactivation is wanted, otherwise stay on A. Decide before MP-49 is built, then update the MP-49 ticket.
+
+---
+
+## 10. Supabase row level security is off on every table
+
+| Field | Value |
+|-------|-------|
+| **Related** | Withdrawal pre-staging audit A-2 (`shared/withdrawal/audit-pre-staging.md`). Affects all 38 `public` tables, including `users` |
+| **Added** | 2026-11-04 |
+| **Status** | OPEN GAP, needs confirming |
+
+**Question:** Row level security (RLS) is off on all 38 tables in `public`. Is the Supabase REST API able to read or write them?
+
+**What is known:** the Supabase API roles (`anon`, `authenticated`) hold only `REFERENCES`, `TRIGGER` and `TRUNCATE` on the tables checked (the two new withdrawal tables, `users` and `official_receipts`), and no `SELECT`, `INSERT`, `UPDATE` or `DELETE`. So the REST API should not be able to read or write them. This came from the grants, **not from calling the API with the anon key**.
+
+**To answer:** call the REST API with the anon key and confirm it returns nothing. If it does, turn RLS on for every table with no policies (the backend connects as the database owner and keeps working). Also find out why `anon` and `authenticated` hold `TRUNCATE`.
+
+---
+
+## 11. Security headers and the `X-Powered-By` header
+
+| Field | Value |
+|-------|-------|
+| **Related** | Withdrawal pre-staging audit A-1. App-wide, not caused by the withdrawal work |
+| **Added** | 2026-11-04 |
+| **Status** | OPEN GAP |
+
+**Question:** Do we add `helmet` and turn off `X-Powered-By` in `main.ts`?
+
+**Current:** the server replies `X-Powered-By: Express` and sends no `X-Content-Type-Options`, frame protection or HSTS.
+
+**To answer:** yes or no, and who takes it. Check the frontend still works behind the headers.
+
+---
+
+## 12. Withdrawal tests that are not in the repo
+
+| Field | Value |
+|-------|-------|
+| **Related** | Withdrawal pre-staging audit A-4 |
+| **Added** | 2026-11-04 |
+| **Status** | OPEN GAP |
+
+**Question:** Do we keep the real-database tests and add frontend tests?
+
+**Current:** the 30-check HTTP run, the 60-race test and the security run were temporary scripts. The controller, DTO validation and database behaviour have no test in the repo. The frontend has no test runner, so the stage logic (`withdrawal-pipeline.ts`, 10 cases) is also unprotected.
+
+**To answer:** add an opt-in integration spec that needs a Postgres server, and add Vitest to the frontend. Decide whether CI can run a Postgres.
+
+---
+
+## 13. Withdrawal: what the trainee may see about staff
+
+| Field | Value |
+|-------|-------|
+| **Related** | Withdrawal pre-staging audit A-8, MP-46 |
+| **Added** | 2026-11-04 |
+| **Status** | OPEN GAP |
+
+**Question:** Should the trainee see the names of the trainer, registrar and admin who acted, and the remarks written on each status change?
+
+**Current:** the trainee sees both, in the stepper and the history. A rejection reason travels in those remarks, which is the reason for showing them. Validators' separate private remarks are not returned.
+
+**To answer:** keep names and remarks, or show the role only (for example "Trainer") and keep the remarks.
+
+---
+
+## 14. Withdrawal: keep or retire the old `request_status`
+
+| Field | Value |
+|-------|-------|
+| **Related** | Withdrawal pre-staging audit A-9, MP-45, MP-49 |
+| **Added** | 2026-11-04 |
+| **Status** | OPEN GAP |
+
+**Question:** Do we keep `withdrawal_request.request_status` next to the new `withdrawal_status`?
+
+**Current:** new code uses `withdrawal_status` only. The old column stays at `PENDING` on every new request, so after a cancel or an approval the two disagree. It was kept for consistency when the migration was written.
+
+**To answer:** retire it in a later migration, or keep it in sync. Decide before the admin sign-off ticket (MP-49).
+
+---
+
 ## Gap Summary (all open gaps on 2026-11-04)
 
 | Gap | Ticket | Where logged |
@@ -161,3 +269,9 @@ Items that need a team decision before they become a ticket or a backlog.
 | G-42-2 Is "record a new payment instead" still needed | MP-42 | item 6 |
 | Sprint placement for MP-41, MP-42, MP-43, MP-59 | several | item 7 |
 | Can a PENDING enrollment receive a uniform | MP-53 | item 8 |
+| Withdrawal approved: deactivate the trainee's account or not (A, B or C) | MP-49 | item 9 |
+| Supabase RLS is off on every table: confirm the REST API cannot read or write | audit A-2 | item 10 |
+| Add `helmet` and remove `X-Powered-By` | audit A-1 | item 11 |
+| Withdrawal tests not in the repo (integration and frontend) | audit A-4 | item 12 |
+| Trainee sees staff names and remarks | audit A-8, MP-46 | item 13 |
+| Keep or retire the old `request_status` | audit A-9, MP-45, MP-49 | item 14 |
