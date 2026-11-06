@@ -19,6 +19,7 @@ import { AdminBatchesModule } from './users/admin/batches/batches.module';
 import { AdminEnrollmentsModule } from './users/admin/enrollments/enrollments.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { PaymentsModule } from './payments/payments.module';
+import { RequirementsModule } from './requirements/requirements.module';
 import { AdminTraineesModule } from './users/admin/trainee-information/trainees.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { TraineeModule } from './users/trainee/trainee.module';
@@ -53,6 +54,7 @@ import { EncoderTraineesModule } from './users/encoder/trainee-information/train
     AdminEnrollmentsModule,
     AnnouncementsModule,
     PaymentsModule,
+    RequirementsModule,
     AdminTraineesModule,
     InventoryModule,
     TraineeModule,

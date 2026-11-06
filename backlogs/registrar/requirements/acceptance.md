@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-43 |
 | **Type** | Feature (Registrar only) |
-| **Status** | NOT STARTED |
+| **Status** | IN REVIEW. Audited 2026-11-06, see `audit-dod.md` |
 | **Priority** | Medium |
 | **Assignee** | Chelsea Cllj |
 | **Depends on** | MP-33 (Admin Enrollments, shared checklist editor), MP-24 (shared list toolkit and Scalability Guide) |
@@ -94,64 +94,66 @@ Performance: missing/incomplete filters run in the database. The list selects on
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 1 | The Registrar can open `/registrar/requirements` from the sidebar. There is no Admin Requirements page | NOT STARTED | Registrar only |
-| 2 | The checklist editor is one shared component used by this page and the enrollment detail | NOT STARTED | |
-| 3 | The Requirements page and both enrollment-detail endpoints (Admin and Registrar) call the same backend service method | NOT STARTED | |
+| 1 | The Registrar can open `/registrar/requirements` from the sidebar. There is no Admin Requirements page | NOT MET (decision) | Registrar only. Admin page added on purpose (D-1). Registrar part works |
+| 2 | The checklist editor is one shared component used by this page and the enrollment detail | NOT MET (decision) | Panel shared by the Admin and Registrar pages. Enrollment detail keeps its own editor (D-1) |
+| 3 | The Requirements page and both enrollment-detail endpoints (Admin and Registrar) call the same backend service method | PASS | Enrollment endpoints and Requirements controllers all use `saveChecklist` |
 
 ### List
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 4 | The list opens on Incomplete, status `ENROLLED`, most missing first. The status filter can add `PENDING` and other statuses | NOT STARTED | Decided 2026-11-04: ENROLLED by default |
-| 5 | Each row shows "N / 7 submitted" and badges for the missing documents | NOT STARTED | |
-| 6 | Filtering by a missing document shows only enrollments missing it | NOT STARTED | |
-| 7 | Search, every filter, sorting and server-side pagination work together and survive a refresh | NOT STARTED | |
-| 8 | The complete and incomplete counts match the current filters | NOT STARTED | |
+| 4 | The list opens on Incomplete, status `ENROLLED`, most missing first. The status filter can add `PENDING` and other statuses | PASS | Decided 2026-11-04: ENROLLED by default |
+| 5 | Each row shows "N / 7 submitted" and badges for the missing documents | PASS |  |
+| 6 | Filtering by a missing document shows only enrollments missing it | PASS |  |
+| 7 | Search, every filter, sorting and server-side pagination work together and survive a refresh | PARTIAL | Works together through the API. Refresh not seen in a browser |
+| 8 | The complete and incomplete counts match the current filters | PASS |  |
 
 ### Updating
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 9 | Ticking a missing document and saving updates the row's progress and removes it from the missing badges | NOT STARTED | |
-| 10 | All 7 items can be updated, including `commitment_fee` | NOT STARTED | Fixes the current gap |
-| 11 | `checked_by` and `checked_at` update to the staff member and time of the save | NOT STARTED | |
-| 12 | Changes appear in the enrollment detail, and the other way round | NOT STARTED | |
+| 9 | Ticking a missing document and saving updates the row's progress and removes it from the missing badges | PASS | Seen live |
+| 10 | All 7 items can be updated, including `commitment_fee` | NOT MET (decision) | Fixes the current gap. Commitment fee is a payment, not a requirement. Removed from this feature, so the checklist is 6 documents (D-4) |
+| 11 | `checked_by` and `checked_at` update to the staff member and time of the save | PASS |  |
+| 12 | Changes appear in the enrollment detail, and the other way round | PASS | Both directions through the API |
 
 ### Bulk
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 13 | Marking one document received for several rows updates all in one save. It is all or nothing: if one row fails, none change and nothing is logged | NOT STARTED | |
-| 14 | More than 100 rows in one bulk request is rejected with 400 and the message "Maximum 100 rows per request" | NOT STARTED | |
-| 14a | The cap of 100 is one configuration constant, not repeated in several places | NOT STARTED | |
-| 14b | A bulk update of 100 rows completes in under 500 ms server-side, with no per-row queries | NOT STARTED | Guards against a loop with one query per row |
+| 13 | Marking one document received for several rows updates all in one save. It is all or nothing: if one row fails, none change and nothing is logged | PASS |  |
+| 14 | More than 100 rows in one bulk request is rejected with 400 and the message "Maximum 100 rows per request" | PASS |  |
+| 14a | The cap of 100 is one configuration constant, not repeated in several places | PARTIAL | One backend constant, a second copy in the frontend |
+| 14b | A bulk update of 100 rows completes in under 500 ms server-side, with no per-row queries | PASS | Guards against a loop with one query per row. 17 to 18 ms for 100 rows locally, 7 statements |
 
 ### History
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 15 | Every changed document creates a history row with old value, new value, staff member and date and time | NOT STARTED | |
-| 16 | The side panel shows the history newest first. History rows cannot be edited or deleted | NOT STARTED | |
+| 15 | Every changed document creates a history row with old value, new value, staff member and date and time | PASS | Seen live |
+| 16 | The side panel shows the history newest first. History rows cannot be edited or deleted | PARTIAL | Newest first. No database rule stops edits |
 
 ### Concurrency
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 17 | Two staff open the same checklist and both save: the second gets a 409 message and nothing is overwritten | NOT STARTED | |
+| 17 | Two staff open the same checklist and both save: the second gets a 409 message and nothing is overwritten | PASS |  |
 
 ### Access Control and Quality
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 18 | Only the Registrar can open the page or use the `/registrar/requirements` endpoints. Admin, trainee, trainer and encoder get 403 | NOT STARTED | |
-| 19 | Responses never include `password_hash` or other sensitive account fields | NOT STARTED | |
-| 20 | The list uses a fixed number of queries per request, however many rows it returns | NOT STARTED | Replaces the old 10,000-row target, which could not be tested through a 100-row cap |
-| 21 | Exactly one migration is added (history table and index), reviewed before being applied to the shared database | NOT STARTED | |
-| 22 | Backend and frontend type-check, build and lint with 0 problems | NOT STARTED | |
+| 18 | Only the Registrar can open the page or use the `/registrar/requirements` endpoints. Admin, trainee, trainer and encoder get 403 | NOT MET (decision) | Admin is allowed on purpose (D-1) |
+| 19 | Responses never include `password_hash` or other sensitive account fields | PASS |  |
+| 20 | The list uses a fixed number of queries per request, however many rows it returns | PASS | Replaces the old 10,000-row target, which could not be tested through a 100-row cap. 10 statements for 10 and for 100 rows |
+| 21 | Exactly one migration is added (history table and index), reviewed before being applied to the shared database | PARTIAL | One migration, applied on the owner instruction without a separate reviewer |
+| 22 | Backend and frontend type-check, build and lint with 0 problems | PASS |  |
 
 ---
 
 ## Test Cases
+
+Results of the 2026-11-06 audit are in `audit-dod.md` section 4b: TC-01, 03, 04, 05, 07, 09 PASS. TC-06 PARTIAL (refresh not seen in a browser). TC-02 and TC-08 NOT MET by decision (commitment fee removed from the feature, Admin allowed).
 
 ### TC-01: Late document
 - **Precondition:** Enrollment without a Barangay Clearance.
@@ -194,4 +196,4 @@ Performance: missing/incomplete filters run in the database. The list selects on
 
 ---
 
-## Summary: 0/24 PASS, NOT STARTED
+## Summary: 16/24 PASS, 4 PARTIAL, 4 NOT MET by decision. IN REVIEW
