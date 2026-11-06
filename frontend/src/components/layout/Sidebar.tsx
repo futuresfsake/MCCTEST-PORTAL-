@@ -253,6 +253,11 @@ const sidebarConfig: Record<
             path: '/trainee/announcements',
             icon: 'fa-solid fa-bullhorn',
           },
+          {
+            label: 'My Profile',
+            path: '/trainee/profile',
+            icon: 'fa-solid fa-user',
+          },
         ],
       },
 
