@@ -1,12 +1,12 @@
 generator client {
-  provider     = "prisma-client"
-  output       = "../src/generated/prisma"
-  moduleFormat = "cjs"
+  provider        = "prisma-client"
+  output          = "../src/generated/prisma"
+  moduleFormat    = "cjs"
   previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
-  provider = "postgresql"
+  provider   = "postgresql"
   extensions = [pg_trgm]
 }
 
@@ -208,29 +208,30 @@ model distribution_checklist {
 }
 
 model enrollments {
-  id                     String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  trainee_id             String                   @db.Uuid
-  batch_id               String                   @db.Uuid
-  enrollment_status      enrollment_status_enum   @default(ENROLLED)
-  uniform_size           size_enum?
-  id_card_number         String?                  @unique @db.VarChar(50)
-  exit_reason            String?
-  remarks                String?
-  enrolled_by            String                   @db.Uuid
-  enrolled_at            DateTime                 @default(now()) @db.Timestamptz(6)
-  attendance             attendance[]
-  clearance              clearance[]
-  distribution_checklist distribution_checklist?
-  inventory_transactions inventory_transactions[]
-  batch                  batch                    @relation(fields: [batch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users                  users                    @relation(fields: [enrolled_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  trainee                trainee                  @relation(fields: [trainee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  generated_certificate  generated_certificate[]
-  official_receipts      official_receipts[]
-  request_form           request_form[]
-  requirement_checklist  requirement_checklist?
-  trainee_outcome_status trainee_outcome_status[]
-  withdrawal_request     withdrawal_request[]
+  id                            String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  trainee_id                    String                          @db.Uuid
+  batch_id                      String                          @db.Uuid
+  enrollment_status             enrollment_status_enum          @default(ENROLLED)
+  uniform_size                  size_enum?
+  id_card_number                String?                         @unique @db.VarChar(50)
+  exit_reason                   String?
+  remarks                       String?
+  enrolled_by                   String                          @db.Uuid
+  enrolled_at                   DateTime                        @default(now()) @db.Timestamptz(6)
+  attendance                    attendance[]
+  clearance                     clearance[]
+  distribution_checklist        distribution_checklist?
+  inventory_transactions        inventory_transactions[]
+  batch                         batch                           @relation(fields: [batch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                         users                           @relation(fields: [enrolled_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  trainee                       trainee                         @relation(fields: [trainee_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  generated_certificate         generated_certificate[]
+  official_receipts             official_receipts[]
+  request_form                  request_form[]
+  requirement_checklist         requirement_checklist?
+  requirement_checklist_history requirement_checklist_history[]
+  trainee_outcome_status        trainee_outcome_status[]
+  withdrawal_request            withdrawal_request[]
 
   @@unique([trainee_id, batch_id])
   @@index([batch_id], map: "idx_enrollments_batch")
@@ -417,20 +418,39 @@ model request_form {
 }
 
 model requirement_checklist {
-  id              String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  enrollment_id   String      @unique @db.Uuid
-  checked_by      String      @db.Uuid
-  bc_nso_psa_copy Boolean     @default(false)
-  diploma_tor     Boolean     @default(false)
-  brgy_clearance  Boolean     @default(false)
-  one_by_one_pic  Boolean     @default(false)
-  two_by_two_pic  Boolean     @default(false)
-  passport_size   Boolean     @default(false)
-  commitment_fee  Boolean     @default(false)
+  id              String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollment_id   String                          @unique @db.Uuid
+  checked_by      String                          @db.Uuid
+  bc_nso_psa_copy Boolean                         @default(false)
+  diploma_tor     Boolean                         @default(false)
+  brgy_clearance  Boolean                         @default(false)
+  one_by_one_pic  Boolean                         @default(false)
+  two_by_two_pic  Boolean                         @default(false)
+  passport_size   Boolean                         @default(false)
+  commitment_fee  Boolean                         @default(false)
   remarks         String?
-  checked_at      DateTime    @default(now()) @db.Timestamptz(6)
-  users           users       @relation(fields: [checked_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  enrollments     enrollments @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  checked_at      DateTime                        @default(now()) @db.Timestamptz(6)
+  users           users                           @relation(fields: [checked_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments     enrollments                     @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  history         requirement_checklist_history[]
+}
+
+/// Append-only log: one row per document that changed on a save (single or bulk).
+model requirement_checklist_history {
+  id                       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requirement_checklist_id String                @db.Uuid
+  enrollment_id            String                @db.Uuid
+  document                 String                @db.VarChar(30)
+  old_value                Boolean
+  new_value                Boolean
+  changed_by               String                @db.Uuid
+  changed_at               DateTime              @default(now()) @db.Timestamptz(6)
+  remarks                  String?
+  requirement_checklist    requirement_checklist @relation(fields: [requirement_checklist_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  enrollments              enrollments           @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                    users                 @relation(fields: [changed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([requirement_checklist_id, changed_at(sort: Desc), id(sort: Desc)], map: "idx_requirement_history_checklist")
 }
 
 model sessions {
@@ -534,18 +554,18 @@ model user_role {
 }
 
 model users {
-  id                                  String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  first_name                          String                   @db.VarChar(100)
-  last_name                           String                   @db.VarChar(100)
-  middle_name                         String                   @db.VarChar(100)
+  id                                  String                          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  first_name                          String                          @db.VarChar(100)
+  last_name                           String                          @db.VarChar(100)
+  middle_name                         String                          @db.VarChar(100)
   password_hash                       String
   role                                user_role_enum
-  avatar_url                          String?                  @db.VarChar(255)
-  is_active                           Boolean                  @default(true)
-  created_at                          DateTime                 @default(now()) @db.Timestamptz(6)
-  updated_at                          DateTime                 @default(now()) @db.Timestamptz(6)
-  system_id                           String?                  @unique @db.VarChar(100)
-  email                               String?                  @unique
+  avatar_url                          String?                         @db.VarChar(255)
+  is_active                           Boolean                         @default(true)
+  created_at                          DateTime                        @default(now()) @db.Timestamptz(6)
+  updated_at                          DateTime                        @default(now()) @db.Timestamptz(6)
+  system_id                           String?                         @unique @db.VarChar(100)
+  email                               String?                         @unique
   announcements                       announcements[]
   attendance                          attendance[]
   batch                               batch[]
@@ -557,9 +577,10 @@ model users {
   inventory                           inventory[]
   inventory_transactions              inventory_transactions[]
   official_receipts                   official_receipts[]
-  programs_programs_created_byTousers programs[]               @relation("programs_created_byTousers")
-  programs_programs_updated_byTousers programs[]               @relation("programs_updated_byTousers")
+  programs_programs_created_byTousers programs[]                      @relation("programs_created_byTousers")
+  programs_programs_updated_byTousers programs[]                      @relation("programs_updated_byTousers")
   requirement_checklist               requirement_checklist[]
+  requirement_checklist_history       requirement_checklist_history[]
   sessions                            sessions[]
   trainee                             trainee?
   trainee_outcome_status              trainee_outcome_status[]
@@ -567,13 +588,12 @@ model users {
   training_session                    training_session[]
   user_role                           user_role[]
   withdrawal_request                  withdrawal_request[]
-  withdrawal_registrar_validations    withdrawal_request[]     @relation("withdrawal_registrar_validated_by")
-  withdrawal_trainer_validations      withdrawal_request[]     @relation("withdrawal_trainer_validated_by")
-  withdrawal_admin_signoffs           withdrawal_request[]     @relation("withdrawal_admin_signed_off_by")
-  withdrawal_status_changes           withdrawal_status_history[] @relation("withdrawal_history_changed_by")
+  withdrawal_registrar_validations    withdrawal_request[]            @relation("withdrawal_registrar_validated_by")
+  withdrawal_trainer_validations      withdrawal_request[]            @relation("withdrawal_trainer_validated_by")
+  withdrawal_admin_signoffs           withdrawal_request[]            @relation("withdrawal_admin_signed_off_by")
+  withdrawal_status_changes           withdrawal_status_history[]     @relation("withdrawal_history_changed_by")
 
   @@index([system_id(ops: raw("gin_trgm_ops"))], type: Gin, map: "idx_users_system_id_trgm")
-
   @@index([first_name(ops: raw("gin_trgm_ops"))], map: "idx_users_first_name_trgm", type: Gin)
   @@index([last_name(ops: raw("gin_trgm_ops"))], map: "idx_users_last_name_trgm", type: Gin)
 }
@@ -613,12 +633,12 @@ model withdrawal_request {
   admin_signed_off_at    DateTime?              @db.Timestamptz(6)
   admin_remarks          String?
 
-  enrollments           enrollments         @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  users                 users?              @relation(fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  registrar_validator   users?              @relation("withdrawal_registrar_validated_by", fields: [registrar_validated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  trainer_validator     users?              @relation("withdrawal_trainer_validated_by", fields: [trainer_validated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  admin_signer          users?              @relation("withdrawal_admin_signed_off_by", fields: [admin_signed_off_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  status_history        withdrawal_status_history[]
+  enrollments         enrollments                 @relation(fields: [enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users               users?                      @relation(fields: [reviewed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  registrar_validator users?                      @relation("withdrawal_registrar_validated_by", fields: [registrar_validated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  trainer_validator   users?                      @relation("withdrawal_trainer_validated_by", fields: [trainer_validated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  admin_signer        users?                      @relation("withdrawal_admin_signed_off_by", fields: [admin_signed_off_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  status_history      withdrawal_status_history[]
 
   @@index([enrollment_id], map: "idx_withdrawal_enrollment")
   @@index([withdrawal_status], map: "idx_withdrawal_status")
