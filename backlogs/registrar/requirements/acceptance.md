@@ -113,7 +113,7 @@ Performance: missing/incomplete filters run in the database. The list selects on
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
 | 9 | Ticking a missing document and saving updates the row's progress and removes it from the missing badges | PASS | Seen live |
-| 10 | All 7 items can be updated, including `commitment_fee` | NOT MET (decision) | Fixes the current gap. Commitment fee is a payment: shown, not editable here (D-4) |
+| 10 | All 7 items can be updated, including `commitment_fee` | NOT MET (decision) | Fixes the current gap. Commitment fee is a payment, not a requirement. Removed from this feature, so the checklist is 6 documents (D-4) |
 | 11 | `checked_by` and `checked_at` update to the staff member and time of the save | PASS |  |
 | 12 | Changes appear in the enrollment detail, and the other way round | PASS | Both directions through the API |
 
@@ -153,7 +153,7 @@ Performance: missing/incomplete filters run in the database. The list selects on
 
 ## Test Cases
 
-Results of the 2026-11-06 audit are in `audit-dod.md` section 4b: TC-01, 03, 04, 05, 07, 09 PASS. TC-06 PARTIAL (refresh not seen in a browser). TC-02 and TC-08 NOT MET by decision (commitment fee read-only, Admin allowed).
+Results of the 2026-11-06 audit are in `audit-dod.md` section 4b: TC-01, 03, 04, 05, 07, 09 PASS. TC-06 PARTIAL (refresh not seen in a browser). TC-02 and TC-08 NOT MET by decision (commitment fee removed from the feature, Admin allowed).
 
 ### TC-01: Late document
 - **Precondition:** Enrollment without a Barangay Clearance.
