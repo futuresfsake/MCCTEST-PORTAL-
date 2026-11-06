@@ -5,20 +5,22 @@
 | **Date** | 2026-11-06 |
 | **Audited** | Branch `feature/MP-43-requirements-tracking`. The audit ran on the working tree, which was then committed in batches (docs, shared backend, enrollment endpoints, Registrar screen, Admin screen) with no code change in between. Final re-check before committing: backend and frontend lint, type-check and build clean, 102 of 102 tests pass |
 | **Final re-run** | 2026-11-06, after removing the commitment fee: backend and frontend lint, type-check and build clean, 102 of 102 tests in the branch, 76 of 76 end-to-end checks on a clean database, `npm audit` unchanged, no secrets in the diff, Supabase read-only checks unchanged. Separately, 114 unit tests were written and passed locally (216 of 216 with the existing ones) but are **not in this branch** (decision D-8). One new finding (F-15), fixed in the branch |
-| **Compared with** | `origin/dev`. Committed: 17 files changed, 1 migration added. Branch is not pushed and has no pull request |
+| **Final re-check before `main`** | 2026-11-06, on `staging` at `5eb3415` (merge of PR #89). Its code is identical to `dev` at `cfa0e4c` (no file differs), so the earlier results apply. All engineering checks, a live smoke test of the API against the shared database and read-only Supabase checks were run again. No new findings against the code. See section 13 |
+| **Compared with** | `origin/dev` for the first audit (17 files changed, 1 migration added). For the final check, `origin/main`: `staging` is 29 commits ahead, `main` has 1 commit that `staging` lacks (`a00fbc5`, a push-log edit with identical content already on `staging`), 26 files changed, 1 migration. The feature branch was merged into `dev` by PR #88 and `dev` into `staging` by PR #89 |
 | **Jira status** | In Review (checked 2026-11-06). The Jira description still says Registrar only, no Admin page, and a shared editor with the enrollment detail. It does not match what was built (see D-1) |
 | **How it was run** | A fresh Postgres 17 in Docker (`mp43_verify`): all 13 migrations applied from nothing, seeded (135 enrollments, 110 checklists, 10 complete), and the restructured backend run against it. 76 end-to-end checks plus statement logging for the query counts. Supabase was read with read-only queries only. The throwaway database was removed afterwards |
-| **Not audited** | The pages in a real browser by me. Two people saving at once through the UI. A refresh keeping the URL filters. The deployed staging site. Bulk update from the page. Supabase timing |
+| **Not audited** | The pages in a real browser by me. Two people saving at once through the UI. A refresh keeping the URL filters. The deployed staging site. Bulk update from the page. Supabase timing. A real save, bulk save or 409 against the shared database (writes are not allowed there). The owner reported that the pages work on `dev`, but I did not see it |
 | **Definition of Done used** | The Jira "Definition of Done" section and its 23 Acceptance Criteria, the backlog `acceptance.md` (24 rows) and its test cases TC-01 to TC-09 |
 
 ## Verdict
 
-**The code and the database are ready for review. The ticket is not finished as written, because four criteria were changed by decision and the work is not committed, pushed or merged.**
+**Final check, 2026-11-06 (on `staging`): the code and the database are ready for `main`. The ticket is still not finished as written, because four criteria were changed by decision, the Jira description has not been updated, and the merge into `main` has not happened.**
 
-1. **Four criteria no longer match the ticket (D-1, D-4):** AC 1 and 19 (Registrar only, no Admin page), AC 2 (shared editor with the enrollment detail screen) and AC 10 (7 items including the commitment fee, now 6 documents). The Jira description needs updating or the criteria will keep failing audits.
-2. **The work was restructured** into a shared module (`src/requirements/`) with an Admin and a Registrar controller, and the existing enrollment endpoints now use the same service. It is committed on the branch in batches but not pushed.
-3. **No unit tests for the new code are in the branch.** 114 were written and passed locally (216 of 216 with the existing ones), but by decision D-8 they were kept out of the branch. The 102 passing tests in the branch are the project's existing ones.
-4. **Not merged.** The "reviewed and merged into `main`" item is NOT DONE.
+1. **Code and database are ready.** Backend and frontend lint, type-check and build are clean, 102 of 102 tests pass, `prisma validate` is clean, and a trial merge of `staging` into `main` has no conflicts. The migration is recorded as applied on Supabase and the table is as designed (section 13).
+2. **Four criteria no longer match the ticket (D-1, D-4):** AC 1 and 19 (Registrar only, no Admin page), AC 2 (shared editor with the enrollment detail screen) and AC 10 (7 items including the commitment fee, now 6 documents). **The Jira description still says the old thing** (checked again 2026-11-06, status In Review), so it needs updating or the criteria will keep failing audits (F-2).
+3. **No unit tests for the new code are in the branch (D-8).** 114 were written and passed locally but kept out. The 102 passing tests are the project's existing ones. This ships to `main` as it is.
+4. **No browser check by me** (F-12). The owner reported that the pages work on `dev`. Supabase shows no history row since 09:21 on 2026-11-06, so a real save on the shared database after the commitment fee was removed has not been recorded.
+5. **Merged into `main` after this check:** PR #90 `staging` → `main`, 2026-11-06 11:34. The code on `main` is identical to `staging`, so these results apply to `main`. The Jira ticket is still In Review.
 
 ## 1. Engineering checks
 
@@ -229,14 +231,16 @@ Run against the real backend and a database built from all 13 migrations, with s
 | 1 | Uncommitted work | None, except the existing untracked `text.txt`. The 4 unit test files are saved in a local git stash and are not in the branch (D-8) |
 | 2 | Stray files | `text.txt` (untracked, existing) |
 | 3 | Branch pushed | Yes, pushed to `origin` after this audit (not force pushed) |
-| 4 | Pull request | None yet. A trial merge into `origin/dev` is clean: 0 commits behind, 19 ahead, no files changed on both sides |
-| 5 | Merged | No |
+| 4 | Pull request | PR #88 `feature/MP-43-requirements-tracking` → `dev` (merge `cfa0e4c`, 2026-11-06 11:09). PR #89 `dev` → `staging` (merge `5eb3415`, 2026-11-06 11:26). PR #90 `staging` → `main` (merge `2631029`, 2026-11-06 11:34) |
+| 5 | Merged | Into `dev`, `staging` and `main`: yes. Checked after the merge: no code differs between `main` and `staging` |
+| 6 | Trial merge of `staging` into `main` | Clean. `staging` is 29 commits ahead. `main` has 1 commit that `staging` lacks (`a00fbc5`, a push-log edit already present on `staging` with the same content) |
+| 7 | Local and remote | Local `dev` and `staging` match `origin`. Their code is identical |
 
 ## 8. Definition of Done section
 
 | Item | Status |
 |------|--------|
-| Code reviewed and merged into `main` | NOT DONE |
+| Code reviewed and merged into `main` | DONE for the merge (PR #90, 2026-11-06 11:34). No separate reviewer is recorded |
 | Tested as Registrar: list, filters, single update, bulk update, history, concurrent edit | PARTIAL. All pass through the API. Single update and history were seen live. Bulk and simultaneous editing were not seen in a browser |
 | Tested as Admin in the enrollment detail | PARTIAL. The Admin enrollment endpoint is tested through the API. The screen was not tried |
 | Verified the enrollment detail uses the shared component and service | PARTIAL. The service is shared (PASS). The component is not (NOT MET, D-1) |
@@ -270,7 +274,8 @@ Run against the real backend and a database built from all 13 migrations, with s
 | F-9 | No unit tests for the new code are in the branch. 114 were written and passed locally, and 11 of 11 deliberate bugs were caught, but they were kept out by the owner (D-8) | Medium | Add them later: they are saved in a local git stash |
 | F-10 | Frontend `npm audit` shows 10 moderate vulnerabilities | Low, existing | Log as a technical item when convenient |
 | F-11 | Bulk timing (17 to 18 ms) was measured on a small local database. Supabase over the network will be slower | Low | Measure on Supabase when convenient |
-| F-12 | No browser check by me of the pages (bulk, two users at once, date-grouped history, URL refresh) | Medium | Do a manual pass with the Registrar and Admin logins before merging |
+| F-12 | No browser check by me of the pages (bulk, two users at once, date-grouped history, URL refresh). The owner reported on 2026-11-06 that the pages work on `dev`; I did not see it | Medium | Do a manual pass on the deployed `staging` site (Registrar and Admin) and record it in `acceptance.md` |
+| F-16 | (New, Info) Supabase holds 12 trainee accounts with test-looking names, created 2026-09-19 to 2026-10-22 (for example `mpt.trainee_mcctest`). They come from earlier team testing, not from this ticket or this audit. The earlier audit's "no test data" meant none from MP-43, and that is still true | Info, existing | Decide whether to clean them up in a reviewed data change. Not part of MP-43 |
 | F-13 | (Withdrawn 2026-11-06) Raised in error. The owner first said the commitment fee was a separate payment, then corrected it: the only payment is the 450 base fee, so the commitment fee and the enrollment fee are the same payment. The enrollment code (`commitment_fee = payment.processPayment`) is therefore correct and existing flags are not wrong | None | No action |
 | F-14 | The enrollment form charges a base fee of 500 when the trainee has no active insurance coverage (`enrollments.service.ts` line 789). The owner says the fee is always 450. 7 of 9 receipts on Supabase carry 500. The chatbot already says 450 | Medium, existing | Logged as TECH-04 (`technical/enrollment-base-fee-500`). See gap G-2 in section 11. Not fixed in MP-43 |
 | F-15 | (Fixed 2026-11-06) One of the 7 live history rows on Supabase is for the commitment fee, saved before it was removed. The panel would have shown it as a raw `commitment_fee` line. History now lists only the 6 documents (a 3-line filter in `requirements.service.ts`). The old row stays in the table and was not touched | Low | Fixed in the branch. Checked with its unit test (kept local) and the project checks |
@@ -327,9 +332,36 @@ Run against the real backend and a database built from all 13 migrations, with s
 
 ## 12. Release steps still open
 
-1. Folder structure checked against the Payments pattern. Committed in batches.
-2. Get the product owner's answers on F-1, F-2 and F-4, and update the Jira description.
+1. Done: folder structure, commits, pull request into `dev` (#88), `dev` into `staging` (#89).
+2. Update the Jira description so it matches the build (F-2, D-1, D-4), and answer F-4.
 3. Decide whether to add the unit tests later (F-9). They are saved in a local git stash.
-4. Do the manual browser pass (F-12).
-5. Open a pull request into `dev` (the branch is already pushed).
-6. Nothing to apply on deploy for the database. The migration is already on Supabase.
+4. Do the manual browser pass on the deployed `staging` site (F-12).
+5. Done: pull request `staging` → `main` (#90, 2026-11-06 11:34).
+6. Done: the `main` column for MP-43 in `push-log.md` (Release Status by Task) is filled in. Set the Jira ticket to Done after the Jira description is updated and the browser pass on `staging` is recorded.
+7. Nothing to apply on deploy for the database. The migration is already on Supabase.
+
+## 13. Final re-check before `main` (2026-11-06, `staging` at `5eb3415`)
+
+`staging` and `dev` have identical code, so the first audit's results (sections 1 to 6) still apply. These checks were run again on that code.
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | Backend `eslint` (whole project, no fix), `tsc --noEmit`, `nest build`, `prisma validate` | PASS, 0 problems |
+| 2 | Backend `jest` | PASS, 102 of 102 (12 suites). None cover the new code (D-8) |
+| 3 | Frontend `eslint .`, `tsc -b`, `vite build` | PASS. Same chunk-size warning as before (existing) |
+| 4 | `npm audit` backend production / frontend | 0 / 10 moderate, both existing. Backend with dev dependencies: 28 (5 low, 23 moderate), existing |
+| 5 | Migration `20261106_requirement_checklist_history` | The only migration added against `main`. `prisma migrate status`: 13 found, "Database schema is up to date" |
+| 6 | Supabase, read-only: migration finished and not rolled back | PASS |
+| 7 | Supabase, read-only: table shape | PASS. 9 columns, 3 foreign keys, primary key and `idx_requirement_history_checklist` |
+| 8 | Supabase, read-only: orphan history rows, rows with old equal to new, enrollments without a checklist | 0, 0, 0 of 13 |
+| 9 | Supabase, read-only: history rows | 7, all written 2026-11-06 01:20 to 01:21 UTC (09:20 to 09:21 local) through the live page. One is for `commitment_fee`, saved before it was removed. It stays in the table and is hidden by the history filter (F-15). No history was written by this re-check |
+| 10 | Row level security | Off on the history table and on all 40 public tables (finding A-2, existing) |
+| 11 | Smoke test, backend started from the merged code against the shared database, logins for Admin and Registrar | PASS. List, filter options and detail return 200 for both roles. `completion` (all, complete, incomplete), `status=ALL`, search with `%` and with SQL text return 200 |
+| 12 | Smoke test, role isolation | PASS. Registrar on the admin prefix and Admin on the registrar prefix give 403. No token gives 401 |
+| 13 | Smoke test, rejected requests (no writes) | PASS. `take=101` and `take=abc` give 400. A bad history cursor gives 400. 101 rows in bulk gives 400 "Maximum 100 rows per request". `commitment_fee` as a bulk document gives 400. A save with the six booleans missing gives 400. An unknown enrollment gives 404 for detail, bulk and save |
+| 14 | Smoke test, response content | PASS. Detail has no `commitment` or `password` text. A `commitmentFee` field sent in a save is ignored |
+| 15 | Secrets and `.env` in what goes to `main` | PASS. None tracked, none in the diff against `main` |
+| 16 | Seeded or test names in the code | PASS. None outside the project's own seed defaults |
+| 17 | Trial merge of `staging` into `main` | PASS, no conflicts. The real merge (PR #90) followed and `main` now has the same code as `staging` |
+
+**Test data and cleanup.** The smoke test ran a local server on port 3999 against the shared Supabase database. The server is stopped and its log and the two saved login files were deleted. The two logins each created a session row in Supabase, because logging in writes one. They were not removed (nothing is deleted from the shared database) and they expire by themselves. The Supabase checks were read-only. The helper scripts are in the session's temporary folder, outside the repo. No test data was added to the repo. Untracked `text.txt` in the repo root holds personal notes and is not part of the branch.
