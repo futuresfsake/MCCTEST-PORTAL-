@@ -13,7 +13,7 @@ import {
   type RequirementListResponse,
 } from '../../api/requirements.api';
 import { RequirementChecklistPanel } from './RequirementChecklistPanel';
-import { DOCUMENT_KEYS, DOCUMENT_LABELS, EDITABLE_DOCUMENT_KEYS } from './documents';
+import { DOCUMENT_KEYS, DOCUMENT_LABELS } from './documents';
 
 const DEFAULT_COMPLETION = 'incomplete';
 const DEFAULT_STATUS = 'ENROLLED';
@@ -291,7 +291,7 @@ export function RequirementsListPage({ role }: { role: RequirementsRole }) {
               onChange={(event) => setBulkDocument(event.target.value as DocumentKey)}
               className="border border-slate-200 bg-white px-2 py-1.5"
             >
-              {EDITABLE_DOCUMENT_KEYS.map((doc) => (
+              {DOCUMENT_KEYS.map((doc) => (
                 <option key={doc} value={doc}>{DOCUMENT_LABELS[doc]}</option>
               ))}
             </select>

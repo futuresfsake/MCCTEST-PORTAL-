@@ -8,7 +8,7 @@ import {
   type RequirementDetail,
   type RequirementsRole,
 } from '../../api/requirements.api';
-import { DOCUMENT_KEYS, DOCUMENT_LABELS, EDITABLE_DOCUMENT_KEYS, READ_ONLY_DOCUMENT } from './documents';
+import { DOCUMENT_KEYS, DOCUMENT_LABELS } from './documents';
 
 function formatDateTime(value: string | null) {
   if (!value) return '—';
@@ -154,7 +154,7 @@ export function RequirementChecklistPanel({ role, enrollmentId, onClose, onSaved
   const dirty =
     !!detail &&
     !!documents &&
-    (EDITABLE_DOCUMENT_KEYS.some((key) => documents[key] !== detail.checklist.documents[key]) ||
+    (DOCUMENT_KEYS.some((key) => documents[key] !== detail.checklist.documents[key]) ||
       remarks.trim() !== '');
   const submitted = documents ? DOCUMENT_KEYS.filter((key) => documents[key]).length : 0;
 
@@ -204,32 +204,20 @@ export function RequirementChecklistPanel({ role, enrollmentId, onClose, onSaved
                   <span className="text-xs font-medium text-slate-500">{submitted} / {DOCUMENT_KEYS.length} submitted</span>
                 </div>
                 <div className="divide-y divide-slate-100 border border-slate-200">
-                  {DOCUMENT_KEYS.map((key) => {
-                    const readOnly = key === READ_ONLY_DOCUMENT;
-                    return (
-                      <label
-                        key={key}
-                        className={`flex items-center gap-3 px-4 py-3 text-sm text-slate-800 ${readOnly ? '' : 'cursor-pointer'}`}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={documents[key]}
-                          disabled={readOnly}
-                          onChange={(event) => setDocuments({ ...documents, [key]: event.target.checked })}
-                          className="h-4 w-4"
-                        />
-                        <span className="flex-1">
-                          {DOCUMENT_LABELS[key]}
-                          {readOnly ? (
-                            <span className="block text-xs text-slate-500">Recorded in Payments</span>
-                          ) : null}
-                        </span>
-                        {!documents[key] ? (
-                          <span className="bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">Missing</span>
-                        ) : null}
-                      </label>
-                    );
-                  })}
+                  {DOCUMENT_KEYS.map((key) => (
+                    <label key={key} className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm text-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={documents[key]}
+                        onChange={(event) => setDocuments({ ...documents, [key]: event.target.checked })}
+                        className="h-4 w-4"
+                      />
+                      <span className="flex-1">{DOCUMENT_LABELS[key]}</span>
+                      {!documents[key] ? (
+                        <span className="bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">Missing</span>
+                      ) : null}
+                    </label>
+                  ))}
                 </div>
               </section>
 

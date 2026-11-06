@@ -9,8 +9,7 @@ export type DocumentKey =
   | 'brgy_clearance'
   | 'one_by_one_pic'
   | 'two_by_two_pic'
-  | 'passport_size'
-  | 'commitment_fee';
+  | 'passport_size';
 
 export type DocumentFlags = Record<DocumentKey, boolean>;
 
@@ -76,7 +75,6 @@ export interface RequirementFilterOptions {
   documents: { key: DocumentKey; label: string }[];
 }
 
-/** The commitment fee is a payment, so it is not part of what the checklist saves. */
 export interface UpdateRequirementPayload {
   bcNsoPsaCopy: boolean;
   diplomaTor: boolean;
