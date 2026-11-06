@@ -3,117 +3,262 @@
 | Field | Value |
 |-------|-------|
 | **Date** | 2026-11-06 |
-| **Audited** | Branch `feature/MP-43-requirements-tracking` at `d693054`, plus one uncommitted change (the "Last checked from / to" date fields removed from the page) |
-| **Compared with** | `origin/dev`: 13 files changed, 1 migration added |
-| **How it was run** | A fresh Postgres 17 in Docker (`mp43_verify`): all 13 migrations applied from nothing, seeded, then the backend run against it and an end-to-end script of 47 checks. Statement logging was switched on for the query counts. Supabase was read with read-only queries |
-| **Not audited** | The pages in a real browser by me (the Registrar did use the live page, see section 3), the deployed staging site, a second user editing at the same time through the UI |
-| **Definition of Done used** | The "Definition of Done" section and the 23 Acceptance Criteria in the Jira ticket |
+| **Audited** | Branch `feature/MP-43-requirements-tracking`. The audit ran on the working tree, which was then committed in batches (docs, shared backend, enrollment endpoints, Registrar screen, Admin screen) with no code change in between. Final re-check before committing: backend and frontend lint, type-check and build clean, 102 of 102 tests pass |
+| **Compared with** | `origin/dev`. Committed: 17 files changed, 1 migration added. Branch is not pushed and has no pull request |
+| **Jira status** | In Review (checked 2026-11-06). The Jira description still says Registrar only, no Admin page, and a shared editor with the enrollment detail. It does not match what was built (see D-1) |
+| **How it was run** | A fresh Postgres 17 in Docker (`mp43_verify`): all 13 migrations applied from nothing, seeded (135 enrollments, 110 checklists, 10 complete), and the restructured backend run against it. 74 end-to-end checks plus statement logging for the query counts. Supabase was read with read-only queries only. The throwaway database was removed afterwards |
+| **Not audited** | The pages in a real browser by me. Two people saving at once through the UI. A refresh keeping the URL filters. The deployed staging site. Bulk update from the page. Supabase timing |
+| **Definition of Done used** | The Jira "Definition of Done" section and its 23 Acceptance Criteria, the backlog `acceptance.md` (24 rows) and its test cases TC-01 to TC-09 |
 
 ## Verdict
 
-**The code and the database are ready. The ticket is not finished, because three criteria are not met by decision and nothing is merged.**
+**The code and the database are ready for review. The ticket is not finished as written, because four criteria were changed by decision and the work is not committed, pushed or merged.**
 
-1. **AC 2, 3 and 12 are not met.** They assume the Requirements page shares a checklist editor and a backend method with the enrollment detail. It was decided that the page is its own screen and the enrollment detail is not touched. See "Decisions that change the ticket".
-2. **Not on `main`.** The branch is not pushed and has no pull request.
-3. **No unit tests** exist for the new service. The 102 tests that pass are the project's existing ones.
+1. **Four criteria no longer match the ticket (D-1, D-4):** AC 1 and 19 (Registrar only, no Admin page), AC 2 (shared editor with the enrollment detail screen) and AC 10 (all 7 items editable). The Jira description needs updating or the criteria will keep failing audits.
+2. **The work was restructured** into a shared module (`src/requirements/`) with an Admin and a Registrar controller, and the existing enrollment endpoints now use the same service. It is committed on the branch in batches but not pushed.
+3. **No unit tests** exist for the new service. The 102 passing tests are the project's existing ones.
+4. **Not merged.** The "reviewed and merged into `main`" item is NOT DONE.
 
 ## 1. Engineering checks
 
 | # | Check | Result |
 |---|-------|--------|
-| 1 | Backend `eslint` (whole project, no `--fix`) | PASS, 0 problems |
+| 1 | Backend `eslint` (whole project, no fix) | PASS, 0 problems |
 | 2 | Backend `tsc --noEmit` and `nest build` | PASS |
-| 3 | Backend unit tests | PASS, 102 of 102 (12 suites). None cover the new service |
+| 3 | Backend `jest` | PASS, 102 of 102 (12 suites). **None cover the new code** |
 | 4 | `prisma validate` | PASS |
 | 5 | Frontend `eslint .` (whole project) | PASS, 0 problems |
-| 6 | Frontend `tsc -b` and `vite build` | PASS |
-| 7 | Working tree | One uncommitted change (date fields removed) and the untracked scratch file `text.txt` |
+| 6 | Frontend `tsc -b` and `vite build` | PASS. Main bundle 626 kB, over the 500 kB warning (existing, not from this work) |
+| 7 | `npm audit`, backend (production) | 0 vulnerabilities |
+| 8 | `npm audit`, frontend | 10 moderate. No `package.json` changed on this branch, so they are existing |
+| 9 | New dependencies | None |
+| 10 | Frontend tests | The frontend has no test script |
 
 ## 2. Migration and database
 
 | # | Check | Result |
 |---|-------|--------|
-| 8 | All 13 migrations applied to an empty database, in order | PASS, 0 errors |
-| 9 | New migration `20261106_requirement_checklist_history` against `schema.prisma` | PASS, no differences for the table |
-| 10 | Foreign keys | PASS. Deleting an enrollment removes its checklist and history. Deleting a user who has history is blocked |
-| 11 | Exactly one migration added compared with `origin/dev` | PASS |
-| 12 | Supabase: migration recorded as applied | PASS. `migrate status` says up to date |
-| 13 | Supabase: history table has 9 columns, 3 foreign keys, 2 indexes (primary key and the newest-first index) | PASS |
-| 14 | Supabase: orphan history rows, rows with old equal to new, checklists newer than their history | 0, 0, 0 |
-| 15 | Supabase: enrollments without a checklist | 0 of 13 |
-| 16 | Row level security on the history table | Off. The same as every other table (finding A-2). Not new |
+| 11 | All 13 migrations applied to an empty database, in order | PASS, 0 errors (with the byte-order mark stripped in memory, TECH-02) |
+| 12 | Database from migrations compared with `schema.prisma` | PASS for the new table (0 differences). The 3 enum and trainer-column differences are existing (TECH-03) |
+| 13 | Foreign keys | PASS. 3 keys. Deleting an enrollment removes its checklist and history. Deleting a user who has history is blocked |
+| 14 | Index for the new query | PASS. `idx_requirement_history_checklist` on `(requirement_checklist_id, changed_at DESC, id DESC)` |
+| 15 | Migrations added compared with `origin/dev` | PASS. Exactly 1 |
+| 16 | Supabase: migration applied | PASS. `migrate status` up to date, recorded as finished |
+| 17 | Supabase: table shape | PASS. 9 columns, 3 foreign keys, 2 indexes |
+| 18 | Supabase: orphan history rows, rows with old equal to new, enrollments without a checklist | 0, 0, 0 of 13 |
+| 19 | Row level security on the history table | Off, the same as every other table (finding A-2). Not new |
+| 20 | A database built from the migrations breaks the enrollment detail screen | FAIL, existing. See finding F-7 |
 
 ## 3. Evidence from real use
 
-Supabase holds 7 history rows from 2026-11-06 09:20 and 09:21. All 7 were saved by the Registrar account through the live page, covering all 7 documents with the remarks "The student has submitted 2x2 Picture" and "Student has completed". So saving, `commitment_fee`, history and remarks have worked end to end on the shared database in a browser.
-
-What real use does not show: bulk update from the page, two people saving at once through the page, the date-grouped history, and the list filters in the browser.
+On 2026-11-06 (09:20 and 09:21) Supabase received 7 history rows from the Registrar account through the live page, covering all 7 documents, with remarks. So saving, history and remarks have worked in a browser on the shared database. Bulk update from the page, simultaneous saves through the UI, the date-grouped history and refresh of the URL filters were not seen in a browser.
 
 ## 4. Acceptance Criteria
 
+Numbered as in Jira (23). The backlog `acceptance.md` has 24 rows because it splits Jira AC 14 and 15 into 14, 14a and 14b, so its numbers from 15 on are one lower than Jira's. The mapping is in section 4a.
+
 | # | Criterion | Status | Evidence |
 |---|-----------|--------|----------|
-| 1 | Registrar opens `/registrar/requirements` from the sidebar. No Admin page | PASS | Sidebar link and route in the code. No `/admin/requirements` exists. The Registrar used the page live |
-| 2 | The checklist editor is one shared component, used by this page and the enrollment detail | NOT MET (decision) | The editor is only in the new page. `EnrollmentDetail.tsx` is untouched |
-| 3 | This page and both enrollment-detail endpoints call the same backend method | NOT MET (decision) | The page uses its own service. The existing enrollment endpoints still use `EnrollmentsService` |
-| 4 | Opens on Incomplete, ENROLLED, most missing first. Status filter can add PENDING | PASS | End-to-end: defaults checked, PENDING returns only PENDING |
-| 5 | Each row shows "N / 7 submitted" and missing badges | PASS | End-to-end checks every row. Shown in the code |
-| 6 | Filtering by a missing document shows only enrollments missing it | PASS | End-to-end, single and two documents (a row must miss all ticked) |
-| 7 | Search, filters, sorting and pagination work together and survive a refresh | PARTIAL | Each tested through the API (name in any order, username, ID card, program, status, name sort, two pages with no overlap). URL state comes from the shared `useServerList` hook but I did not check a refresh in a browser |
-| 8 | Complete and incomplete counts match the current filters | PASS | End-to-end: counts add up (10 complete, 115 incomplete, 125 with the default status). Counts use the same filters as the list except completion |
-| 9 | Late Barangay Clearance: tick, save, progress goes up, no longer missing | PASS | End-to-end and live |
-| 10 | All 7 items can be updated, including `commitment_fee` | PASS | End-to-end and live (all 7 appear in the live history) |
-| 11 | `checked_by` and `checked_at` update to the staff member and the save time | PASS | End-to-end (checked by "System Registrar") |
-| 12 | Changes appear in the enrollment detail, and vice versa | PARTIAL | Both read the same `requirement_checklist` table, so edits here show there. Not checked in a browser. Edits made in the enrollment detail do not write history, do not save `commitment_fee` and do not check for conflicts |
-| 13 | Bulk updates all in one save, all or nothing | PASS | End-to-end: 100 updated. A request with one unknown id returns 404 and nothing changes |
-| 14 | More than 100 rows returns 400 "Maximum 100 rows per request". The cap is one configuration constant | PARTIAL | 101 rows returns 400 with that exact message. The backend uses one constant (`BULK_MAX_ROWS`). The frontend has its own copy (`BULK_CHUNK_SIZE = 100`), so it is two places in the project |
-| 15 | Bulk of 100 under 500 ms, no per-row queries | PASS | 22 to 27 ms for 100 rows on a local database. 7 statements for 10 rows and 7 for 50 rows |
-| 16 | Every changed document creates a history row with old, new, staff and date and time | PASS | End-to-end and live. Unchanged documents write no row. A repeat bulk writes nothing |
-| 17 | History newest first. Rows cannot be edited or deleted | PARTIAL | Newest first through the API. No endpoint edits or deletes history. There is no database rule or trigger stopping it, so a direct SQL change would work |
-| 18 | Second save of the same checklist gets 409 and nothing is overwritten | PASS | End-to-end: a stale save returns 409 with the message and changes nothing. Two simultaneous saves give one 200 and one 409 |
-| 19 | Only the Registrar can use the page. Admin, trainee, trainer, encoder get 403 | PASS | All five endpoints return 403 for admin, trainer, trainee and encoder. 401 with no token |
-| 20 | Responses never include `password_hash` or other sensitive account fields | PASS | The queries select first and last name only. No `password` text in any response |
-| 21 | The list uses a fixed number of queries whatever the row count | PASS | 10 statements for 10 rows and 10 for 100 rows. This includes the login-check queries |
-| 22 | Exactly one migration, reviewed before being applied to the shared database | PARTIAL | One migration. It was applied to Supabase 2026-11-06 on the owner's instruction. There was no separate reviewer |
+| 1 | Registrar opens `/registrar/requirements` from the sidebar. There is no Admin Requirements page | NOT MET (decision D-1) | The Registrar part works (sidebar link and route in code, used live). An Admin page now exists at `/admin/requirements` |
+| 2 | The checklist editor is one shared component, used by this page and the enrollment detail | NOT MET (decision D-1) | One panel is shared by the Admin and Registrar Requirements pages. The enrollment detail screen keeps its own checkbox editor |
+| 3 | The Requirements page and both enrollment-detail endpoints call the same backend service method | PASS | Both enrollment endpoints and both Requirements controllers end in `saveChecklist`. Proven by history rows written from the enrollment endpoints (TC-07) |
+| 4 | Opens on Incomplete, ENROLLED, most missing first. PENDING can be added | PASS | 74-check run: defaults, order and PENDING |
+| 5 | Each row shows "N / 7 submitted" and missing badges | PASS | Every row checked in the API. Rendering by code reading |
+| 6 | Filtering by a missing document shows only enrollments missing it | PASS | One and two documents |
+| 7 | Search, every filter, sorting and pagination work together and survive a refresh | PARTIAL | Combined search + program + missing + sort + page works through the API. All 3 other sorts work. The refresh uses the shared `useServerList` hook but was not seen in a browser |
+| 8 | Complete and incomplete counts match the current filters | PASS | Counts add up with no filter and follow the program filter |
+| 9 | Ticking a missing Barangay Clearance updates progress and removes the badge | PASS | End-to-end and live. An enrollment with no checklist gets one on first save |
+| 10 | All 7 items can be updated, including `commitment_fee` | NOT MET (decision D-4) | 6 items are editable. The commitment fee is a payment: shown, not editable. A value sent for it is ignored and bulk refuses it |
+| 11 | `checked_by` and `checked_at` update to the staff member and time | PASS | "System Registrar" after a Registrar save |
+| 12 | Changes appear in the enrollment detail, and the other way round | PASS | A save on the Requirements page shows in the Admin and Registrar enrollment details (200, flag true). A save from the Admin and Registrar enrollment endpoints shows in the Requirements page with the right name. API only, not seen in a browser |
+| 13 | Bulk updates all in one save, all or nothing | PASS | 20 rows all updated. One unknown id gives 404, nothing changes and no history is written |
+| 14 | More than 100 rows gives 400 "Maximum 100 rows per request". The cap is one configuration constant | PARTIAL | 101 rows gives the exact message. The backend has one constant. The frontend has its own copy (`BULK_CHUNK_SIZE`), so 100 is defined twice in the project |
+| 15 | Bulk of 100 under 500 ms with no per-row queries | PASS | 17 to 18 ms for 100 rows, and 7 statements for 10 rows and 7 for 50 rows. Local database, not Supabase |
+| 16 | Every changed document creates a history row with old, new, staff and date and time | PASS | End-to-end and live. A save that changes nothing writes no row |
+| 17 | History newest first. Rows cannot be edited or deleted | PARTIAL | Newest first through the API. No endpoint edits or deletes (PUT and DELETE give 404). There is no database rule, so a direct SQL change would work |
+| 18 | The second of two saves gets 409 and nothing is overwritten | PASS | A stale save gives 409 with the message and leaves the first save intact. Two simultaneous saves give one 200 and one 409. Two browsers not tried |
+| 19 | Only the Registrar can use the page. Admin, trainee, trainer, encoder get 403 | NOT MET (decision D-1) | Trainer, trainee and encoder get 403 on all 5 endpoints under both prefixes, and no token gives 401. Admin and Registrar each reach only their own prefix. Admin is allowed on purpose |
+| 20 | Responses never include `password_hash` or other sensitive account fields | PASS | Queries select first and last name only. No `password` text in list or detail responses |
+| 21 | The list uses a fixed number of queries whatever the row count | PASS | 10 statements for 10 rows and 10 for 100 rows (includes the login-check queries) |
+| 22 | Exactly one migration, reviewed before being applied to the shared database | PARTIAL | One migration. It was applied to Supabase on the owner's instruction, with no separate reviewer |
 | 23 | Backend and frontend type-check, build and lint with 0 problems | PASS | Section 1 |
 
-Totals: 16 PASS, 5 PARTIAL (AC 7, 12, 14, 17, 22), 2 NOT MET by decision (AC 2, 3). That is 23. AC 12 is PARTIAL because it depends on the same decision as AC 2 and 3.
+Totals: **15 PASS, 4 PARTIAL (AC 7, 14, 17, 22), 4 NOT MET by decision (AC 1, 2, 10, 19)**. That is 23.
 
-## 5. Definition of Done section
+### 4a. Backlog `acceptance.md` rows (24)
+
+| Backlog row | Jira AC | Status |
+|-------------|---------|--------|
+| 1 | 1 | NOT MET (decision) |
+| 2 | 2 | NOT MET (decision) |
+| 3 | 3 | PASS |
+| 4, 5, 6 | 4, 5, 6 | PASS |
+| 7 | 7 | PARTIAL |
+| 8 | 8 | PASS |
+| 9 | 9 | PASS |
+| 10 | 10 | NOT MET (decision) |
+| 11 | 11 | PASS |
+| 12 | 12 | PASS |
+| 13 | 13 | PASS |
+| 14 | 14 | PASS (400 and the exact message) |
+| 14a | 14 | PARTIAL (one backend constant, a second copy in the frontend) |
+| 14b | 15 | PASS |
+| 15 | 16 | PASS |
+| 16 | 17 | PARTIAL |
+| 17 | 18 | PASS |
+| 18 | 19 | NOT MET (decision) |
+| 19 | 20 | PASS |
+| 20 | 21 | PASS |
+| 21 | 22 | PARTIAL |
+| 22 | 23 | PASS |
+
+Totals: **16 PASS, 4 PARTIAL, 4 NOT MET by decision**. That is 24.
+
+## 4b. Test cases (backlog TC-01 to TC-09)
+
+| TC | Status | Evidence |
+|----|--------|----------|
+| TC-01 Late document | PASS | Progress goes up by one, the badge disappears, a "Missing → Submitted" history row exists |
+| TC-02 Commitment fee | NOT MET (decision D-4) | The expected result (a ticked commitment fee stays ticked) cannot happen: it is read-only. Verified instead that a sent value is ignored and writes no history |
+| TC-03 Bulk | PASS | 20 rows all update, with history. One invalid row: none change, no history written |
+| TC-04 Bulk limit | PASS | 101 gives 400 with the exact message and nothing changes. Exactly 100 succeeds |
+| TC-05 Concurrent edit | PASS | Second save gets 409, the first is intact. Done through the API, not two browsers |
+| TC-06 Filters and URL state | PARTIAL | Program, missing document, search, sort and page work together through the API. The refresh was not seen in a browser |
+| TC-07 Admin enrollment detail | PASS | The Admin and Registrar enrollment endpoints write history through the shared service. The Requirements page shows the change and the history row names the Admin. The screen itself was not tried in a browser |
+| TC-08 Role access | NOT MET (decision D-1) | The four other roles get 403 and no token gets 401. But Admin is allowed on purpose and `/admin/requirements` now exists |
+| TC-09 Performance | PASS | 100 rows in 17 to 18 ms. 10 statements for 10 and for 100 rows. Local database only |
+
+Totals: 6 PASS, 1 PARTIAL, 2 NOT MET by decision. That is 9.
+
+## 5. Security and integrity (extra checks)
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | No token gives 401 on all 5 endpoints under both prefixes | PASS |
+| 2 | Trainer, trainee and encoder get 403 on all 5 endpoints under both prefixes | PASS |
+| 3 | Registrar cannot use `/admin/requirements` and Admin cannot use `/registrar/requirements` | PASS |
+| 4 | Oversized remark (5,000 characters), wrong types, `take=100000`, `skip=-1`, a made-up document column name | PASS, all 400 |
+| 5 | SQL-looking search text | PASS, 200 with 0 rows (parameters are bound, column names come from a fixed list) |
+| 6 | `.env` or secrets committed | PASS, none tracked, none in the diff |
+| 7 | Tokens or passwords in the server log | PASS, none (a match was only a route name) |
+| 8 | History is append-only | Convention only (finding F-6) |
+
+## 6. Frontend and UX (code reading)
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | Routes are role-gated | PASS. `/admin/requirements` allows ADMIN, `/registrar/requirements` allows REGISTRAR |
+| 2 | Sidebar links | PASS. One per role |
+| 3 | URL state through the shared hook | PASS in code. Not seen on refresh |
+| 4 | Loading, empty and error states | PASS. All three exist on the list and the panel |
+| 5 | Commitment fee is read-only in the panel | PASS in code (disabled box with "Recorded in Payments") |
+
+## 7. Branch hygiene and release state
+
+| # | Check | Result |
+|---|-------|--------|
+| 1 | Uncommitted work | None after the batch commits, except the existing untracked `text.txt` |
+| 2 | Stray files | `text.txt` (untracked, existing) |
+| 3 | Branch pushed | No |
+| 4 | Pull request | None |
+| 5 | Merged | No |
+
+## 8. Definition of Done section
 
 | Item | Status |
 |------|--------|
-| Code reviewed and merged into `main` | NOT DONE. Branch is local, not pushed, no pull request |
-| Tested as Registrar: list, filters, single update, bulk update, history, concurrent edit | PARTIAL. All pass through the API. The Registrar saved and saw history on the live page. Bulk, simultaneous editing and filters were not seen in a browser |
-| Tested as Admin in the enrollment detail | NOT DONE. Out of scope by decision |
-| Verified the enrollment detail uses the shared component and service | NOT MET (decision) |
-| Verified `commitment_fee` can be updated | PASS |
+| Code reviewed and merged into `main` | NOT DONE |
+| Tested as Registrar: list, filters, single update, bulk update, history, concurrent edit | PARTIAL. All pass through the API. Single update and history were seen live. Bulk and simultaneous editing were not seen in a browser |
+| Tested as Admin in the enrollment detail | PARTIAL. The Admin enrollment endpoint is tested through the API. The screen was not tried |
+| Verified the enrollment detail uses the shared component and service | PARTIAL. The service is shared (PASS). The component is not (NOT MET, D-1) |
+| Verified `commitment_fee` can be updated | NOT MET (decision D-4) |
 
-## 6. Decisions that change the ticket
+## 9. Decisions that change the ticket
 
 | # | Decision | Effect on the ticket |
 |---|----------|----------------------|
-| D-1 | The Requirements page is its own screen. The enrollment detail and `EnrollmentsService` are not changed | AC 2, 3, 12 and the two enrollment-detail DoD items are not met as written |
+| D-1 | The backend is shared. Admin and Registrar each have a thin controller (`/admin/requirements`, `/registrar/requirements`) over one service. The existing enrollment endpoints call it too. Admin has a Requirements page. The enrollment detail screen is not changed | AC 1, 2 and 19 and TC-08 no longer match. "An Admin Requirements page" is no longer out of scope |
 | D-2 | The "Last checked from / to" date filter was removed from the page | The ticket lists a last-checked date range. The backend still supports it |
-| D-3 | The remark box is add-only. It starts empty and an empty save keeps the saved remark | The old box could edit or clear the saved remark. It can no longer be cleared |
+| D-3 | The remark box is add-only. It starts empty. An empty save keeps the saved remark | The old box could edit or clear the remark |
+| D-4 | The commitment fee is a payment: shown and counted in "N / 7", but not editable in the checklist | AC 10, TC-02 and the DoD item no longer apply |
+| D-5 | Only Admin and Registrar can see the history | Matches the roles allowed on the endpoints |
+| D-6 | Enrollments with no checklist show as missing all 7 | No change |
+| D-7 | Commitment fee stays a stored value, read-only, set at enrollment (option A of gap G-1). Nothing derives it from payments | A late payment in Payments still shows as missing here. Accepted by the owner on 2026-11-06 |
 
-## 7. Findings
+## 10. Findings
 
 | # | Finding | Severity | Suggested action |
 |---|---------|----------|------------------|
-| F-1 | Edits made in the existing enrollment detail overwrite `checked_by` and `checked_at`, skip `commitment_fee`, and write no history. History will have gaps for those edits | Medium | Ask the product owner whether the enrollment detail should use the new service (see questions) |
-| F-2 | A save that changes only the remark writes no history row, so the remark does not appear under any date | Low | Decide whether remark-only saves should be logged |
-| F-3 | A bulk selection over 100 rows is sent in groups, one transaction each. If a later group fails, earlier groups stay saved. The page tells the user how many were updated | Low | Accept, or cap the selection at 100 |
-| F-4 | The bulk cap of 100 is defined twice, in the backend and in the frontend | Low | Fetch the cap from the API or accept the copy |
-| F-5 | No unit tests for `RequirementsService` | Medium | Add tests for the stale-save, no-op save, and bulk cap paths |
-| F-6 | History is append-only only by convention (no database rule) | Low | Add a trigger in a later migration if auditors need it |
-| F-7 | `0_init/migration.sql` starts with a byte-order mark, so `prisma migrate deploy` fails on a new database. The mark is deliberate (commit `b13fe19`, it matches the checksum Supabase stored), so deleting it would break Supabase. Worked around by stripping it in memory for testing only | Medium, existing | Logged as TECH-02 in `technical/migration-bom-fresh-database` |
-| F-8 | A database built from the migrations differs from `schema.prisma` and from Supabase on 3 enums (`employment_status`, `employment_type`, `highest_education`) and 5 `trainer` columns. Supabase already matches the schema | Medium, existing | Logged as TECH-03 in `technical/migration-schema-drift` |
-| F-9 | Bulk timing (22 to 27 ms) was measured on a small local database. Supabase over the network will be slower. The 500 ms target is not yet shown there | Low | Measure on Supabase when convenient |
+| F-1 | (Accepted, D-7) The commitment fee flag is set once, at enrollment. Recording a payment later in Payments does not update it, and Payments has no "enrollment" reason. The read-only value can stay "missing" after the trainee has paid | Medium | Left as is by decision. See gap G-1 in section 11 |
+| F-2 | The Jira description does not match the build (Registrar only, no Admin page, shared editor) | Medium | Update the ticket after the product owner answers |
+| F-3 | The enrollment detail screen has its own checkbox editor. It shows no history, and it sends no `checked_at`, so it does not get the 409 protection | Low | Reuse the shared panel there, or leave as is by decision |
+| F-4 | A save that changes only the remark writes no history row, so it never appears under a date | Low | Decide whether remark-only saves should be logged |
+| F-5 | A bulk selection over 100 is sent in groups, one transaction each. A later group failing leaves the earlier ones saved. The cap of 100 is defined in the backend and again in the frontend | Low | Accept, or cap the selection and share the constant |
+| F-6 | History is append-only only by convention. No database rule | Low | Add a trigger in a later migration if auditors need it |
+| F-7 | A database built from the migrations stores `FULL_TIME` (and other underscore values) while the app expects `FULL TIME`. Reading such a trainee makes the enrollment detail endpoint return 500. Seen on the Docker test database. Supabase is not affected | Medium, existing | TECH-03 (`technical/migration-schema-drift`) now records this failure |
+| F-8 | `0_init/migration.sql` begins with a byte-order mark that must be kept (matches the checksum on Supabase), so a new database cannot be built with `migrate deploy` | Medium, existing | TECH-02 (`technical/migration-bom-fresh-database`) |
+| F-9 | No unit tests for `RequirementsService` (stale save, no-op save, cap, unknown id, read-only commitment fee) | Medium | Add tests before merging |
+| F-10 | Frontend `npm audit` shows 10 moderate vulnerabilities | Low, existing | Log as a technical item when convenient |
+| F-11 | Bulk timing (17 to 18 ms) was measured on a small local database. Supabase over the network will be slower | Low | Measure on Supabase when convenient |
+| F-12 | No browser check by me of the pages (bulk, two users at once, date-grouped history, URL refresh) | Medium | Do a manual pass with the Registrar and Admin logins before merging |
+| F-13 | (Withdrawn 2026-11-06) Raised in error. The owner first said the commitment fee was a separate payment, then corrected it: the only payment is the 450 base fee, so the commitment fee and the enrollment fee are the same payment. The enrollment code (`commitment_fee = payment.processPayment`) is therefore correct and existing flags are not wrong | None | No action |
+| F-14 | The enrollment form charges a base fee of 500 when the trainee has no active insurance coverage (`enrollments.service.ts` line 789). The owner says the fee is always 450. 7 of 9 receipts on Supabase carry 500. The chatbot already says 450 | Medium, existing | Logged as TECH-04 (`technical/enrollment-base-fee-500`). See gap G-2 in section 11. Not fixed in MP-43 |
 
-## 8. Release steps still open
+## 11. Gaps to ask the product owner
 
-1. Commit the date-field removal.
-2. Push the branch and open a pull request into `dev`.
-3. Nothing to apply on deploy for the database. The migration is already on Supabase.
-4. Update `acceptance.md` and `push-log.md`.
+### G-1: The commitment fee has no reliable source of truth
+
+**Status: ACCEPTED AS IS (option A, decision D-7, 2026-11-06).** Kept here as a known limitation. Revisit with the product owner if late payments become common.
+
+| Item | Detail |
+|------|--------|
+| **What happens today** | The checklist keeps `commitment_fee` as a stored yes/no. It is set once, at enrollment, from the "process payment" box on the enrollment form (`enrollments.service.ts`, `commitment_fee: payment.processPayment`). Nothing changes it afterwards |
+| **What was decided** | The commitment fee is a payment, so the Requirements page shows it as read-only and sends people to the Payments screen (D-4) |
+| **The gap** | Recording a payment in Payments does **not** update the stored value. So a trainee who pays the commitment fee after enrollment still shows as **missing** on the Requirements page, and counts as "6 / 7" instead of "7 / 7", until someone edits the database. The page tells people to go to Payments, but doing so changes nothing here |
+| **Smaller than first thought** | Because the commitment fee is the same payment as the enrollment fee, the gap only affects a trainee who did **not** pay at enrollment and pays later. Anyone who paid at enrollment is already correct |
+| **Why it cannot be derived yet** | The enrollment payment is saved with the reason `ENROLLMENT`. The Payments screen only offers `PROCESSING_FEE`, `UNIFORM_ID_FEE`, `ASSESSMENT_DEPOSIT` and `EXTERNAL_FEES`. There is no reason that means "commitment fee", so a later payment cannot be recognised as one |
+| **Conflict with the ticket** | AC 10 and the Definition of Done say the commitment fee can be updated in the checklist. The read-only decision overrides that |
+| **Effect on completeness** | The commitment fee counts in "N / 7". A trainee who has paid can never reach "Complete" if the payment was made after enrollment, so the Complete filter and the counts can be wrong |
+
+**Questions for the product owner**
+1. Is the commitment fee the same payment as the enrollment fee (reason `ENROLLMENT`), or a separate payment? **Answered by the owner on 2026-11-06: it is the same payment. The only payment is the 450 base fee.**
+2. When a trainee who did not pay at enrollment pays the fee later, which payment reason should the Payments screen record? Payments does not offer `ENROLLMENT`, which is the reason the enrollment form uses for this same payment.
+3. Should the Requirements page then **calculate** paid or unpaid from the payments (so it is always correct), or should recording that payment **update the stored flag**?
+4. Should the commitment fee count toward "Complete" (7 of 7), or should completeness be based on the 6 documents only, with the fee shown separately?
+5. Until this is settled, is it acceptable that a late payment still shows as missing on the Requirements page?
+
+**Options**
+
+| # | Option | Effect |
+|---|--------|--------|
+| A | Leave as is (stored value, read-only) | Simple. Wrong after a late payment |
+| B | Derive paid or unpaid from the receipts for the enrollment | Always correct. Needs the payment reason from question 2 |
+| C | Update the stored flag when Payments records the commitment fee | Keeps one stored value. Changes the Payments code |
+| D | Go back to an editable checkbox, as the ticket says | Matches AC 10. Two places can now change the same fact |
+
+### G-2: The enrollment fee is 500 in the code, but it is really 450
+
+**Status: RULE CONFIRMED BY THE OWNER (2026-11-06): the enrollment fee is 450.** The code still charges 500 in one case. Logged as TECH-04. Not fixed in MP-43.
+
+| Item | Detail |
+|------|--------|
+| **What the code does** | `enrollments.service.ts` line 789: `const baseFee = activeCoverage ? 450 : 500;`. A trainee with no active insurance coverage gets a base fee of **500** |
+| **What the owner says** | The enrollment fee is always **450** |
+| **Why it matters here** | The commitment fee and the enrollment fee are the same payment (G-1). So the 450 is also the amount behind the commitment fee flag on the Requirements page |
+| **Real data** | On Supabase, 7 of 9 receipts carry a base fee of 500 and 2 carry 450 |
+| **Also inconsistent** | The chatbot already tells users "Enrollment fee: PHP 450" |
+
+**Questions for the product owner**
+1. Should the 500 be removed so the fee is always 450?
+2. What happens to the 7 receipts already issued at 500: leave them, or correct them with a reviewed data change?
+3. Should a first payment still create the insurance coverage record, since the amount no longer depends on coverage?
+4. Was 500 ever meant for something (for example a trainee with no insurance), or is it simply a mistake?
+
+## 12. Release steps still open
+
+1. Folder structure checked against the Payments pattern. Committed in batches.
+2. Get the product owner's answers on F-1, F-2 and F-4, and update the Jira description.
+3. Add unit tests for the new service (F-9).
+4. Do the manual browser pass (F-12).
+5. Push the branch and open a pull request into `dev`.
+6. Nothing to apply on deploy for the database. The migration is already on Supabase.

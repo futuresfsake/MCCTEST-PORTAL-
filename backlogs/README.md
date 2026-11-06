@@ -37,7 +37,7 @@ backlogs/
     notifications/acceptance.md                  — MP-55: Notification Bell, Registrar Events (NOT STARTED)
     enrollment-uniform-deduction-bug/acceptance.md — MP-58: Bug, enrollment does not deduct uniform stock (NOT STARTED)
     decisions.md                                 — Registrar decisions and the reasons (MP-42 history, MP-53, MP-43)
-    requirements/acceptance.md                   — MP-43: Requirements Tracking, Registrar only (NOT STARTED)
+    requirements/acceptance.md                   — MP-43: Requirements Tracking, Admin and Registrar (IN REVIEW). Audit: registrar/requirements/audit-dod.md
     uniform-distribution/acceptance.md           — MP-53: Uniform Distribution page, Registrar only (NOT STARTED)
     uniform-restock-reminder/acceptance.md       — MP-59: Registrar reminds the Admin to order more uniforms (NOT STARTED)
   trainer/
@@ -57,6 +57,7 @@ backlogs/
     multer-dos-advisory/acceptance.md            — SEC-02: multer denial-of-service advisory (LOGGED, not fixed)
     e2e-test-config/acceptance.md                — TECH-01: Jest ESM config fix for e2e tests
     migration-bom-fresh-database/acceptance.md   — TECH-02: 0_init migration cannot be applied to a new database (byte-order mark) (LOGGED, not fixed)
+    enrollment-base-fee-500/acceptance.md        — TECH-04: base fee is 500 without insurance coverage, should always be 450 (LOGGED, not fixed)
     migration-schema-drift/acceptance.md         — TECH-03: migration history disagrees with schema.prisma and Supabase (3 enums, 5 trainer columns) (LOGGED, not fixed)
 ```
 
@@ -125,7 +126,7 @@ backlogs/
 | MP-30 follow-up | Trainee dashboard: Attendance Summary, Competency Outcomes, Upcoming Sessions | Unassigned | Not Started | Tables are empty and nothing can write them (0 sessions, 0 attendance, 0 competencies, 0 outcomes). See `trainee/dashboard-data-gaps` |
 | MP-41 | Trainee Profile Page (view, edit, photo upload) | Vince Jon Gonzalez | Not Started | See `trainee/profile`. Photo storage is open in `to-be-discussed.md` |
 | MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Unassigned | Not Started | See `admin/trainee-edit`. Depends on MP-24 |
-| MP-43 | Requirements Tracking (Registrar only) | Chelsea Cllj | Not Started | See `registrar/requirements` |
+| MP-43 | Requirements Tracking (Admin and Registrar) | Chelsea Cllj | In Review | Audited 2026-11-06: 15 of 23 criteria pass, 4 partial, 4 changed by decision. Not merged. See `registrar/requirements/audit-dod.md` |
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
 | MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | Not Started | See `registrar/uniform-distribution` |
 | MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
@@ -136,6 +137,7 @@ backlogs/
 |---------|------------------------------------|----------|-------------|--------------------------------------------------------|
 | TECH-01 | E2E Test Jest ESM Compatibility    | Medium   | Not Started | `@nestjs/config` ESM breaks `jest-e2e.json` transform  |
 | TECH-02 | `0_init` migration cannot be applied to a new database | Medium | Logged, not fixed | Byte-order mark is deliberate (commit `b13fe19`, matches the applied checksum). Deleting it would break Supabase. See `technical/migration-bom-fresh-database` |
+| TECH-04 | Enrollment base fee is 500 without insurance coverage, should always be 450 | Medium | Logged, not fixed | 7 of 9 receipts on Supabase carry 500. The chatbot already says 450. See `technical/enrollment-base-fee-500` |
 | TECH-03 | Migration history disagrees with `schema.prisma` and Supabase | Medium | Logged, not fixed | 3 enums and 5 trainer columns. Supabase already matches the schema. See `technical/migration-schema-drift` |
 | SEC-01  | Announcements API exposed the poster's password hash | High | Fixed, on dev and staging. Main pending | `include: { users: true }` returned the whole user row to every role. See `technical/announcements-password-hash-exposure` |
 | SEC-02  | `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs` | High | Logged, not fixed | Deferred by choice. `npm audit fix` is available. See `technical/multer-dos-advisory` |

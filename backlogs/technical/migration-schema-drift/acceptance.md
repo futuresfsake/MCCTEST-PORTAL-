@@ -47,6 +47,7 @@ file. The repo's migration history never recorded it.
 | Supabase and the running app | None today |
 | A database rebuilt from the migrations (once TECH-02 is solved) | The app writes `SELF EMPLOYED`, `FULL TIME`, `HIGH SCHOOL`, `POST GRADUATE` and rejects those values on such a database. Creating a trainer without every field fails on `NOT NULL` |
 | `prisma migrate dev` | Wants to generate a new migration for these changes the first time someone runs it |
+| **Seen on 2026-11-06** | On a Docker database built from the migrations, a trainee stored with `FULL_TIME` made `GET /admin/enrollments/:id` and `GET /registrar/enrollments/:id` return **500**, because the app expects `FULL TIME`. Setting the value to `CASUAL` (valid in both) fixed it. Supabase is not affected |
 
 ## Fix notes
 
