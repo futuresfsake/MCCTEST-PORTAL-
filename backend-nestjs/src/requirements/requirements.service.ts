@@ -373,6 +373,9 @@ export class RequirementsService {
     const rows = await this.prisma.requirement_checklist_history.findMany({
       where: {
         requirement_checklist_id: checklistId,
+        // Old rows for a document that is no longer a requirement (the
+        // commitment fee) stay in the table but are not shown.
+        document: { in: REQUIREMENT_DOCUMENT_KEYS },
         ...(cursorRow && {
           OR: [
             { changed_at: { lt: cursorRow.changed_at } },
