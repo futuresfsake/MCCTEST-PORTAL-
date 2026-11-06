@@ -107,6 +107,11 @@ const sidebarConfig: Record<
             icon: 'fa-solid fa-peso-sign',
           },
           {
+            label: 'Requirements',
+            path: '/admin/requirements',
+            icon: 'fa-solid fa-list-check',
+          },
+          {
             label: 'Inventory',
             path: '/admin/inventory',
             icon: 'fa-solid fa-boxes-stacked',

@@ -29,8 +29,11 @@ import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 import EncoderAnnouncementsPage from '../pages/users/encoder/announcements/EncoderAnnouncementsPage'
 
 import RegistrarAnnouncementsPage from '../pages/users/registrar/announcements/RegistrarAnnouncementsPage'
+// lazy() loads a page's code only when someone opens it, so it stays out of the
+// main bundle. Each lazy route must be wrapped in <Suspense> (shows a loading text).
 const AdminPaymentsPage = lazy(() => import('../pages/users/admin/AdminPaymentsPage'))
 const RegistrarPaymentsPage = lazy(() => import('../pages/users/registrar/RegistrarPaymentsPage'))
+const AdminRequirementsPage = lazy(() => import('../pages/users/admin/requirements/AdminRequirementsPage'))
 const RegistrarRequirementsPage = lazy(() => import('../pages/users/registrar/requirements/RegistrarRequirementsPage'))
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
@@ -230,6 +233,17 @@ return ( <Routes>
       <ProtectedRoute allowedRoles={['REGISTRAR']}>
         <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading payments...</div>}>
           <RegistrarPaymentsPage />
+        </Suspense>
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/admin/requirements"
+    element={
+      <ProtectedRoute allowedRoles={['ADMIN']}>
+        <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading requirements...</div>}>
+          <AdminRequirementsPage />
         </Suspense>
       </ProtectedRoute>
     }
