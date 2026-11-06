@@ -46,7 +46,7 @@ backlogs/
     notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
-    profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (NOT STARTED)
+    profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (IN REVIEW). Audit: trainee/profile/audit-dod.md
     dashboard-data-gaps/acceptance.md            — MP-30 follow-up: attendance, competencies, sessions not functional (NOT STARTED)
     account-generation/acceptance.md             — MP-26: Trainee Account Generation
   encoder/
@@ -124,7 +124,7 @@ backlogs/
 |--------|--------|----------|--------|------|
 | MP-33 | Admin Enrollments | Chelsea Cllj | In Progress | 8 FAIL, 2 PARTIAL — 7 critical gaps |
 | MP-30 follow-up | Trainee dashboard: Attendance Summary, Competency Outcomes, Upcoming Sessions | Unassigned | Not Started | Tables are empty and nothing can write them (0 sessions, 0 attendance, 0 competencies, 0 outcomes). See `trainee/dashboard-data-gaps` |
-| MP-41 | Trainee Profile Page (view, edit, photo upload) | Vince Jon Gonzalez | Not Started | See `trainee/profile`. Photo storage is open in `to-be-discussed.md` |
+| MP-41 | Trainee Profile Page (view, edit, photo upload) | Vince Jon Gonzalez | In Review | Audited and checked by Chelsea Cllj 2026-11-06: 13 of 19 criteria pass, 6 partial, 0 not met. The missing `sharp` entry is fixed. Two medium bugs open. Not merged. See `trainee/profile/audit-dod.md` |
 | MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Unassigned | Not Started | See `admin/trainee-edit`. Depends on MP-24 |
 | MP-43 | Requirements Tracking (Admin and Registrar) | Chelsea Cllj | In Review | Audited 2026-11-06 (re-checked on `staging`): 15 of 23 criteria pass, 4 partial, 4 changed by decision. On `dev` (PR #88), `staging` (PR #89) and `main` (PR #90, 2026-11-06 11:34). Jira description needs updating. See `registrar/requirements/audit-dod.md` |
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
