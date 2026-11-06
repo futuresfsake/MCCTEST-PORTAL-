@@ -3,8 +3,6 @@ import { RegistrarController } from './registrar.controller';
 import { RegistrarService } from './registrar.service';
 import { EnrollmentsController } from './enrollments/enrollments.controller';
 import { RegistrarTraineesController } from './trainees/trainees.controller';
-import { RequirementsController } from './requirements/requirements.controller';
-import { RequirementsService } from './requirements/requirements.service';
 import { EnrollmentsModule } from '../../enrollments/enrollments.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { TraineeInformationModule } from '../../trainee-information/trainee-information.module';
@@ -17,8 +15,7 @@ import { TraineeInformationModule } from '../../trainee-information/trainee-info
     RegistrarController,
     EnrollmentsController,
     RegistrarTraineesController,
-    RequirementsController,
   ],
-  providers: [RegistrarService, RequirementsService],
+  providers: [RegistrarService],
 })
 export class RegistrarModule {}

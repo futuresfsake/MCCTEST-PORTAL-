@@ -15,18 +15,18 @@ import { Roles } from '../../../common/decorators/roles.decorator';
 import { Role } from '../../../common/enums/role.enum';
 import { CurrentUser } from '../../../common/decorators/current-user.decorator';
 import type { AuthenticatedUser } from '../../../common/types/authenticated-user.type';
-import { RequirementsService } from './requirements.service';
+import { RequirementsService } from '../../../requirements/requirements.service';
 import {
   BulkRequirementDto,
   RequirementDetailQueryDto,
   RequirementListQueryDto,
   UpdateRequirementDto,
-} from './dto/requirements.dto';
+} from '../../../requirements/dto/requirements.dto';
 
 @Controller('registrar/requirements')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.REGISTRAR)
-export class RequirementsController {
+export class RegistrarRequirementsController {
   constructor(private readonly requirementsService: RequirementsService) {}
 
   @Get()

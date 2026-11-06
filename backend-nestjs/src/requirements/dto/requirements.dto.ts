@@ -14,10 +14,11 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { enrollment_status_enum } from '../../../../generated/prisma/enums';
+import { enrollment_status_enum } from '../../generated/prisma/enums';
 import {
   BULK_MAX_ROWS,
   BULK_MAX_ROWS_MESSAGE,
+  EDITABLE_DOCUMENT_KEYS,
   REQUIREMENT_DOCUMENT_KEYS,
 } from '../requirements.constants';
 
@@ -104,7 +105,6 @@ export class UpdateRequirementDto {
   @IsBoolean() oneByOnePic!: boolean;
   @IsBoolean() twoByTwoPic!: boolean;
   @IsBoolean() passportSize!: boolean;
-  @IsBoolean() commitmentFee!: boolean;
 
   @IsOptional()
   @IsString()
@@ -124,6 +124,6 @@ export class BulkRequirementDto {
   @IsUUID('all', { each: true })
   enrollmentIds!: string[];
 
-  @IsIn(REQUIREMENT_DOCUMENT_KEYS)
+  @IsIn(EDITABLE_DOCUMENT_KEYS)
   document!: string;
 }

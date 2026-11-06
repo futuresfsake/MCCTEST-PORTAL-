@@ -15,6 +15,15 @@ export type RequirementDocumentKey =
 export const REQUIREMENT_DOCUMENT_KEYS: RequirementDocumentKey[] =
   REQUIREMENT_DOCUMENTS.map((d) => d.key);
 
+/**
+ * The commitment fee is a payment. It is shown in the checklist but changed
+ * through Payments, so the checklist cannot edit it.
+ */
+export const READ_ONLY_DOCUMENT: RequirementDocumentKey = 'commitment_fee';
+
+export const EDITABLE_DOCUMENT_KEYS: RequirementDocumentKey[] =
+  REQUIREMENT_DOCUMENT_KEYS.filter((k) => k !== READ_ONLY_DOCUMENT);
+
 export const REQUIREMENT_TOTAL = REQUIREMENT_DOCUMENTS.length;
 
 /** Single place for the bulk cap (AC 14a). */

@@ -4,12 +4,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '../../../generated/prisma/client';
-import { enrollment_status_enum } from '../../../generated/prisma/enums';
-import { PrismaService } from '../../../prisma/prisma.service';
+import { Prisma } from '../generated/prisma/client';
+import { enrollment_status_enum } from '../generated/prisma/enums';
+import { PrismaService } from '../prisma/prisma.service';
 import {
   BULK_MAX_ROWS,
   BULK_MAX_ROWS_MESSAGE,
+  EDITABLE_DOCUMENT_KEYS,
   HISTORY_PAGE_SIZE,
   REQUIREMENT_DOCUMENTS,
   REQUIREMENT_DOCUMENT_KEYS,
@@ -56,7 +57,7 @@ const checklistSelect = {
   users: { select: { first_name: true, last_name: true } },
 } satisfies Prisma.requirement_checklistSelect;
 
-type ChecklistRow = Prisma.requirement_checklistGetPayload<{
+export type ChecklistRow = Prisma.requirement_checklistGetPayload<{
   select: typeof checklistSelect;
 }>;
 
@@ -413,23 +414,38 @@ export class RequirementsService {
 
   // -------------------------------------------------------------- update
 
-  /**
-   * Saves one checklist: all 7 items, rejects a stale version with 409 and
-   * writes one history row per changed document, in one transaction.
-   */
+  /** Saves one checklist and returns the view the Requirements page uses. */
   async update(
     enrollmentId: string,
     dto: UpdateRequirementDto,
     userId: string,
   ) {
-    const next: DocumentFlags = {
+    return this.toChecklistView(
+      await this.saveChecklist(enrollmentId, dto, userId),
+    );
+  }
+
+  /**
+   * The one place a checklist is saved. Used by the Admin and Registrar
+   * Requirements endpoints and by the enrollment detail endpoints.
+   *
+   * Saves the six editable documents and the remark, rejects a stale version
+   * with 409 (when `expectedCheckedAt` is sent) and writes one history row per
+   * changed document, all in one transaction. The commitment fee is a payment,
+   * so it is never changed here.
+   */
+  async saveChecklist(
+    enrollmentId: string,
+    dto: UpdateRequirementDto,
+    userId: string,
+  ): Promise<ChecklistRow> {
+    const next: Record<string, boolean> = {
       bc_nso_psa_copy: dto.bcNsoPsaCopy,
       diploma_tor: dto.diplomaTor,
       brgy_clearance: dto.brgyClearance,
       one_by_one_pic: dto.oneByOnePic,
       two_by_two_pic: dto.twoByTwoPic,
       passport_size: dto.passportSize,
-      commitment_fee: dto.commitmentFee,
     };
 
     try {
@@ -458,7 +474,7 @@ export class RequirementsService {
         }
 
         const before = flagsOf(current);
-        const changed = REQUIREMENT_DOCUMENT_KEYS.filter(
+        const changed = EDITABLE_DOCUMENT_KEYS.filter(
           (k) => before[k] !== next[k],
         );
         const remarks =
@@ -467,7 +483,7 @@ export class RequirementsService {
           remarks !== undefined && remarks !== (current?.remarks ?? null);
 
         if (current && changed.length === 0 && !remarksChanged) {
-          return this.toChecklistView(current);
+          return current;
         }
 
         const checkedAt = new Date();
@@ -504,7 +520,7 @@ export class RequirementsService {
           });
         }
 
-        return this.toChecklistView(saved);
+        return saved;
       });
     } catch (error) {
       // Two first-time saves for the same enrollment race on the unique key.
@@ -530,11 +546,11 @@ export class RequirementsService {
       throw new BadRequestException(BULK_MAX_ROWS_MESSAGE);
     }
     if (
-      !REQUIREMENT_DOCUMENT_KEYS.includes(
-        dto.document as RequirementDocumentKey,
-      )
+      !EDITABLE_DOCUMENT_KEYS.includes(dto.document as RequirementDocumentKey)
     ) {
-      throw new BadRequestException('Unknown document.');
+      throw new BadRequestException(
+        'Unknown document, or it cannot be changed here.',
+      );
     }
     const column = Prisma.raw(dto.document);
 
