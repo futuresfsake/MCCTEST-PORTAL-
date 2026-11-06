@@ -85,8 +85,6 @@ export default function RegistrarRequirementsPage() {
   const statusFilter = searchParams.getAll('status');
   const programId = searchParams.get('programId') ?? '';
   const batchId = searchParams.get('batchId') ?? '';
-  const checkedFrom = searchParams.get('checkedFrom') ?? '';
-  const checkedTo = searchParams.get('checkedTo') ?? '';
   const sort = searchParams.get('sort') ?? DEFAULT_SORT;
   const page = Number(searchParams.get('page') ?? '1') || 1;
   const limit = Number(searchParams.get('limit') ?? DEFAULT_LIMIT) || DEFAULT_LIMIT;
@@ -120,8 +118,6 @@ export default function RegistrarRequirementsPage() {
   if (statusFilter.length > 0 && !(statusFilter.length === 1 && statusFilter[0] === DEFAULT_STATUS)) {
     chips.push({ key: 'status', label: 'Status', value: statusFilter.join(', ') });
   }
-  if (checkedFrom) chips.push({ key: 'checkedFrom', label: 'Checked from', value: checkedFrom });
-  if (checkedTo) chips.push({ key: 'checkedTo', label: 'Checked to', value: checkedTo });
   if (sort !== DEFAULT_SORT) chips.push({ key: 'sort', label: 'Sort', value: SORT_LABELS[sort] ?? sort });
 
   const removeChip = (key: string) => {
@@ -258,24 +254,6 @@ export default function RegistrarRequirementsPage() {
                       <option key={value} value={value}>{label}</option>
                     ))}
                   </select>
-                </label>
-                <label className="text-xs font-semibold text-slate-600">
-                  Last checked from
-                  <input
-                    type="date"
-                    value={checkedFrom}
-                    onChange={(event) => update({ checkedFrom: event.target.value || null })}
-                    className="mt-1 w-full border border-slate-200 bg-slate-50 px-2 py-2 text-sm"
-                  />
-                </label>
-                <label className="text-xs font-semibold text-slate-600">
-                  Last checked to
-                  <input
-                    type="date"
-                    value={checkedTo}
-                    onChange={(event) => update({ checkedTo: event.target.value || null })}
-                    className="mt-1 w-full border border-slate-200 bg-slate-50 px-2 py-2 text-sm"
-                  />
                 </label>
                 <fieldset className="sm:col-span-2">
                   <legend className="text-xs font-semibold text-slate-600">Enrollment status</legend>

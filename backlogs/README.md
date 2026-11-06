@@ -56,6 +56,8 @@ backlogs/
     announcements-password-hash-exposure/acceptance.md — SEC-01: password hash exposed by announcements API (FIXED, on dev and staging; main pending)
     multer-dos-advisory/acceptance.md            — SEC-02: multer denial-of-service advisory (LOGGED, not fixed)
     e2e-test-config/acceptance.md                — TECH-01: Jest ESM config fix for e2e tests
+    migration-bom-fresh-database/acceptance.md   — TECH-02: 0_init migration cannot be applied to a new database (byte-order mark) (LOGGED, not fixed)
+    migration-schema-drift/acceptance.md         — TECH-03: migration history disagrees with schema.prisma and Supabase (3 enums, 5 trainer columns) (LOGGED, not fixed)
 ```
 
 ---
@@ -133,6 +135,8 @@ backlogs/
 | ID      | Issue                              | Priority | Status      | Notes                                                  |
 |---------|------------------------------------|----------|-------------|--------------------------------------------------------|
 | TECH-01 | E2E Test Jest ESM Compatibility    | Medium   | Not Started | `@nestjs/config` ESM breaks `jest-e2e.json` transform  |
+| TECH-02 | `0_init` migration cannot be applied to a new database | Medium | Logged, not fixed | Byte-order mark is deliberate (commit `b13fe19`, matches the applied checksum). Deleting it would break Supabase. See `technical/migration-bom-fresh-database` |
+| TECH-03 | Migration history disagrees with `schema.prisma` and Supabase | Medium | Logged, not fixed | 3 enums and 5 trainer columns. Supabase already matches the schema. See `technical/migration-schema-drift` |
 | SEC-01  | Announcements API exposed the poster's password hash | High | Fixed, on dev and staging. Main pending | `include: { users: true }` returned the whole user row to every role. See `technical/announcements-password-hash-exposure` |
 | SEC-02  | `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs` | High | Logged, not fixed | Deferred by choice. `npm audit fix` is available. See `technical/multer-dos-advisory` |
 
