@@ -31,6 +31,7 @@ import EncoderAnnouncementsPage from '../pages/users/encoder/announcements/Encod
 import RegistrarAnnouncementsPage from '../pages/users/registrar/announcements/RegistrarAnnouncementsPage'
 const AdminPaymentsPage = lazy(() => import('../pages/users/admin/AdminPaymentsPage'))
 const RegistrarPaymentsPage = lazy(() => import('../pages/users/registrar/RegistrarPaymentsPage'))
+const RegistrarRequirementsPage = lazy(() => import('../pages/users/registrar/requirements/RegistrarRequirementsPage'))
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
@@ -229,6 +230,17 @@ return ( <Routes>
       <ProtectedRoute allowedRoles={['REGISTRAR']}>
         <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading payments...</div>}>
           <RegistrarPaymentsPage />
+        </Suspense>
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/registrar/requirements"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading requirements...</div>}>
+          <RegistrarRequirementsPage />
         </Suspense>
       </ProtectedRoute>
     }
