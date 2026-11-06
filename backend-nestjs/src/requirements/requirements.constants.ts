@@ -1,4 +1,7 @@
-/** The 7 checklist items. Keys are the requirement_checklist column names. */
+/**
+ * The 6 required documents (physical copies). Keys are the requirement_checklist
+ * column names. The commitment fee is a payment, not a document, so it is not here.
+ */
 export const REQUIREMENT_DOCUMENTS = [
   { key: 'bc_nso_psa_copy', label: 'PSA Birth Certificate' },
   { key: 'diploma_tor', label: 'Diploma / TOR' },
@@ -6,7 +9,6 @@ export const REQUIREMENT_DOCUMENTS = [
   { key: 'one_by_one_pic', label: '1x1 Picture' },
   { key: 'two_by_two_pic', label: '2x2 Picture' },
   { key: 'passport_size', label: 'Passport Size Picture' },
-  { key: 'commitment_fee', label: 'Commitment Fee' },
 ] as const;
 
 export type RequirementDocumentKey =
@@ -14,15 +16,6 @@ export type RequirementDocumentKey =
 
 export const REQUIREMENT_DOCUMENT_KEYS: RequirementDocumentKey[] =
   REQUIREMENT_DOCUMENTS.map((d) => d.key);
-
-/**
- * The commitment fee is a payment. It is shown in the checklist but changed
- * through Payments, so the checklist cannot edit it.
- */
-export const READ_ONLY_DOCUMENT: RequirementDocumentKey = 'commitment_fee';
-
-export const EDITABLE_DOCUMENT_KEYS: RequirementDocumentKey[] =
-  REQUIREMENT_DOCUMENT_KEYS.filter((k) => k !== READ_ONLY_DOCUMENT);
 
 export const REQUIREMENT_TOTAL = REQUIREMENT_DOCUMENTS.length;
 

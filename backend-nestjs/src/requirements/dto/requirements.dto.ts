@@ -18,7 +18,6 @@ import { enrollment_status_enum } from '../../generated/prisma/enums';
 import {
   BULK_MAX_ROWS,
   BULK_MAX_ROWS_MESSAGE,
-  EDITABLE_DOCUMENT_KEYS,
   REQUIREMENT_DOCUMENT_KEYS,
 } from '../requirements.constants';
 
@@ -124,6 +123,6 @@ export class BulkRequirementDto {
   @IsUUID('all', { each: true })
   enrollmentIds!: string[];
 
-  @IsIn(EDITABLE_DOCUMENT_KEYS)
+  @IsIn(REQUIREMENT_DOCUMENT_KEYS)
   document!: string;
 }

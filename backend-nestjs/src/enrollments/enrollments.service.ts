@@ -1298,7 +1298,6 @@ export class EnrollmentsService {
       one_by_one_pic: saved.one_by_one_pic,
       two_by_two_pic: saved.two_by_two_pic,
       passport_size: saved.passport_size,
-      commitment_fee: saved.commitment_fee,
       remarks: saved.remarks,
       checked_at: saved.checked_at,
       users: saved.users,
