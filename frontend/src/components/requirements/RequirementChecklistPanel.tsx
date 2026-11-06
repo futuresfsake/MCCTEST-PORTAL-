@@ -6,8 +6,9 @@ import {
   type DocumentFlags,
   type HistoryEntry,
   type RequirementDetail,
-} from '../../../../api/requirements.api';
-import { DOCUMENT_KEYS, DOCUMENT_LABELS } from './documents';
+  type RequirementsRole,
+} from '../../api/requirements.api';
+import { DOCUMENT_KEYS, DOCUMENT_LABELS, EDITABLE_DOCUMENT_KEYS, READ_ONLY_DOCUMENT } from './documents';
 
 function formatDateTime(value: string | null) {
   if (!value) return '—';
@@ -62,13 +63,14 @@ function uniqueRemarks(entries: HistoryEntry[]) {
 }
 
 type Props = {
+  role: RequirementsRole;
   enrollmentId: string;
   onClose: () => void;
   /** Called after a successful save so the list can refresh. */
   onSaved: () => void;
 };
 
-export function RequirementChecklistPanel({ enrollmentId, onClose, onSaved }: Props) {
+export function RequirementChecklistPanel({ role, enrollmentId, onClose, onSaved }: Props) {
   const [detail, setDetail] = useState<RequirementDetail | null>(null);
   const [documents, setDocuments] = useState<DocumentFlags | null>(null);
   const [remarks, setRemarks] = useState('');
@@ -87,7 +89,7 @@ export function RequirementChecklistPanel({ enrollmentId, onClose, onSaved }: Pr
     setError(null);
     setStale(false);
     try {
-      const result = await getRequirementDetail(enrollmentId);
+      const result = await getRequirementDetail(role, enrollmentId);
       setDetail(result);
       setDocuments(result.checklist.documents);
       setRemarks('');
@@ -98,7 +100,7 @@ export function RequirementChecklistPanel({ enrollmentId, onClose, onSaved }: Pr
     } finally {
       setLoading(false);
     }
-  }, [enrollmentId]);
+  }, [role, enrollmentId]);
 
   useEffect(() => {
     void load();
@@ -115,7 +117,7 @@ export function RequirementChecklistPanel({ enrollmentId, onClose, onSaved }: Pr
   const loadMoreHistory = async () => {
     if (!nextCursor) return;
     try {
-      const more = await getRequirementDetail(enrollmentId, nextCursor);
+      const more = await getRequirementDetail(role, enrollmentId, nextCursor);
       setHistory((current) => [...current, ...more.history.data]);
       setNextCursor(more.history.nextCursor);
     } catch (moreError) {
@@ -128,14 +130,13 @@ export function RequirementChecklistPanel({ enrollmentId, onClose, onSaved }: Pr
     setSaving(true);
     setError(null);
     try {
-      await updateRequirement(enrollmentId, {
+      await updateRequirement(role, enrollmentId, {
         bcNsoPsaCopy: documents.bc_nso_psa_copy,
         diplomaTor: documents.diploma_tor,
         brgyClearance: documents.brgy_clearance,
         oneByOnePic: documents.one_by_one_pic,
         twoByTwoPic: documents.two_by_two_pic,
         passportSize: documents.passport_size,
-        commitmentFee: documents.commitment_fee,
         // An empty box leaves the saved remark unchanged.
         remarks: remarks.trim() || undefined,
         expectedCheckedAt: detail.checklist.checkedAt,
@@ -153,7 +154,7 @@ export function RequirementChecklistPanel({ enrollmentId, onClose, onSaved }: Pr
   const dirty =
     !!detail &&
     !!documents &&
-    (DOCUMENT_KEYS.some((key) => documents[key] !== detail.checklist.documents[key]) ||
+    (EDITABLE_DOCUMENT_KEYS.some((key) => documents[key] !== detail.checklist.documents[key]) ||
       remarks.trim() !== '');
   const submitted = documents ? DOCUMENT_KEYS.filter((key) => documents[key]).length : 0;
 
@@ -203,20 +204,32 @@ export function RequirementChecklistPanel({ enrollmentId, onClose, onSaved }: Pr
                   <span className="text-xs font-medium text-slate-500">{submitted} / {DOCUMENT_KEYS.length} submitted</span>
                 </div>
                 <div className="divide-y divide-slate-100 border border-slate-200">
-                  {DOCUMENT_KEYS.map((key) => (
-                    <label key={key} className="flex cursor-pointer items-center gap-3 px-4 py-3 text-sm text-slate-800">
-                      <input
-                        type="checkbox"
-                        checked={documents[key]}
-                        onChange={(event) => setDocuments({ ...documents, [key]: event.target.checked })}
-                        className="h-4 w-4"
-                      />
-                      <span className="flex-1">{DOCUMENT_LABELS[key]}</span>
-                      {!documents[key] ? (
-                        <span className="bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">Missing</span>
-                      ) : null}
-                    </label>
-                  ))}
+                  {DOCUMENT_KEYS.map((key) => {
+                    const readOnly = key === READ_ONLY_DOCUMENT;
+                    return (
+                      <label
+                        key={key}
+                        className={`flex items-center gap-3 px-4 py-3 text-sm text-slate-800 ${readOnly ? '' : 'cursor-pointer'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={documents[key]}
+                          disabled={readOnly}
+                          onChange={(event) => setDocuments({ ...documents, [key]: event.target.checked })}
+                          className="h-4 w-4"
+                        />
+                        <span className="flex-1">
+                          {DOCUMENT_LABELS[key]}
+                          {readOnly ? (
+                            <span className="block text-xs text-slate-500">Recorded in Payments</span>
+                          ) : null}
+                        </span>
+                        {!documents[key] ? (
+                          <span className="bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">Missing</span>
+                        ) : null}
+                      </label>
+                    );
+                  })}
                 </div>
               </section>
 

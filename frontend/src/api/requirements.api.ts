@@ -1,5 +1,8 @@
 import { apiFetch } from './auth.api';
 
+/** The Requirements endpoints exist under both roles. */
+export type RequirementsRole = 'admin' | 'registrar';
+
 export type DocumentKey =
   | 'bc_nso_psa_copy'
   | 'diploma_tor'
@@ -73,6 +76,7 @@ export interface RequirementFilterOptions {
   documents: { key: DocumentKey; label: string }[];
 }
 
+/** The commitment fee is a payment, so it is not part of what the checklist saves. */
 export interface UpdateRequirementPayload {
   bcNsoPsaCopy: boolean;
   diplomaTor: boolean;
@@ -80,7 +84,6 @@ export interface UpdateRequirementPayload {
   oneByOnePic: boolean;
   twoByTwoPic: boolean;
   passportSize: boolean;
-  commitmentFee: boolean;
   remarks?: string;
   expectedCheckedAt: string | null;
 }
@@ -103,24 +106,24 @@ async function parse<T>(response: Response, fallback: string): Promise<T> {
   return data as T;
 }
 
-export async function getRequirements(params: URLSearchParams, signal?: AbortSignal) {
-  const response = await apiFetch(`/api/registrar/requirements?${params.toString()}`, { signal });
+export async function getRequirements(role: RequirementsRole, params: URLSearchParams, signal?: AbortSignal) {
+  const response = await apiFetch(`/api/${role}/requirements?${params.toString()}`, { signal });
   return parse<RequirementListResponse>(response, 'Failed to load requirements');
 }
 
-export async function getRequirementFilterOptions() {
-  const response = await apiFetch('/api/registrar/requirements/filter-options');
+export async function getRequirementFilterOptions(role: RequirementsRole) {
+  const response = await apiFetch(`/api/${role}/requirements/filter-options`);
   return parse<RequirementFilterOptions>(response, 'Failed to load filters');
 }
 
-export async function getRequirementDetail(enrollmentId: string, cursor?: string) {
+export async function getRequirementDetail(role: RequirementsRole, enrollmentId: string, cursor?: string) {
   const query = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-  const response = await apiFetch(`/api/registrar/requirements/${enrollmentId}${query}`);
+  const response = await apiFetch(`/api/${role}/requirements/${enrollmentId}${query}`);
   return parse<RequirementDetail>(response, 'Failed to load checklist');
 }
 
-export async function updateRequirement(enrollmentId: string, payload: UpdateRequirementPayload) {
-  const response = await apiFetch(`/api/registrar/requirements/${enrollmentId}`, {
+export async function updateRequirement(role: RequirementsRole, enrollmentId: string, payload: UpdateRequirementPayload) {
+  const response = await apiFetch(`/api/${role}/requirements/${enrollmentId}`, {
     method: 'PATCH',
     body: JSON.stringify(payload),
     headers: { 'Content-Type': 'application/json' },
@@ -128,8 +131,8 @@ export async function updateRequirement(enrollmentId: string, payload: UpdateReq
   return parse<ChecklistView>(response, 'Failed to save checklist');
 }
 
-export async function bulkMarkReceived(enrollmentIds: string[], document: DocumentKey) {
-  const response = await apiFetch('/api/registrar/requirements/bulk', {
+export async function bulkMarkReceived(role: RequirementsRole, enrollmentIds: string[], document: DocumentKey) {
+  const response = await apiFetch(`/api/${role}/requirements/bulk`, {
     method: 'POST',
     body: JSON.stringify({ enrollmentIds, document }),
     headers: { 'Content-Type': 'application/json' },
