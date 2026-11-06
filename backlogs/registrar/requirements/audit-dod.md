@@ -4,7 +4,7 @@
 |-------|-------|
 | **Date** | 2026-11-06 |
 | **Audited** | Branch `feature/MP-43-requirements-tracking`. The audit ran on the working tree, which was then committed in batches (docs, shared backend, enrollment endpoints, Registrar screen, Admin screen) with no code change in between. Final re-check before committing: backend and frontend lint, type-check and build clean, 102 of 102 tests pass |
-| **Final re-run** | 2026-11-06, after removing the commitment fee from the feature: backend and frontend lint, type-check and build clean, 102 of 102 tests, 76 of 76 end-to-end checks on a clean database, `npm audit` unchanged, no secrets in the diff, Supabase read-only checks unchanged. No new findings |
+| **Final re-run** | 2026-11-06, after removing the commitment fee: backend and frontend lint, type-check and build clean, 102 of 102 tests in the branch, 76 of 76 end-to-end checks on a clean database, `npm audit` unchanged, no secrets in the diff, Supabase read-only checks unchanged. Separately, 114 unit tests were written and passed locally (216 of 216 with the existing ones) but are **not in this branch** (decision D-8). One new finding (F-15), also not fixed in this branch |
 | **Compared with** | `origin/dev`. Committed: 17 files changed, 1 migration added. Branch is not pushed and has no pull request |
 | **Jira status** | In Review (checked 2026-11-06). The Jira description still says Registrar only, no Admin page, and a shared editor with the enrollment detail. It does not match what was built (see D-1) |
 | **How it was run** | A fresh Postgres 17 in Docker (`mp43_verify`): all 13 migrations applied from nothing, seeded (135 enrollments, 110 checklists, 10 complete), and the restructured backend run against it. 76 end-to-end checks plus statement logging for the query counts. Supabase was read with read-only queries only. The throwaway database was removed afterwards |
@@ -17,7 +17,7 @@
 
 1. **Four criteria no longer match the ticket (D-1, D-4):** AC 1 and 19 (Registrar only, no Admin page), AC 2 (shared editor with the enrollment detail screen) and AC 10 (7 items including the commitment fee, now 6 documents). The Jira description needs updating or the criteria will keep failing audits.
 2. **The work was restructured** into a shared module (`src/requirements/`) with an Admin and a Registrar controller, and the existing enrollment endpoints now use the same service. It is committed on the branch in batches but not pushed.
-3. **No unit tests** exist for the new service. The 102 passing tests are the project's existing ones.
+3. **No unit tests for the new code are in the branch.** 114 were written and passed locally (216 of 216 with the existing ones), but by decision D-8 they were kept out of the branch. The 102 passing tests in the branch are the project's existing ones.
 4. **Not merged.** The "reviewed and merged into `main`" item is NOT DONE.
 
 ## 1. Engineering checks
@@ -26,7 +26,7 @@
 |---|-------|--------|
 | 1 | Backend `eslint` (whole project, no fix) | PASS, 0 problems |
 | 2 | Backend `tsc --noEmit` and `nest build` | PASS |
-| 3 | Backend `jest` | PASS, 102 of 102 (12 suites). **None cover the new code** |
+| 3 | Backend `jest` | PASS, 102 of 102 (12 suites) in the branch. **None cover the new code.** 114 unit tests written locally and not included (D-8). See section 5b |
 | 4 | `prisma validate` | PASS |
 | 5 | Frontend `eslint .` (whole project) | PASS, 0 problems |
 | 6 | Frontend `tsc -b` and `vite build` | PASS. Main bundle 626 kB, over the 500 kB warning (existing, not from this work) |
@@ -144,6 +144,74 @@ Totals: 6 PASS, 1 PARTIAL, 2 NOT MET by decision. That is 9.
 | 7 | Tokens or passwords in the server log | PASS, none (a match was only a route name) |
 | 8 | History is append-only | Convention only (finding F-6) |
 
+## 5b. Tests run (full inventory)
+
+Every check run for this ticket, where it lives, and what happened to its test data.
+
+### A. Unit tests (written and run locally; NOT in this branch, decision D-8)
+
+New for this ticket: 114 tests in 4 files. They were written and passed, then kept out of the branch at the owner's request (saved in a local git stash, not pushed). They use a fake database and fake users, so they never touch a real database.
+
+| File | Tests | What it checks |
+|------|-------|----------------|
+| `requirements/requirements.service.spec.ts` | 52 | **Save:** 404 for an unknown enrollment, row lock before reading, creating a checklist when none exists, history only for documents that changed (old and new value), one shared time and the staff member on the checklist and its history, the remark carried onto history, stale save gives 409 (older version, null vs existing, existing vs missing, no version sent), duplicate first save gives 409, other errors pass through, save that changes nothing writes nothing, remark kept when omitted, remark-only save writes no history, blank remark stored as empty, a commitment fee is never saved or logged, `update()` returns progress out of 6. **Bulk:** 101 rows refused with the exact message, exactly 100 allowed, repeated ids counted once, unknown documents refused (4 cases), 404 and no writes when an enrollment is missing, history written before the update, a fixed number of statements for 10 or 100 rows, the staff id always bound. **Detail:** 404, no checklist shows 6 missing with no history query, trainee name format, history newest first with a next-page cursor, no next page, cursor continues after the right row, bad cursor gives 400, history lists only the 6 documents, no commitment fee or password in the response. **List:** totals for each completion filter, rows in the database's order, N / 6 and missing documents, empty page skips the row query, same number of queries for 10 or 100 rows, opens on ENROLLED, ALL removes the status filter, `%` and `_` escaped in the search, SQL-looking search stays plain text, unknown missing-document name ignored. **Options:** 6 documents, statuses, batches with program |
+| `requirements/dto/requirements.dto.spec.ts` | 49 | The bulk cap message, empty and non-UUID lists, all 6 documents accepted and 4 bad ones refused (commitment fee included), the update body (each of 6 fields required, wrong types, remark over 2000, bad date, null version, a `commitmentFee` dropped), list query limits and bad values (take, skip, sort, completion, UUIDs, date, search length, unknown status, `missing=commitment_fee`), single values turned into lists, all 4 sorts, the history cursor |
+| `requirements/requirements.controllers.spec.ts` | 10 | For Admin and Registrar alike: mounted at the right path, only that role allowed behind the login and role guards, the logged-in user (not the body) used as the staff member, list, detail and options handed to the shared service, `filter-options` and `bulk` declared before `:enrollmentId` |
+| `enrollments/enrollments.requirements.spec.ts` | 3 | The enrollment detail endpoint saves through the shared service with the logged-in staff member, answers in the old row shape without a commitment fee, and lets the 404 through |
+
+Existing tests: 102 in 12 suites, unchanged and passing. **Whole suite with the new tests: 216 of 216 in 16 suites. In the branch itself: 102 of 102.**
+
+Coverage of the new code (statements): service 93%, DTOs 97%, both controllers 100%, constants 100%. The module file is wiring only and is not unit tested.
+
+### B. Do the tests catch real bugs? (break-it check)
+
+The service was broken on purpose in 11 ways, one at a time, with the tests run after each. **All 11 were caught**, then the file was restored. The ways: remove the 409 check, raise the bulk cap, save when nothing changed, let any document through in bulk, let any column through the missing filter, stop escaping `%` and `_`, default the list to PENDING, never offer a next history page, skip the row lock, skip the 404, log history for unchanged documents. This check also found two weak tests of mine (they passed when the check was removed), which were rewritten.
+
+### C. Engineering checks
+
+| Check | Result |
+|-------|--------|
+| Backend `eslint` (whole project, no fix), `tsc`, `nest build`, `prisma validate` | Clean |
+| Frontend `eslint .`, `tsc -b`, `vite build` | Clean |
+| `npm audit` backend (production) / frontend | 0 / 10 moderate (existing) |
+
+### D. End-to-end API script (not in the repo): 76 checks, run on a clean database
+
+Run against the real backend and a database built from all 13 migrations, with seeded users for every role. Groups:
+1. Login for all 5 roles.
+2. Access control: no token (401) and every role (403) on all 5 endpoints under both `/registrar/requirements` and `/admin/requirements`, each role limited to its own prefix.
+3. List: defaults (Incomplete, ENROLLED, most missing first), N / 6 and missing badges, counts adding up and following the program filter, missing-document filter (one and two), PENDING, search by last name, any order, username and ID card, search + filter + sort + page together, pagination without overlap, all 3 other sorts, bad sort and bad id (400), Admin list equals Registrar list.
+4. Single update (TC-01): ticking a document, progress up by one, staff name, history row with date and time, remark on history, newest first, history cannot be edited or deleted (PUT and DELETE give 404), no password in the response.
+5. The commitment fee is gone (TC-02): 6 flags only, no mention in list, detail or options, refused as a filter and in bulk, ignored in a save.
+6. Concurrency (TC-05): stale save gives 409 and the first save stays, a no-op save writes nothing, two simultaneous saves give one 200 and one 409, an enrollment with no checklist gets one and shows 6 missing.
+7. Bulk (TC-03, TC-04): 20 rows updated with history, one bad row changes nothing, 101 rows refused, exactly 100 succeeds in 16 to 19 ms locally, a repeat changes nothing, a bad document is refused.
+8. Query counts (TC-09): the list uses 10 statements for 10 and 100 rows, bulk uses 7 for 10 and 50 rows.
+9. Enrollment detail endpoints (TC-07): the Admin and Registrar PATCH write history through the shared service, keep the old response shape without the commitment fee, 404 for an unknown enrollment, and the change shows on the Requirements page and the other way round.
+
+### E. Other checks
+
+| Check | Result |
+|-------|--------|
+| 13 migrations applied from an empty database | 0 errors |
+| New table compared with `schema.prisma` | 0 differences (3 enums and 5 trainer columns differ, existing TECH-03) |
+| Foreign keys: deleting an enrollment, deleting a user who has history | Cascades and is blocked, as designed |
+| Oversized remark, wrong types, `take=100000`, `skip=-1`, a made-up column name, SQL-looking search | All refused (400) or kept as plain text |
+| Server log scanned for tokens, passwords, errors | None |
+| Secrets and `.env` in everything that would be pushed | None |
+| Trial merge into `origin/dev` | Clean, 0 behind, no overlapping files |
+| Supabase, read-only: migration recorded, table shape, orphans, rows with old equal to new, enrollments without a checklist, test data present | Up to date, 9 columns, 0, 0, 0, **no test data** |
+| Manual use by the owner on the live page | 7 saves with remarks, working |
+
+### F. Where the test data lives and what was cleaned up
+
+| Item | Where | Status |
+|------|-------|--------|
+| Unit test data (fake names, ids, rows) | Inside the 4 spec files, which are not in the branch (kept in a local stash) | It is only fake text inside tests, never saved anywhere |
+| Seeded users, programs, enrollments, checklists | Throwaway Docker database | Removed with the container, and the test volume and extra image too |
+| End-to-end scripts, seed SQL, test passwords | The session's temporary folder, outside the repo | Never committed. Safe to delete |
+| Anything in Supabase | Nothing written by tests | Verified: 0 test users, 0 test programs. The 7 history rows came from the owner using the live page |
+| Anything in the real code or docs | None | Checked. The only matches are the project's own seed defaults, which existed before this work |
+
 ## 6. Frontend and UX (code reading)
 
 | # | Check | Result |
@@ -158,7 +226,7 @@ Totals: 6 PASS, 1 PARTIAL, 2 NOT MET by decision. That is 9.
 
 | # | Check | Result |
 |---|-------|--------|
-| 1 | Uncommitted work | None after the batch commits, except the existing untracked `text.txt` |
+| 1 | Uncommitted work | None, except the existing untracked `text.txt`. The 4 unit test files and the history fix are saved in a local git stash and are not in the branch (D-8) |
 | 2 | Stray files | `text.txt` (untracked, existing) |
 | 3 | Branch pushed | Yes, pushed to `origin` after this audit (not force pushed) |
 | 4 | Pull request | None yet. A trial merge into `origin/dev` is clean: 0 commits behind, 19 ahead, no files changed on both sides |
@@ -185,6 +253,7 @@ Totals: 6 PASS, 1 PARTIAL, 2 NOT MET by decision. That is 9.
 | D-5 | Only Admin and Registrar can see the history | Matches the roles allowed on the endpoints |
 | D-6 | Enrollments with no checklist show as missing all 6 | No change |
 | D-7 | (Superseded by D-4) The commitment fee stays out of the Requirements feature, so there is nothing to derive from payments | Gap G-1 is closed |
+| D-8 | The 114 unit tests and the history fix were written but kept out of the branch | The branch ships without unit tests for the new code and with the old commitment fee history row visible in the panel (F-9, F-15) |
 
 ## 10. Findings
 
@@ -198,12 +267,13 @@ Totals: 6 PASS, 1 PARTIAL, 2 NOT MET by decision. That is 9.
 | F-6 | History is append-only only by convention. No database rule | Low | Add a trigger in a later migration if auditors need it |
 | F-7 | A database built from the migrations stores `FULL_TIME` (and other underscore values) while the app expects `FULL TIME`. Reading such a trainee makes the enrollment detail endpoint return 500. Seen on the Docker test database. Supabase is not affected | Medium, existing | TECH-03 (`technical/migration-schema-drift`) now records this failure |
 | F-8 | `0_init/migration.sql` begins with a byte-order mark that must be kept (matches the checksum on Supabase), so a new database cannot be built with `migrate deploy` | Medium, existing | TECH-02 (`technical/migration-bom-fresh-database`) |
-| F-9 | No unit tests for `RequirementsService` (stale save, no-op save, cap, unknown id) | Medium | Add tests before merging |
+| F-9 | No unit tests for the new code are in the branch. 114 were written and passed locally, and 11 of 11 deliberate bugs were caught, but they were kept out by the owner (D-8) | Medium | Add them later: they are saved in a local git stash |
 | F-10 | Frontend `npm audit` shows 10 moderate vulnerabilities | Low, existing | Log as a technical item when convenient |
 | F-11 | Bulk timing (17 to 18 ms) was measured on a small local database. Supabase over the network will be slower | Low | Measure on Supabase when convenient |
 | F-12 | No browser check by me of the pages (bulk, two users at once, date-grouped history, URL refresh) | Medium | Do a manual pass with the Registrar and Admin logins before merging |
 | F-13 | (Withdrawn 2026-11-06) Raised in error. The owner first said the commitment fee was a separate payment, then corrected it: the only payment is the 450 base fee, so the commitment fee and the enrollment fee are the same payment. The enrollment code (`commitment_fee = payment.processPayment`) is therefore correct and existing flags are not wrong | None | No action |
 | F-14 | The enrollment form charges a base fee of 500 when the trainee has no active insurance coverage (`enrollments.service.ts` line 789). The owner says the fee is always 450. 7 of 9 receipts on Supabase carry 500. The chatbot already says 450 | Medium, existing | Logged as TECH-04 (`technical/enrollment-base-fee-500`). See gap G-2 in section 11. Not fixed in MP-43 |
+| F-15 | (Open) One of the 7 live history rows on Supabase is for the commitment fee, saved before it was removed. The panel will show it as a raw `commitment_fee` line, because history is not filtered to the 6 documents. A fix was written and tested locally but is not in this branch (D-8). The row itself was not touched | Low | Filter history to the 6 documents (saved in the local stash), or remove the old row with an approved data change |
 
 ## 11. Gaps to ask the product owner
 
@@ -259,7 +329,7 @@ Totals: 6 PASS, 1 PARTIAL, 2 NOT MET by decision. That is 9.
 
 1. Folder structure checked against the Payments pattern. Committed in batches.
 2. Get the product owner's answers on F-1, F-2 and F-4, and update the Jira description.
-3. Add unit tests for the new service (F-9).
+3. Decide whether to add the unit tests and the history fix (F-9, F-15): both are saved in a local git stash.
 4. Do the manual browser pass (F-12).
 5. Open a pull request into `dev` (the branch is already pushed).
 6. Nothing to apply on deploy for the database. The migration is already on Supabase.
