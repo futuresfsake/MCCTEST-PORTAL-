@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-43 |
 | **Type** | Feature (Registrar only) |
-| **Status** | IN REVIEW. Audited 2026-11-06, see `audit-dod.md` |
+| **Status** | IN REVIEW. Audited 2026-11-06 and re-checked on `staging` before `main`, see `audit-dod.md`. On `dev` (PR #88), `staging` (PR #89) and `main` (PR #90, 2026-11-06 11:34) |
 | **Priority** | Medium |
 | **Assignee** | Chelsea Cllj |
 | **Depends on** | MP-33 (Admin Enrollments, shared checklist editor), MP-24 (shared list toolkit and Scalability Guide) |
