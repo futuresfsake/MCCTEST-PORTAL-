@@ -4,7 +4,7 @@
 |-------|-------|
 | **Date** | 2026-11-06 |
 | **Audited** | Branch `feature/MP-43-requirements-tracking`. The audit ran on the working tree, which was then committed in batches (docs, shared backend, enrollment endpoints, Registrar screen, Admin screen) with no code change in between. Final re-check before committing: backend and frontend lint, type-check and build clean, 102 of 102 tests pass |
-| **Final re-run** | 2026-11-06, after removing the commitment fee: backend and frontend lint, type-check and build clean, 102 of 102 tests in the branch, 76 of 76 end-to-end checks on a clean database, `npm audit` unchanged, no secrets in the diff, Supabase read-only checks unchanged. Separately, 114 unit tests were written and passed locally (216 of 216 with the existing ones) but are **not in this branch** (decision D-8). One new finding (F-15), also not fixed in this branch |
+| **Final re-run** | 2026-11-06, after removing the commitment fee: backend and frontend lint, type-check and build clean, 102 of 102 tests in the branch, 76 of 76 end-to-end checks on a clean database, `npm audit` unchanged, no secrets in the diff, Supabase read-only checks unchanged. Separately, 114 unit tests were written and passed locally (216 of 216 with the existing ones) but are **not in this branch** (decision D-8). One new finding (F-15), fixed in the branch |
 | **Compared with** | `origin/dev`. Committed: 17 files changed, 1 migration added. Branch is not pushed and has no pull request |
 | **Jira status** | In Review (checked 2026-11-06). The Jira description still says Registrar only, no Admin page, and a shared editor with the enrollment detail. It does not match what was built (see D-1) |
 | **How it was run** | A fresh Postgres 17 in Docker (`mp43_verify`): all 13 migrations applied from nothing, seeded (135 enrollments, 110 checklists, 10 complete), and the restructured backend run against it. 76 end-to-end checks plus statement logging for the query counts. Supabase was read with read-only queries only. The throwaway database was removed afterwards |
@@ -226,7 +226,7 @@ Run against the real backend and a database built from all 13 migrations, with s
 
 | # | Check | Result |
 |---|-------|--------|
-| 1 | Uncommitted work | None, except the existing untracked `text.txt`. The 4 unit test files and the history fix are saved in a local git stash and are not in the branch (D-8) |
+| 1 | Uncommitted work | None, except the existing untracked `text.txt`. The 4 unit test files are saved in a local git stash and are not in the branch (D-8) |
 | 2 | Stray files | `text.txt` (untracked, existing) |
 | 3 | Branch pushed | Yes, pushed to `origin` after this audit (not force pushed) |
 | 4 | Pull request | None yet. A trial merge into `origin/dev` is clean: 0 commits behind, 19 ahead, no files changed on both sides |
@@ -253,7 +253,7 @@ Run against the real backend and a database built from all 13 migrations, with s
 | D-5 | Only Admin and Registrar can see the history | Matches the roles allowed on the endpoints |
 | D-6 | Enrollments with no checklist show as missing all 6 | No change |
 | D-7 | (Superseded by D-4) The commitment fee stays out of the Requirements feature, so there is nothing to derive from payments | Gap G-1 is closed |
-| D-8 | The 114 unit tests and the history fix were written but kept out of the branch | The branch ships without unit tests for the new code and with the old commitment fee history row visible in the panel (F-9, F-15) |
+| D-8 | The 114 unit tests were written but kept out of the branch (they stay local). The one code fix they found, F-15, is in the branch | The branch ships without unit tests for the new code (F-9) |
 
 ## 10. Findings
 
@@ -273,7 +273,7 @@ Run against the real backend and a database built from all 13 migrations, with s
 | F-12 | No browser check by me of the pages (bulk, two users at once, date-grouped history, URL refresh) | Medium | Do a manual pass with the Registrar and Admin logins before merging |
 | F-13 | (Withdrawn 2026-11-06) Raised in error. The owner first said the commitment fee was a separate payment, then corrected it: the only payment is the 450 base fee, so the commitment fee and the enrollment fee are the same payment. The enrollment code (`commitment_fee = payment.processPayment`) is therefore correct and existing flags are not wrong | None | No action |
 | F-14 | The enrollment form charges a base fee of 500 when the trainee has no active insurance coverage (`enrollments.service.ts` line 789). The owner says the fee is always 450. 7 of 9 receipts on Supabase carry 500. The chatbot already says 450 | Medium, existing | Logged as TECH-04 (`technical/enrollment-base-fee-500`). See gap G-2 in section 11. Not fixed in MP-43 |
-| F-15 | (Open) One of the 7 live history rows on Supabase is for the commitment fee, saved before it was removed. The panel will show it as a raw `commitment_fee` line, because history is not filtered to the 6 documents. A fix was written and tested locally but is not in this branch (D-8). The row itself was not touched | Low | Filter history to the 6 documents (saved in the local stash), or remove the old row with an approved data change |
+| F-15 | (Fixed 2026-11-06) One of the 7 live history rows on Supabase is for the commitment fee, saved before it was removed. The panel would have shown it as a raw `commitment_fee` line. History now lists only the 6 documents (a 3-line filter in `requirements.service.ts`). The old row stays in the table and was not touched | Low | Fixed in the branch. Checked with its unit test (kept local) and the project checks |
 
 ## 11. Gaps to ask the product owner
 
@@ -329,7 +329,7 @@ Run against the real backend and a database built from all 13 migrations, with s
 
 1. Folder structure checked against the Payments pattern. Committed in batches.
 2. Get the product owner's answers on F-1, F-2 and F-4, and update the Jira description.
-3. Decide whether to add the unit tests and the history fix (F-9, F-15): both are saved in a local git stash.
+3. Decide whether to add the unit tests later (F-9). They are saved in a local git stash.
 4. Do the manual browser pass (F-12).
 5. Open a pull request into `dev` (the branch is already pushed).
 6. Nothing to apply on deploy for the database. The migration is already on Supabase.
