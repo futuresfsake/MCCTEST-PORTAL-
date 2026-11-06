@@ -126,7 +126,7 @@ backlogs/
 | MP-30 follow-up | Trainee dashboard: Attendance Summary, Competency Outcomes, Upcoming Sessions | Unassigned | Not Started | Tables are empty and nothing can write them (0 sessions, 0 attendance, 0 competencies, 0 outcomes). See `trainee/dashboard-data-gaps` |
 | MP-41 | Trainee Profile Page (view, edit, photo upload) | Vince Jon Gonzalez | Not Started | See `trainee/profile`. Photo storage is open in `to-be-discussed.md` |
 | MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Unassigned | Not Started | See `admin/trainee-edit`. Depends on MP-24 |
-| MP-43 | Requirements Tracking (Admin and Registrar) | Chelsea Cllj | In Review | Audited 2026-11-06: 15 of 23 criteria pass, 4 partial, 4 changed by decision. Not merged. See `registrar/requirements/audit-dod.md` |
+| MP-43 | Requirements Tracking (Admin and Registrar) | Chelsea Cllj | In Review | Audited 2026-11-06 (re-checked on `staging`): 15 of 23 criteria pass, 4 partial, 4 changed by decision. On `dev` (PR #88), `staging` (PR #89) and `main` (PR #90, 2026-11-06 11:34). Jira description needs updating. See `registrar/requirements/audit-dod.md` |
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
 | MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | Not Started | See `registrar/uniform-distribution` |
 | MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
