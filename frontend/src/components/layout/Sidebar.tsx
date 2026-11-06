@@ -448,6 +448,11 @@ const sidebarConfig: Record<
             path: '/registrar/payments',
             icon: 'fa-solid fa-peso-sign',
           },
+          {
+            label: 'Requirements',
+            path: '/registrar/requirements',
+            icon: 'fa-solid fa-list-check',
+          },
         ],
       },
     ],
