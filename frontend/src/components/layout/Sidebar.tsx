@@ -463,6 +463,11 @@ const sidebarConfig: Record<
             path: '/registrar/requirements',
             icon: 'fa-solid fa-list-check',
           },
+          {
+            label: 'Withdrawal Requests',
+            path: '/registrar/withdrawal-requests',
+            icon: 'fa-solid fa-right-from-bracket',
+          },
         ],
       },
     ],
