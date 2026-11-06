@@ -62,7 +62,7 @@ All timestamps are `TIMESTAMPTZ(6)`. All new foreign keys are `ON DELETE NO ACTI
 | Existing rows | Kept. Nothing is deleted or rewritten except the new `withdrawal_status` |
 | Backfill | `request_status` APPROVED, REJECTED, CANCELLED copy to `withdrawal_status`. Everything else (PENDING) stays `PENDING_VALIDATION` |
 | Legacy columns | `request_status`, `reviewed_by`, `date_reviewed`, `remarks` are **kept**. New code uses the role-specific columns |
-| `surrendered_id` | **Kept and reused** as the registrar's "ID surrendered" checklist item (consistent naming, no duplicate column). Old values stay as they were. MP-47 reads and writes `surrendered_id` |
+| `surrendered_id` | **Kept and reused** as the "ID surrendered" check. Since D-09 (2026-11-06) it belongs to the Admin sign-off (MP-49), not the registrar. It was first planned as the registrar's item (consistent naming, no duplicate column). Old values stay as they were. MP-47 reads and writes `surrendered_id` |
 
 ---
 

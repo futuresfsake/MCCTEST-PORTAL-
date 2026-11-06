@@ -104,16 +104,58 @@ The parallel design had a race condition (two validators approving in the same s
 
 ## Acceptance Criteria (MP-47, Registrar, after the Trainer)
 
+Decisions: D-08, D-09, D-10 and D-11 in `registrar/decisions.md`. "API" means checked by real requests against a throwaway database (109 checks). "Browser" means a person using the screens.
+
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| R-1 | Default view shows `TRAINER_VALIDATED` | NOT STARTED | |
-| R-2 | Registrar can act only when the status is `TRAINER_VALIDATED`; `PENDING_VALIDATION` and every other status return 400 | NOT STARTED | D-06 |
-| R-3 | Approve needs all 3 checklist items true (server-side). Reject saves the checklist as is | NOT STARTED | |
-| R-4 | Approval sets `PENDING_ADMIN_SIGNOFF`. Rejection sets `REJECTED` | NOT STARTED | |
-| R-5 | The panel shows the trainer's validation and the full timeline | NOT STARTED | |
-| R-6 | Every action writes a history row, in one transaction | NOT STARTED | |
-| R-7 | Responses exclude `password_hash`; non-registrar roles get 403 | NOT STARTED | |
-| R-8 | Pages type-check, build and lint with 0 problems | NOT STARTED | |
+| R-1 | Default view shows only requests waiting for the registrar (`TRAINER_VALIDATED`). "All requests" and each status can be chosen | PASS (API). Browser not run | TC-R2, TC-R12 |
+| R-2 | The registrar can act only when the status is `TRAINER_VALIDATED`. Any other status, including `PENDING_VALIDATION`, returns 400 | PASS (API) | TC-R4 |
+| R-3 | Approve needs both checks ticked (finances cleared, documents submitted), enforced on the server. Reject saves them as they are. Both are manual ticks. ID surrendered is not a registrar item | PASS (API) | TC-R5, TC-R8. D-09 |
+| R-3a | A reason is required to reject (blank counts as none, up to 1000 characters) and is optional to approve | PASS (API) | TC-R5. D-08 |
+| R-3b | The panel shows whether the enrollment fee is paid (receipt number, date and amount when paid). Only an enrollment-fee receipt counts. It never ticks or blocks anything | PASS (API). Browser not run | TC-R9, TC-R14. D-09 |
+| R-3c | A pop-up shows the trainee's whole payment history from the Enrollment fee box: date, receipt number, what for, method and amount, oldest first, at most 50. Read only. Closes with the button, the backdrop or Escape. Amounts show centavos | PASS (API data). Browser not run | TC-R9, TC-R14. D-10 |
+| R-4 | Approval sets `PENDING_ADMIN_SIGNOFF`. Rejection sets `REJECTED` and is final for that request. The trainee may submit a new one | PASS (API) | TC-R6, TC-R7 |
+| R-5 | The panel shows the trainer's validation (who, when, remarks) and the full timeline | PASS (API data). Browser not run | TC-R3, TC-R13 |
+| R-5a | The panel shows the trainee's document progress (N / 6) for information only. It does not block approval | PASS (API data). Browser not run | TC-R3, TC-R13 |
+| R-6 | Every action writes one history row in the same transaction. Two registrars acting together get one winner and one 400 | PASS (API) | TC-R6 |
+| R-7 | Responses never include a password or the commitment fee. Other roles get 403 and no token gets 401 | PASS (API) | TC-R1, TC-R3 |
+| R-7a | The registrar sees all requests, not only one batch. An unknown id gives 404 and a malformed id gives 400 | PASS (API) | TC-R3, TC-R4 |
+| R-7b | There is no separate decided-requests table. The status filter finds past decisions | PASS (by design) | D-08 |
+| R-8 | Backend and frontend type-check, build and lint with 0 problems | PASS | Backend: `tsc`, `nest build`, `eslint`. Frontend: `tsc -b`, `eslint .`, `vite build` |
+| R-9 | Unit tests cover the service method, the DTO and the controller, including the unhappy paths | PARTIAL | 3 spec files, 64 tests, passed with the suite (166 of 166). **Kept out of the commit by decision D-11** (a local git stash), so the repo has no unit tests for the registrar step |
+| R-10 | Released on its own (per task). The sidebar link is visible. Until MP-49 ships, an approved request waits at `PENDING_ADMIN_SIGNOFF` | BUILT, not released | D-08 #6 |
+| R-11 | After the registrar approves, the trainee's progress view shows the last step: surrender your ID to the admin. No instruction at any other status. Staff panels show a neutral line | PASS (logic, 11 checks). Browser not run | TC-R11, TC-R15. D-09 |
+
+### Test cases (MP-47)
+
+No accounts, passwords or data are listed here. Use any registrar, trainer and trainee on a throwaway database.
+
+**Automated, run on a throwaway database (109 checks, all passed)**
+
+| TC | What is checked | Expected | Result |
+|----|-----------------|----------|--------|
+| TC-R1 | Access to the four registrar endpoints (list, filter options, detail, validate) with no token and with each other role | No token: 401. Admin, trainer, trainee, encoder: 403 | PASS |
+| TC-R2 | List: default, all statuses, one status, search by name, by system ID and with SQL-looking text, program and batch filters, pagination, bad values (limit 51 or 0, page 0, unknown status, bad ids, search over 100 characters) | Default shows only waiting requests. Filters combine. Search is plain text. Bad values give 400 | PASS |
+| TC-R3 | Detail: trainer remarks and who/when, document progress (N / 6, and 0 / 6 with no checklist), fee status, timeline order, unknown id, malformed id | Correct data. Unknown id 404. Malformed id 400. No password or commitment fee anywhere | PASS |
+| TC-R4 | Validate a request that is still with the trainer, already with the admin, rejected by the trainer, rejected by the registrar or cancelled, as approve and as reject. Unknown id with ticks missing. Malformed id | 400 for every wrong status. Unknown id 404 even with ticks missing. Malformed id 400 | PASS |
+| TC-R5 | Approve with finances missing, documents missing or neither. Reject with no reason, a blank reason, over 1000 characters. Bad or missing action. Ticks sent as text. An extra status field. Then read the request again | Each is refused with 400. The request is unchanged | PASS |
+| TC-R6 | Two approvals of the same waiting request at the same moment | One succeeds (200), one is refused (400). Exactly one history row. A later approval is refused | PASS |
+| TC-R7 | Reject a waiting request with a reason surrounded by spaces | Status `REJECTED`. Reason trimmed and saved. Checks saved as sent. History row names the registrar and the reason. A second attempt is refused. It leaves the default list | PASS |
+| TC-R8 | Send `surrendered_id` as true while approving. Check a rejection. Check a request already waiting for the admin | The registrar cannot set it. It stays unset in all three cases | PASS |
+| TC-R9 | Fee status and payment data for a trainee with an enrollment receipt plus another fee, one with only a non-enrollment receipt, one with none, and a cancelled request | Paid only with an enrollment receipt. All payments listed oldest first with date, amount, method and reason. Exactly five fields each. Paid does not tick finances | PASS |
+| TC-R10 | After the registrar acts, the trainer and the trainee read the request | Both see the new status. The trainee's view shows no registrar remarks, checks or password | PASS |
+| TC-R11 | The tracker wording as a pure function, for every status and both audiences | Instruction only at the Admin step while `PENDING_ADMIN_SIGNOFF`. Trainee wording tells them what to do. Staff wording says what is awaited. Nothing at any other status | PASS (11 checks) |
+
+**Manual, in a browser (not run yet)**
+
+| TC | Steps | Expected | Result |
+|----|-------|----------|--------|
+| TC-R12 | Log in as the registrar. Open Withdrawal Requests from the sidebar. Change the status, program, batch and search. Reload the page | The list opens on "Waiting for me". Filters and page survive the reload (URL) | NOT RUN |
+| TC-R13 | Click Review on a waiting request. Scroll the panel. Try Approve with nothing ticked, then with one tick, then both. Try Reject with no reason | Approve stays disabled until both are ticked. Reject cannot be confirmed without a reason. After a decision the list refreshes and the panel shows the result | NOT RUN |
+| TC-R14 | In the Enrollment fee box, open View payment history. Close it with the button, with the backdrop and with Escape. Check a trainee with no enrollment receipt | The pop-up lists every payment with centavos. Escape closes the pop-up first and the panel second. A trainee without an enrollment receipt shows "Not paid" but still lists other payments. Finances is never ticked for you | NOT RUN |
+| TC-R15 | Approve a request as the registrar. Log in as that trainee and open the request. Check a trainee whose request is at another status | After approval the trainee sees "surrender your ID to the admin" on the last step. No such line at other statuses | NOT RUN |
+| TC-R16 | Open the same waiting request in two browsers as two registrars. Approve in one, then act in the other | The second gets a clear message and the panel reloads to the real state | NOT RUN |
+| TC-R17 | As a trainee, use the list, the detail page and Cancel on requests from the earlier tickets | They still work. The shared progress view only gained the one line | NOT RUN |
 
 ## Acceptance Criteria (MP-49, Admin)
 
@@ -122,7 +164,8 @@ The parallel design had a race condition (two validators approving in the same s
 | A-1 | Default view shows `PENDING_ADMIN_SIGNOFF` | NOT STARTED | |
 | A-2 | Sign-off only when `PENDING_ADMIN_SIGNOFF`; otherwise 400 | NOT STARTED | |
 | A-3 | Approval sets `APPROVED` and the enrollment to `WITHDRAWN` in one transaction. Rejection leaves the enrollment unchanged | NOT STARTED | Account stays as is (gap item 1) |
-| A-4 | The panel shows the trainer validation (first), the registrar checklist (second) and the full timeline | NOT STARTED | |
+| A-3a | **Approval needs the ID surrendered tick (the trainee gives the ID to the admin).** The sign-off body carries `surrendered_id`, saved in the existing column. Rejecting does not need it | NOT STARTED | D-09 #2 |
+| A-4 | The panel shows the trainer validation (first), the registrar checks (finances, documents, second), who confirmed the ID, and the full timeline | NOT STARTED | D-09 |
 | A-5 | Responses exclude `password_hash`; non-admin roles get 403 | NOT STARTED | |
 | A-6 | End-to-end test of the pipeline, rejection at each stage, registrar blocked before the trainer (400), and cancellation | NOT STARTED | Definition of Done |
 | A-7 | Pages type-check, build and lint with 0 problems | NOT STARTED | |
@@ -148,6 +191,7 @@ The parallel design had a race condition (two validators approving in the same s
 | 2026-11-04 | Trainee UI (MP-46, UI half) built on `feature/withdrawal-trainee-request-ui`: list page with status filter and pagination in the URL, request form (own ENROLLED enrollments only), detail page with the four-stage stepper, history and cancel, sidebar link. Checked: pipeline logic (10 cases), server-rendered components, full frontend build and lint, and the API over real HTTP (30 checks). **Not checked in a browser** |
 | 2026-11-04 | Trainee backend (MP-46, API half) built on `feature/withdrawal-trainee-request-api`: shared `WithdrawalService`, trainee controller, 20 unit tests, plus a throwaway real-database run (10 scenarios and a 60-race stress test). Found and fixed an error-mapping bug in that run. UI half still to do |
 | 2026-11-04 | Pipeline changed from parallel to sequential (Trainer, then Registrar, then Admin), decision D-06. Jira tickets MP-45 to MP-49 rewritten to match. `REGISTRAR_VALIDATED` removed. MP-48 is now ticket 3 of 5 and MP-47 ticket 4 of 5 |
+| 2026-11-06 | Registrar step (MP-47) decided and built on `feature/MP-47-registrar-withdrawal` (backend, page, side panel, 64 unit tests, 97 end-to-end checks on a throwaway database), decision D-08: manual ticks, a reason required to reject, a rejection final for that request, the registrar sees all requests, no history table, released on its own. Then **changed by D-09 the same day**: the registrar checks **finances cleared and documents submitted only** and sees whether the enrollment fee is paid (from the `ENROLLMENT` receipts); **ID surrendered moves to the Admin sign-off (MP-49)**, because the trainee hands in the ID after the registrar accepts the request. Jira MP-47 and MP-49 and these criteria updated. The MP-47 code was then changed to match (two checks, enrollment fee status, the tracker step), and **D-10** added a read-only payment history pop-up in the Enrollment fee box. 109 end-to-end checks on a throwaway database and 166 unit tests pass |
 
 ---
 
@@ -210,4 +254,4 @@ What it does not prove: how the pages look, and every stepper state. The request
 | # | Gap | Where |
 |---|-----|-------|
 | 1 | After approval, is the trainee's account deactivated? Options A (enrollment only), B (deactivate), C (deactivate only if no other active enrollment). Current plan is A, with a TODO in the service | `to-be-discussed.md` item 9 |
-| 2 | ~~Duplicate `surrendered_id` / `id_surrendered`~~ **Resolved 2026-11-04:** the existing `surrendered_id` is kept and reused as the registrar checklist item. No `id_surrendered` column is added | Closed |
+| 2 | ~~Duplicate `surrendered_id` / `id_surrendered`~~ **Resolved 2026-11-04:** the existing `surrendered_id` is kept and reused (since D-09, 2026-11-06, as the Admin sign-off item, not the registrar's). No `id_surrendered` column is added | Closed |
