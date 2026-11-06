@@ -40,7 +40,7 @@ The order is deliberate (decision D-06): one validator at a time, so there is no
 |------|--------------|--------|
 | **Trainee** | Submits a request for one of their own enrolled enrollments, follows its progress, can cancel before the trainer acts | Built (MP-46) |
 | **Trainer** | Reviews requests from trainees in **their own batches**. Approves, or rejects with a reason | Built (MP-48) |
-| **Registrar** | Confirms three things on requests the trainer approved: ID surrendered, finances cleared, documents submitted. Approves or rejects | **Not built** (MP-47) |
+| **Registrar** | Confirms two things on requests the trainer approved: finances cleared and documents submitted. Sees whether the enrollment fee is paid. Approves or rejects (D-09) | **Built, not released** (MP-47). Being changed from three checks to two |
 | **Admin** | Final sign-off on requests both have approved. Approval sets the enrollment to `WITHDRAWN` | **Not built** (MP-49) |
 
 ## 3. Statuses
@@ -78,7 +78,7 @@ A status can only move forward along the arrows in section 1. Every move is a gu
 - The list defaults to "waiting for me". It can also show every request, or the trainer's own past decisions, and can be filtered by status and searched by trainee name or system ID.
 
 ### Registrar and Admin (planned, from the Jira tickets)
-- **Registrar** acts only on `TRAINER_VALIDATED`. Approving needs all three checklist items ticked. Result: `PENDING_ADMIN_SIGNOFF`.
+- **Registrar** acts only on `TRAINER_VALIDATED`. Approving needs both checklist items ticked (finances cleared, documents submitted). Result: `PENDING_ADMIN_SIGNOFF`. The Admin then confirms the ID was surrendered when signing off (D-09).
 - **Admin** acts only on `PENDING_ADMIN_SIGNOFF`. Approving sets the request to `APPROVED` and the enrollment to `WITHDRAWN` in **one** database transaction.
 
 ## 5. What is stored

@@ -16,6 +16,20 @@ export interface PipelineStage {
   at: string | null
   /** Reason text: the trainee's reason for the request, or a validator's note on a rejection. */
   note: string | null
+  /** What happens next, shown only on the step that is waiting. Not a reason, not a record. */
+  hint: string | null
+}
+
+/** Who is looking: the trainee is told what to do, staff are told what is being waited for. */
+export type PipelineAudience = 'trainee' | 'staff'
+
+/**
+ * The last step, once the registrar has accepted the request:
+ * the trainee hands in their ID, and the admin confirms it at sign-off.
+ */
+const ADMIN_STEP_HINT: Record<PipelineAudience, string> = {
+  trainee: 'Last step: surrender your ID to the admin. Your request is completed once the admin confirms it.',
+  staff: 'Waiting for the trainee to surrender their ID to the admin.',
 }
 
 const VALIDATION_STAGES = ['trainer', 'registrar', 'admin'] as const
@@ -33,7 +47,7 @@ const STAGE_AWAITING: Partial<Record<WithdrawalStatus, number>> = {
   PENDING_ADMIN_SIGNOFF: 2,
 }
 
-export function buildPipeline(detail: WithdrawalDetail): PipelineStage[] {
+export function buildPipeline(detail: WithdrawalDetail, audience: PipelineAudience = 'trainee'): PipelineStage[] {
   const { status, stages, history } = detail
   const first = history[0]
 
@@ -63,6 +77,7 @@ export function buildPipeline(detail: WithdrawalDetail): PipelineStage[] {
       actor: first?.changedBy.name ?? null,
       at: first?.changedAt ?? detail.dateRequested,
       note: detail.reason,
+      hint: null,
     },
   ]
 
@@ -82,6 +97,8 @@ export function buildPipeline(detail: WithdrawalDetail): PipelineStage[] {
       actor: isRejectedStage ? (rejection.changedBy.name ?? null) : state === 'done' ? stageData[index].by : null,
       at: isRejectedStage ? rejection.changedAt : state === 'done' ? stageData[index].at : null,
       note: isRejectedStage ? rejection.remarks : null,
+      // Only while the request waits at the admin step (the registrar has accepted it).
+      hint: key === 'admin' && state === 'current' ? ADMIN_STEP_HINT[audience] : null,
     })
   })
 
@@ -115,4 +132,11 @@ export function formatDateTime(value: string | null): string {
     hour: 'numeric',
     minute: '2-digit',
   })
+}
+
+/** An amount of pesos as text, always with centavos: "450" and "450.00" both read "PHP 450.00". */
+export function formatPeso(value: string): string {
+  const number = Number(value)
+  if (Number.isNaN(number)) return `PHP ${value}`
+  return `PHP ${number.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }

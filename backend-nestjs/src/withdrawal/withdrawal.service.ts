@@ -11,8 +11,11 @@ import {
   withdrawal_status_enum,
 } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { REQUIREMENT_DOCUMENTS } from '../requirements/requirements.constants';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
+import { RegistrarWithdrawalQueryDto } from './dto/registrar-withdrawal-query.dto';
 import { TrainerWithdrawalQueryDto } from './dto/trainer-withdrawal-query.dto';
+import { ValidateWithdrawalRegistrarDto } from './dto/validate-withdrawal-registrar.dto';
 import { ValidateWithdrawalTrainerDto } from './dto/validate-withdrawal-trainer.dto';
 import { WithdrawalQueryDto } from './dto/withdrawal-query.dto';
 
@@ -22,8 +25,8 @@ import { WithdrawalQueryDto } from './dto/withdrawal-query.dto';
  * PENDING_ADMIN_SIGNOFF -> admin -> APPROVED. Any validator can REJECT and the
  * trainee can CANCEL while the request is still PENDING_VALIDATION.
  *
- * This service is shared by every role. This file holds the trainee and trainer
- * sides; the registrar and admin methods are added by their own tickets.
+ * This service is shared by every role. This file holds the trainee, trainer
+ * and registrar sides; the admin methods are added by their own ticket.
  */
 
 /** A request in any of these states is still "open" for its enrollment. */
@@ -122,6 +125,81 @@ type TrainerDetailRow = Prisma.withdrawal_requestGetPayload<{
 }>;
 type PipelineRow = Prisma.withdrawal_requestGetPayload<{
   include: typeof pipelineInclude;
+}>;
+
+/**
+ * The registrar sees every request, so the row also names the trainee and the
+ * program. Name and ID only: no contact details, no password hash.
+ */
+const registrarListInclude = {
+  enrollments: {
+    select: {
+      id: true,
+      enrollment_status: true,
+      batch: {
+        select: {
+          id: true,
+          batch_name: true,
+          programs: { select: { id: true, name: true } },
+        },
+      },
+      trainee: {
+        select: {
+          users: {
+            select: { first_name: true, last_name: true, system_id: true },
+          },
+        },
+      },
+    },
+  },
+} satisfies Prisma.withdrawal_requestInclude;
+
+/** Receipts returned for the payment history pop-up. One enrollment has only a few. */
+const MAX_PAYMENT_HISTORY = 50;
+
+/**
+ * Detail adds two things for information only (they never block an approval):
+ * the trainee's document checklist from the Requirements feature, and
+ * the enrollment's payments. "Enrollment fee paid" means at least one official
+ * receipt with the reason ENROLLMENT exists. The whole payment
+ * history is returned too, so the registrar can read it in a pop-up without
+ * leaving the page.
+ */
+const registrarDetailInclude = {
+  enrollments: {
+    select: {
+      ...registrarListInclude.enrollments.select,
+      official_receipts: {
+        orderBy: [{ payment_date: 'asc' }, { created_at: 'asc' }],
+        take: MAX_PAYMENT_HISTORY,
+        select: {
+          or_number: true,
+          payment_date: true,
+          amount: true,
+          payment_method: true,
+          reason_of_dues: true,
+        },
+      },
+      requirement_checklist: {
+        select: {
+          bc_nso_psa_copy: true,
+          diploma_tor: true,
+          brgy_clearance: true,
+          one_by_one_pic: true,
+          two_by_two_pic: true,
+          passport_size: true,
+        },
+      },
+    },
+  },
+  ...pipelineInclude,
+} satisfies Prisma.withdrawal_requestInclude;
+
+type RegistrarListRow = Prisma.withdrawal_requestGetPayload<{
+  include: typeof registrarListInclude;
+}>;
+type RegistrarDetailRow = Prisma.withdrawal_requestGetPayload<{
+  include: typeof registrarDetailInclude;
 }>;
 type Actor = { first_name: string; last_name: string; role: string };
 
@@ -468,6 +546,176 @@ export class WithdrawalService {
     }
   }
 
+  // -------------------------------------------------------------- registrar
+
+  /**
+   * Every request, not scoped to a batch. Left without a
+   * status it shows what waits for the registrar (TRAINER_VALIDATED); `ALL`
+   * shows every status so past decisions and requests still with the trainer
+   * can be found.
+   */
+  async listForRegistrar(query: RegistrarWithdrawalQueryDto) {
+    const page = query.page ?? DEFAULT_PAGE;
+    const limit = query.limit ?? DEFAULT_LIMIT;
+    const status =
+      query.status === 'ALL'
+        ? undefined
+        : (query.status ?? withdrawal_status_enum.TRAINER_VALIDATED);
+
+    // Each word must match the first, middle or last name or the system ID.
+    const terms = (query.search ?? '').split(/\s+/).filter(Boolean).slice(0, 5);
+    const where: Prisma.withdrawal_requestWhereInput = {
+      enrollments: {
+        batch: {
+          ...(query.batchId ? { id: query.batchId } : {}),
+          ...(query.programId ? { program_id: query.programId } : {}),
+        },
+        ...(terms.length
+          ? {
+              trainee: {
+                users: {
+                  AND: terms.map((term) => ({
+                    OR: [
+                      { first_name: { contains: term, mode: 'insensitive' } },
+                      { middle_name: { contains: term, mode: 'insensitive' } },
+                      { last_name: { contains: term, mode: 'insensitive' } },
+                      { system_id: { contains: term, mode: 'insensitive' } },
+                    ],
+                  })),
+                },
+              },
+            }
+          : {}),
+      },
+      ...(status ? { withdrawal_status: status } : {}),
+    };
+
+    const [rows, total] = await this.prisma.$transaction([
+      this.prisma.withdrawal_request.findMany({
+        where,
+        include: registrarListInclude,
+        orderBy: [
+          { date_requested: 'desc' },
+          { withdrawal_request_id: 'desc' },
+        ],
+        skip: (page - 1) * limit,
+        take: limit,
+      }),
+      this.prisma.withdrawal_request.count({ where }),
+    ]);
+
+    return {
+      data: rows.map((row) => this.serializeRegistrarListRow(row)),
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limit)),
+      },
+    };
+  }
+
+  /** Programs, batches and statuses for the list filters. */
+  async getRegistrarFilterOptions() {
+    const [programs, batches] = await Promise.all([
+      this.prisma.programs.findMany({
+        select: { id: true, name: true },
+        orderBy: { name: 'asc' },
+      }),
+      this.prisma.batch.findMany({
+        select: { id: true, batch_name: true, program_id: true },
+        orderBy: { batch_name: 'asc' },
+      }),
+    ]);
+    return {
+      programs,
+      batches: batches.map((b) => ({
+        id: b.id,
+        name: b.batch_name,
+        programId: b.program_id,
+      })),
+      statuses: Object.values(withdrawal_status_enum),
+    };
+  }
+
+  /** One request with the trainer's decision, the checklist and the full history. */
+  async getForRegistrar(requestId: string) {
+    const row = await this.prisma.withdrawal_request.findUnique({
+      where: { withdrawal_request_id: requestId },
+      include: registrarDetailInclude,
+    });
+    if (!row) throw new NotFoundException('Withdrawal request not found');
+    return this.serializeRegistrarDetail(row);
+  }
+
+  /**
+   * Second validation step. Only a request the trainer already approved
+   * (TRAINER_VALIDATED) can be validated: a request still with the trainer
+   * gives 400. Approve needs both checklist items ticked (finances cleared,
+   * documents submitted) and moves the request on to the admin
+   * (PENDING_ADMIN_SIGNOFF). Reject ends it (REJECTED), needs a reason and is
+   * final for that request. The registrar never touches
+   * `surrendered_id`: the trainee hands in the ID after the request is accepted,
+   * so the admin confirms it at sign-off.
+   */
+  async validateByRegistrar(
+    userId: string,
+    requestId: string,
+    dto: ValidateWithdrawalRegistrarDto,
+  ) {
+    const approve = dto.action === 'APPROVE';
+    const next = approve
+      ? withdrawal_status_enum.PENDING_ADMIN_SIGNOFF
+      : withdrawal_status_enum.REJECTED;
+
+    await this.prisma.$transaction(async (tx) => {
+      const exists = await tx.withdrawal_request.findUnique({
+        where: { withdrawal_request_id: requestId },
+        select: { withdrawal_request_id: true },
+      });
+      if (!exists) throw new NotFoundException('Withdrawal request not found');
+
+      if (approve && !(dto.finances_cleared && dto.documents_submitted)) {
+        throw new BadRequestException(
+          'Both checklist items must be confirmed before approving',
+        );
+      }
+
+      // Conditional update: if two registrars act at the same moment, only one
+      // write wins and the other gets a clean 400.
+      const updated = await tx.withdrawal_request.updateMany({
+        where: {
+          withdrawal_request_id: requestId,
+          withdrawal_status: withdrawal_status_enum.TRAINER_VALIDATED,
+        },
+        data: {
+          withdrawal_status: next,
+          finances_cleared: dto.finances_cleared,
+          documents_submitted: dto.documents_submitted,
+          registrar_validated_by: userId,
+          registrar_validated_at: new Date(),
+          registrar_remarks: dto.remarks ?? null,
+        },
+      });
+      if (updated.count === 0) {
+        throw new BadRequestException(
+          'Only a request that is waiting for the registrar can be validated',
+        );
+      }
+      await tx.withdrawal_status_history.create({
+        data: {
+          withdrawal_request_id: requestId,
+          old_status: withdrawal_status_enum.TRAINER_VALIDATED,
+          new_status: next,
+          changed_by: userId,
+          remarks: dto.remarks ?? null,
+        },
+      });
+    });
+
+    return this.getForRegistrar(requestId);
+  }
+
   // ---------------------------------------------------------------- helpers
 
   private async requireTraineeId(userId: string): Promise<string> {
@@ -555,6 +803,78 @@ export class WithdrawalService {
     return {
       ...this.serializeTrainerListRow(row),
       ...this.serializePipeline(row),
+    };
+  }
+
+  private serializeRegistrarListRow(row: RegistrarListRow) {
+    const user = row.enrollments.trainee.users;
+    return {
+      id: row.withdrawal_request_id,
+      status: row.withdrawal_status,
+      reason: row.requested_reason,
+      dateRequested: row.date_requested.toISOString().slice(0, 10),
+      trainee: {
+        name: user ? actorName(user) : null,
+        systemId: user?.system_id ?? null,
+      },
+      enrollment: {
+        id: row.enrollments.id,
+        status: row.enrollments.enrollment_status,
+        batchId: row.enrollments.batch.id,
+        batchName: row.enrollments.batch.batch_name,
+        programId: row.enrollments.batch.programs.id,
+        programName: row.enrollments.batch.programs.name,
+      },
+    };
+  }
+
+  /**
+   * Detail for the registrar: the list row, the pipeline, the trainer's
+   * remarks, the registrar's own two checks, whether the enrollment fee is
+   * paid, and the trainee's document progress from the Requirements feature (information only,
+   * 6 documents).
+   */
+  private serializeRegistrarDetail(row: RegistrarDetailRow) {
+    const checklist = row.enrollments.requirement_checklist;
+    const missing = REQUIREMENT_DOCUMENTS.filter(
+      (doc) => !(checklist?.[doc.key] ?? false),
+    ).map((doc) => ({ key: doc.key, label: doc.label }));
+    // Oldest first. The enrollment fee is the first receipt with that reason.
+    const receipts = row.enrollments.official_receipts;
+    const receipt =
+      receipts.find((r) => r.reason_of_dues === 'ENROLLMENT') ?? null;
+    return {
+      ...this.serializeRegistrarListRow(row),
+      ...this.serializePipeline(row),
+      trainerRemarks: row.trainer_remarks,
+      checklist: {
+        financesCleared: row.finances_cleared,
+        documentsSubmitted: row.documents_submitted,
+        remarks: row.registrar_remarks,
+      },
+      enrollmentFee: {
+        paid: receipt !== null,
+        receipt: receipt
+          ? {
+              orNumber: receipt.or_number,
+              paymentDate: receipt.payment_date.toISOString().slice(0, 10),
+              amount: receipt.amount.toString(),
+            }
+          : null,
+        // Every payment of this enrollment, oldest first, for the pop-up.
+        payments: receipts.map((r) => ({
+          orNumber: r.or_number,
+          paymentDate: r.payment_date.toISOString().slice(0, 10),
+          amount: r.amount.toString(),
+          method: r.payment_method,
+          reason: r.reason_of_dues,
+        })),
+      },
+      requirements: {
+        submitted: REQUIREMENT_DOCUMENTS.length - missing.length,
+        total: REQUIREMENT_DOCUMENTS.length,
+        missing,
+      },
     };
   }
 
