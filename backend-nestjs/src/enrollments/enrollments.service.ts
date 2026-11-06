@@ -7,6 +7,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
 import { InventoryService } from '../inventory/inventory.service';
+import { RequirementsService } from '../requirements/requirements.service';
 import {
   CreateEnrollmentDto,
   TraineeInfoDto,
@@ -144,6 +145,7 @@ export class EnrollmentsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly inventoryService: InventoryService,
+    private readonly requirementsService: RequirementsService,
   ) {}
 
   async searchTrainees(query: string) {
@@ -1272,52 +1274,33 @@ export class EnrollmentsService {
   }
 
   /**
-   * Saves the registrar's edit of an enrollment's submitted documents.
-   * Creates the checklist if the enrollment has none yet (older records).
+   * Saves an edit of an enrollment's submitted documents. Goes through the
+   * shared requirements service, so it checks the enrollment, writes history
+   * and records who checked. The commitment fee is a payment and is not
+   * changed here. Returns the row shape the enrollment detail already uses.
    */
   async updateRequirementChecklist(
     enrollmentId: string,
     checklist: RequirementChecklistDto,
     checkedByUserId: string,
   ) {
-    const enrollment = await this.prisma.enrollments.findUnique({
-      where: { id: enrollmentId },
-      select: { id: true },
-    });
+    const saved = await this.requirementsService.saveChecklist(
+      enrollmentId,
+      checklist,
+      checkedByUserId,
+    );
 
-    if (!enrollment) {
-      throw new NotFoundException('Enrollment not found.');
-    }
-
-    const data = {
-      bc_nso_psa_copy: checklist.bcNsoPsaCopy,
-      diploma_tor: checklist.diplomaTor,
-      brgy_clearance: checklist.brgyClearance,
-      one_by_one_pic: checklist.oneByOnePic,
-      two_by_two_pic: checklist.twoByTwoPic,
-      passport_size: checklist.passportSize,
-      // Omitted remarks keep the existing value
-      remarks: checklist.remarks,
-      checked_by: checkedByUserId,
-      checked_at: new Date(),
+    return {
+      id: saved.id,
+      bc_nso_psa_copy: saved.bc_nso_psa_copy,
+      diploma_tor: saved.diploma_tor,
+      brgy_clearance: saved.brgy_clearance,
+      one_by_one_pic: saved.one_by_one_pic,
+      two_by_two_pic: saved.two_by_two_pic,
+      passport_size: saved.passport_size,
+      remarks: saved.remarks,
+      checked_at: saved.checked_at,
+      users: saved.users,
     };
-
-    return this.prisma.requirement_checklist.upsert({
-      where: { enrollment_id: enrollmentId },
-      update: data,
-      create: { enrollment_id: enrollmentId, ...data },
-      select: {
-        id: true,
-        bc_nso_psa_copy: true,
-        diploma_tor: true,
-        brgy_clearance: true,
-        one_by_one_pic: true,
-        two_by_two_pic: true,
-        passport_size: true,
-        commitment_fee: true,
-        remarks: true,
-        checked_at: true,
-      },
-    });
   }
 }
