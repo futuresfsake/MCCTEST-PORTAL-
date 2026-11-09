@@ -15,7 +15,7 @@
 **The code meets 20 of the 22 acceptance criteria and has one real bug (F-15). The ticket is not done as the Definition of Done defines it, and it is not ready to merge until the points below are settled.**
 
 1. **Behaviour is correct.** All 155 end-to-end checks pass on a clean database, including rollback after a forced failure, three-way races for the last slot, and every 401 and 403 combination. Lint, type-check, build and `prisma validate` are clean, and `npm audit` shows 0 vulnerabilities in both projects.
-2. **The branch has no unit tests for the new code (F-1).** About 770 changed lines in `enrollments.service.ts`, two DTOs and five endpoints have no spec file in the branch, and its 102 passing Jest tests are the same 102 as on `dev`. After the first audit I wrote 215 unit tests (4 spec files) and kept them out of the repository on request. With them the whole suite is 317 of 317, the new service methods are 82 of 82 statements covered, and a break-it run caught 35 of 35 deliberate breaks.
+2. **The branch has no unit tests for the new code (F-1).** About 770 changed lines in `enrollments.service.ts`, two DTOs and five endpoints have no spec file in the branch, and its 102 passing Jest tests are the same 102 as on `dev`. After the first audit I wrote 215 unit tests (4 spec files) and ran them: the whole suite was 317 of 317, the new service methods were 82 of 82 statements covered, and a break-it run caught 35 of 35 deliberate breaks. At the owner's request they were never committed, and the files were then deleted, so those results cannot be re-run without writing the tests again.
 3. **One real bug found by those tests (F-15).** `PATCH /admin/trainees/:id` with no `beneficiary` field at all returns **500**, not a clear 400. Confirmed on the live API. A `null` or empty `beneficiary` gives a correct 400, and nothing is saved. This makes AC 2 PARTIAL.
 4. **The migration is not on Supabase (F-2).** `prisma migrate status` lists `20261106_trainee_enrollment_transfers` as not applied and the table does not exist there. AC 20 stays PARTIAL until the PM applies it.
 5. **Merged into `main` is NOT DONE (F-3).** The branch is pushed but not merged into `dev` or `main`. A trial merge into both has no conflicts. Whether a pull request is open could not be checked. Jira already says Done.
@@ -23,7 +23,7 @@
 
 ### Ready to merge into `dev`?
 
-**Almost. Yes for `dev`, once two things are done. Not for `main` yet.** Before `dev`: (1) fix F-15 (one line, `@IsDefined()` on `beneficiary`) or accept it knowingly, because no screen can trigger it; (2) the PM applies the migration to Supabase when the code reaches `dev`, or the history and change actions fail there (F-2). The branch is 0 behind `dev` and a trial merge has no conflicts. Before `main`: decide the MP-47 gap (F-4), decide whether the unit tests join the branch (F-1), and check one batch change and one program change in a browser.
+**Almost. Yes for `dev`, once two things are done. Not for `main` yet.** Before `dev`: (1) fix F-15 (one line, `@IsDefined()` on `beneficiary`) or accept it knowingly, because no screen can trigger it; (2) the PM applies the migration to Supabase when the code reaches `dev`, or the history and change actions fail there (F-2). The branch is 0 behind `dev` and a trial merge has no conflicts. Before `main`: decide the MP-47 gap (F-4), decide whether unit tests are written for the branch (F-1), and check one batch change and one program change in a browser.
 
 ## 1. Engineering checks
 
@@ -32,7 +32,7 @@
 | 1 | Backend `eslint` (whole project, no fix) | PASS, 0 problems |
 | 2 | Backend `tsc --noEmit` | PASS, after `prisma generate`. **Before it, 7 errors**: the generated client under `src/generated/prisma` is git-ignored, so a fresh checkout does not know `enrollment_transfers` (F-9) |
 | 3 | Backend `nest build` | PASS |
-| 4 | Backend `jest` | PASS, 102 of 102 (12 suites) in the branch. **None cover the new code** (F-1). With my 4 local spec files: 317 of 317 (16 suites) |
+| 4 | Backend `jest` | PASS, 102 of 102 (12 suites) in the branch. **None cover the new code** (F-1). With my 4 spec files (since deleted): 317 of 317 (16 suites) |
 | 5 | `prisma validate` | PASS |
 | 6 | Frontend `eslint .` (whole project) | PASS, 0 problems |
 | 7 | Frontend `tsc -b` and `vite build` | PASS. Main bundle 649 kB, over the 500 kB warning (existing) |
@@ -151,8 +151,8 @@ Other differences: `acceptance.md` says "Assignee: Not assigned (open gap 1)", b
 | Group | What was run | Result |
 |-------|--------------|--------|
 | Unit tests in the branch | Jest, 12 suites. None are for the new code | 102 of 102 |
-| Unit tests for the new code (local, **not committed**) | 4 untracked spec files: `enrollments.transfer.service.spec.ts` (service, fake database: update trainee, change options, change batch, change program, payment and uniform, history, errors and write conflicts), `enrollments.transfer.controllers.spec.ts` (routes, methods, role access for every new endpoint, the logged-in admin passed on, no write route for the registrar), `dto/change-enrollment.dto.spec.ts` and `dto/update-trainee.dto.spec.ts` (limits, trimming, bad values, extra fields dropped, email handling) | 215 of 215. Two of them are `it.failing` tests that record the known bug F-15 |
-| Whole suite with the local specs | `npx jest` | 317 of 317 in 16 suites |
+| Unit tests for the new code (written and run, **never committed, then deleted**) | 4 spec files: `enrollments.transfer.service.spec.ts` (service, fake database: update trainee, change options, change batch, change program, payment and uniform, history, errors and write conflicts), `enrollments.transfer.controllers.spec.ts` (routes, methods, role access for every new endpoint, the logged-in admin passed on, no write route for the registrar), `dto/change-enrollment.dto.spec.ts` and `dto/update-trainee.dto.spec.ts` (limits, trimming, bad values, extra fields dropped, email handling) | 215 of 215. Two of them are `it.failing` tests that record the known bug F-15 |
+| Whole suite with those specs (before they were deleted) | `npx jest` | 317 of 317 in 16 suites |
 | Coverage of the new code | `jest --coverage` on the service, DTOs and controllers | The new service methods (updateTrainee to getTraineeChangeHistory): 82 of 82 statements. `update-trainee.dto.ts` 100%, `change-enrollment.dto.ts` 100% |
 | Break-it check | 35 deliberate breaks of the service, DTOs and controllers, one at a time, with the file restored after each (confirmed by `git status`) | **35 of 35 caught.** On the first pass 27 were caught. Of the 8 others, 5 were my script failing to match the file's Windows line endings, 2 changed the wrong occurrence in the file, and 1 was too mild a change. After correcting the script all 8 were caught, so no weak test was found |
 | Engineering | Backend eslint, `tsc`, `nest build`, `prisma validate`. Frontend eslint, `tsc -b`, `vite build`. `npm audit` in both | All clean (section 1) |
@@ -203,7 +203,7 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 
 | ID | Finding | Severity | Suggested action |
 |----|---------|----------|------------------|
-| F-1 | The branch has no unit tests for the new service methods, DTOs, controllers or the five endpoints. The 102 passing tests are unchanged from `dev`. 215 tests now exist locally, untracked, at the owner's request | Medium | Decide whether the 4 spec files go into the branch. They are lint-clean and pass |
+| F-1 | The branch has no unit tests for the new service methods, DTOs, controllers or the five endpoints. The 102 passing tests are unchanged from `dev`. 215 tests were written and run, then deleted at the owner's request | Medium | Write unit tests for the branch if the team wants them (service, validators, controllers). The first run of them found F-15 |
 | F-2 | Migration `20261106_trainee_enrollment_transfers` is not applied on Supabase | Medium | PM applies it before the code reaches an environment that uses Supabase. Then re-run `migrate status` |
 | F-3 | The branch is not merged and Jira already says Done (resolved 2026-11-08). The DoD item "code reviewed and merged into `main`" is open. PR state unknown | Medium | Check for an open PR. Move the Jira status back to In Review until the merge, or accept that it means "built" |
 | F-4 | A shifted trainee's new enrollment has no receipt, so MP-47 (already on `dev`) reads it as an unpaid enrollment fee. The profile also hides the carried-over OR (remarks) and `exit_reason`. Listed as Known Gaps 1 and 3 in `acceptance.md`. Read in code (`withdrawal.service.ts` reads the enrollment's receipts), not run | Medium | Decide with the product owner before merge: follow the transfer chain in MP-47, or record a zero-amount carried receipt |
@@ -217,7 +217,7 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 | F-12 | A new payment on a program change uses the existing base fee rule (500 without insurance, 450 with). That is TECH-04 | Medium (existing) | Fix TECH-04 once, in one place |
 | F-13 | TECH-03 (migration history against `schema.prisma`) meant I had to align 3 enums and 5 trainer columns on the throwaway database before the app would run on it | Medium (existing) | See TECH-03 |
 | F-14 | Untracked `text.txt` in the working tree | Low | Do not commit it |
-| F-15 | `PATCH /admin/trainees/:id` with no `beneficiary` field returns **500**. `@ValidateNested()` skips a missing value, and the service then reads a field of `undefined`. `null` and `{}` are correctly 400. Nothing is saved (rolled back). Breaks AC 2 ("not a server error") for a client that leaves the object out. The Edit form always sends it. The enrollment form shares `TraineeDetailsDto`, so `POST` enrollments may have the same weakness (not tested) **Cause:** a code gap, not an account problem. It depends on what the request sends, not on which trainee it is for. The validator skips a missing field, then the service reads a field of `undefined` and crashes (rolled back, nothing saved). A trainee with no beneficiary row yet is fine: `saveBeneficiary` is an upsert, so the row is created on save (by code reading, not tested). The Edit form always sends the object, so only a direct API call can trigger it. | Medium | Add `@IsDefined()` (or `@IsNotEmptyObject()`) to `beneficiary` in `TraineeDetailsDto`. Two `it.failing` tests in my local specs will then start passing and tell you to remove `.failing` |
+| F-15 | `PATCH /admin/trainees/:id` with no `beneficiary` field returns **500**. `@ValidateNested()` skips a missing value, and the service then reads a field of `undefined`. `null` and `{}` are correctly 400. Nothing is saved (rolled back). Breaks AC 2 ("not a server error") for a client that leaves the object out. The Edit form always sends it. The enrollment form shares `TraineeDetailsDto`, so `POST` enrollments may have the same weakness (not tested) **Cause:** a code gap, not an account problem. It depends on what the request sends, not on which trainee it is for. The validator skips a missing field, then the service reads a field of `undefined` and crashes (rolled back, nothing saved). A trainee with no beneficiary row yet is fine: `saveBeneficiary` is an upsert, so the row is created on save (by code reading, not tested). The Edit form always sends the object, so only a direct API call can trigger it. | Medium | Add `@IsDefined()` (or `@IsNotEmptyObject()`) to `beneficiary` in `TraineeDetailsDto`. The deleted specs had two tests for exactly this case, so add one when unit tests are written |
 
 ## 11. Gaps to ask the product owner
 
@@ -227,7 +227,7 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 
 ## 12. Release steps still open
 
-1. Decide F-15 (fix the missing-beneficiary 500), F-1 (add the unit tests to the branch) and F-4 (MP-47 interaction).
+1. Decide F-15 (fix the missing-beneficiary 500), F-1 (write unit tests for the branch) and F-4 (MP-47 interaction).
 2. Open or find the pull request, review it, and merge into `dev`.
 3. The PM applies the migration to Supabase, then `prisma migrate status` should say "Database schema is up to date".
 4. After `dev`, `staging` and `main` promotion, check one real batch change and one program change in a browser, then re-run the read-only Supabase checks (table shape, orphan rows, history rows against enrollments).
