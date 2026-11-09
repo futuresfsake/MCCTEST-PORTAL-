@@ -7,7 +7,7 @@
 | **Status** | BUILT and audited (2026-11-09), not merged. The PM applies the migration to Supabase. Jira already says Done |
 | **Priority** | Medium |
 | **Assignee** | Aubrien Fuentes (per Jira, 2026-11-09) |
-| **Audit** | `audit-dod.md`, 2026-11-09: 21 PASS, 1 PARTIAL on the 22 Jira criteria. Open: no unit tests for the new code, migration not on Supabase, merge not done |
+| **Audit** | `audit-dod.md`, 2026-11-09: 20 PASS, 2 PARTIAL on the 22 Jira criteria. Open: missing-beneficiary 500 (F-15), no unit tests for the new code in the branch, migration not on Supabase, merge not done |
 | **Depends on** | MP-24 (Student Information module, must be done first), MP-33 (shared `EnrollmentsService`), MP-35 (uniform stock on program change) |
 | **Decision log** | `registrar/decisions.md` D-01 (why the change history exists) |
 | **Added** | 2026-11-04 (from the Jira ticket) |
@@ -126,7 +126,7 @@ Update, change-batch and change-program endpoints are `ADMIN` only. There are no
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
 | 1 | An admin on a trainee's profile clicks Edit, changes details and saves. The changes persist after a refresh | PASS | API and browser |
-| 2 | Invalid input (future birth date, missing required field, duplicate email) shows a clear error, not a server error | PASS | API and browser. Also added: text too long for its column is a 400, not a server error |
+| 2 | Invalid input (future birth date, missing required field, duplicate email) shows a clear error, not a server error | PARTIAL | API and browser. Also added: text too long for its column is a 400, not a server error. **Audit 2026-11-09:** a request with no `beneficiary` field at all returns 500 (audit F-15); `null` and `{}` are 400 |
 | 3 | The username (system ID) and password cannot be edited | PASS | API and browser. Sent values are ignored; the hash and username stay unchanged |
 
 ### Change Batch
@@ -255,4 +255,4 @@ These were not in the ticket. Change them if the team disagrees.
 
 ---
 
-## Summary: 22 PASS, 1 PARTIAL (the PM runs the migration on Supabase)
+## Summary: 21 PASS, 2 PARTIAL (row 2: missing beneficiary gives 500; row 21: the PM runs the migration on Supabase)

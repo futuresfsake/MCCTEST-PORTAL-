@@ -25,7 +25,7 @@ backlogs/
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
     enrollment/acceptance.md                     — MP-33: Admin Enrollments Module (IN PROGRESS)
     trainee-edit/acceptance.md                   — MP-42: Admin Edit Trainee, batch and program changes with history (BUILT, not merged)
-    trainee-edit/audit-dod.md                    — MP-42 Definition of Done audit (2026-11-09): 21 PASS, 1 PARTIAL, merge and unit tests open
+    trainee-edit/audit-dod.md                    — MP-42 Definition of Done audit (2026-11-09): 20 PASS, 2 PARTIAL, one 500 bug (F-15), merge and unit tests open
     payments/acceptance.md                       — MP-25: Payments Module (30/30 PASS)
     inventory/acceptance.md                      — MP-35: Uniform Inventory (shared Admin and Registrar, ON DEV AND STAGING, not on main)
     notifications/acceptance.md                  — MP-54: Notification Bell, Admin Events (NOT STARTED)
@@ -127,7 +127,7 @@ backlogs/
 | MP-33 | Admin Enrollments | Chelsea Cllj | In Progress | 8 FAIL, 2 PARTIAL — 7 critical gaps |
 | MP-30 follow-up | Trainee dashboard: Attendance Summary, Competency Outcomes, Upcoming Sessions | Unassigned | Not Started | Tables are empty and nothing can write them (0 sessions, 0 attendance, 0 competencies, 0 outcomes). See `trainee/dashboard-data-gaps` |
 | MP-41 | Trainee Profile Page (view, edit, photo upload) | Vince Jon Gonzalez | Not Started | See `trainee/profile`. Photo storage is open in `to-be-discussed.md` |
-| MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Aubrien Fuentes | Built, audited 2026-11-09, not merged | 21 PASS, 1 PARTIAL (Jira AC): migration not on Supabase yet, no unit tests for the new code, merge open. See `admin/trainee-edit/audit-dod.md` |
+| MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Aubrien Fuentes | Built, audited 2026-11-09, not merged | 20 PASS, 2 PARTIAL (Jira AC): missing beneficiary gives 500 (F-15), migration not on Supabase yet, no unit tests for the new code in the branch, merge open. See `admin/trainee-edit/audit-dod.md` |
 | MP-43 | Requirements Tracking (Admin and Registrar) | Chelsea Cllj | In Review | Audited 2026-11-06 (re-checked on `staging`): 15 of 23 criteria pass, 4 partial, 4 changed by decision. On `dev` (PR #88), `staging` (PR #89) and `main` (PR #90, 2026-11-06 11:34). Jira description needs updating. See `registrar/requirements/audit-dod.md` |
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
 | MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | Not Started | See `registrar/uniform-distribution` |
