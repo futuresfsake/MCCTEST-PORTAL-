@@ -209,6 +209,7 @@ Recorded in `acceptance.md` under "Decisions made while building (MP-49)" and li
 | F-8 | Supabase has no request at the admin step yet, so the first real sign-off will be the first time this code runs on real data | Low | Do one real sign-off in a browser on `dev` right after the merge, then re-run the read-only checks |
 | F-9 | Row level security is off on all Supabase tables, including the withdrawal ones | Low (existing) | Same as every table |
 | F-10 | Untracked `text.txt` and the two local spec files are in the working tree | Low | Do not commit them |
+| F-11 | The old column `withdrawal_request.request_status` is not updated by the sign-off (nor by the earlier steps). It stays `PENDING` on every request, so after an approval or rejection it disagrees with `withdrawal_status`. The audit note A-9 said to decide this before MP-49 (`to-be-discussed.md` item 14) | Medium | Decide: retire the column in a later migration, or keep it in sync. Nothing reads it today, so it does not break behaviour |
 
 No new TECH item was needed.
 
@@ -217,11 +218,12 @@ No new TECH item was needed.
 1. **G-1. Should the admin need a reason to reject?** The trainer and the registrar do. Options: keep it optional (current, as the ticket says), or require it like the others so the trainee always sees why.
 2. **G-2. Should approving a withdrawal also write the trainee's reason into the enrollment's `exit_reason`?** Options: leave it empty (current), or copy the request's reason.
 3. **G-3. What should happen to the trainee's account after approval?** (existing, item 9) A: nothing, B: deactivate, C: deactivate only if no other active enrollment.
+4. **G-4. Keep or retire the old `request_status` column?** (existing, item 14, now due) Options: retire it in a later migration, or write it in sync with `withdrawal_status` at every step.
 
 ## 12. Release steps still open
 
 1. Open the pull request from `feature/MP-49-admin-withdrawal-signoff` into `dev`, review it and merge. It is 0 behind `dev`, and the trial merge is clean.
 2. No migration to apply.
 3. After the merge, run the browser cases TC-A11 to TC-A15 on `dev`, including one real sign-off, then re-run the read-only Supabase checks (section 2, rows 16 and 17).
-4. Decide G-1 to G-3 and F-6 before `main`.
+4. Decide G-1 to G-4 and F-6 before `main`.
 5. Update the Jira status once merged. Add the release to `backlogs/push-log.md` when it is pushed to `dev`.

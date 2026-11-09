@@ -224,6 +224,7 @@ These were not in the ticket. Change them if the team disagrees.
 | 1 | The account after approval is not decided (gap item 1 below). Only the enrollment is withdrawn, with a TODO in `signOffByAdmin` | The trainee can still log in |
 | 2 | The pages were not run in a browser | TC-A11 to TC-A15 are open |
 | 3 | A request that stays open after an MP-42 program change is attached to the old, already withdrawn enrollment | Approving it changes nothing for the new enrollment. See the MP-42 audit |
+| 4 | The old `request_status` column is not updated and stays `PENDING` (gap item 14) | It disagrees with `withdrawal_status` on finished requests. Nothing reads it |
 
 ## Acceptance Criteria (pipeline rules across tickets)
 
