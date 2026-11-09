@@ -159,7 +159,7 @@ No accounts, passwords or data are listed here. Use any registrar, trainer and t
 
 ## Acceptance Criteria (MP-49, Admin, final sign-off)
 
-Decisions: D-06 and D-09 in `registrar/decisions.md`. "API" means checked by real requests against a throwaway database (114 checks, 2026-11-09). "Browser" means a person using the screens. Branch: `feature/MP-49-admin-withdrawal-signoff`.
+Decisions: D-06 and D-09 in `registrar/decisions.md`. "API" means checked by real requests against a throwaway database (114 checks, 2026-11-09). Full Definition of Done audit: `audit-mp49-admin.md` (12 of 12 Jira criteria PASS over the API, browser run and merge still open). "Browser" means a person using the screens. Branch: `feature/MP-49-admin-withdrawal-signoff`.
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
