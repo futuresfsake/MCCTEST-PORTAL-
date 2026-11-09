@@ -112,6 +112,11 @@ const sidebarConfig: Record<
             icon: 'fa-solid fa-list-check',
           },
           {
+            label: 'Withdrawal Requests',
+            path: '/admin/withdrawal-requests',
+            icon: 'fa-solid fa-right-from-bracket',
+          },
+          {
             label: 'Inventory',
             path: '/admin/inventory',
             icon: 'fa-solid fa-boxes-stacked',
