@@ -4,9 +4,10 @@
 |-------|-------|
 | **Jira** | MP-42 |
 | **Type** | Feature (Admin edits, Registrar reads the history) |
-| **Status** | BUILT, not merged. The PM applies the migration to Supabase |
+| **Status** | BUILT and audited (2026-11-09), not merged. The PM applies the migration to Supabase. Jira already says Done |
 | **Priority** | Medium |
-| **Assignee** | Not assigned (open gap 1) |
+| **Assignee** | Aubrien Fuentes (per Jira, 2026-11-09) |
+| **Audit** | `audit-dod.md`, 2026-11-09: 21 PASS, 1 PARTIAL on the 22 Jira criteria. Open: no unit tests for the new code, migration not on Supabase, merge not done |
 | **Depends on** | MP-24 (Student Information module, must be done first), MP-33 (shared `EnrollmentsService`), MP-35 (uniform stock on program change) |
 | **Decision log** | `registrar/decisions.md` D-01 (why the change history exists) |
 | **Added** | 2026-11-04 (from the Jira ticket) |
@@ -105,7 +106,7 @@ Update, change-batch and change-program endpoints are `ADMIN` only. There are no
 
 | # | Gap | Current assumption |
 |---|-----|--------------------|
-| 1 | Who takes MP-42? The ticket has no assignee | Unassigned |
+| 1 | Who takes MP-42? The ticket has no assignee | **Resolved.** Jira shows Aubrien Fuentes (checked 2026-11-09) |
 | 2 | Since all programs have the same payment, is the "record a new payment instead" option still needed? | Kept as an option for now |
 
 ## Out of Scope
@@ -176,7 +177,7 @@ Update, change-batch and change-program endpoints are `ADMIN` only. There are no
 |---|---------|--------|-------|
 | 21 | Exactly one migration is added, for `enrollment_transfers`. `npx prisma migrate status` says "Database schema is up to date" after applying it | PARTIAL | One migration added, `20261106_trainee_enrollment_transfers`. "Up to date" on a throwaway database (with the TECH-02 byte-order mark removed from a copy of `0_init`), and no drift from `schema.prisma`. The PM runs it on Supabase |
 | 22 | No logic is copied from `EnrollmentsService` or the MP-24 module. This ticket extends them | PASS | Shared rules, payment and uniform steps are reused; the last two were moved out of `createEnrollment` into helpers |
-| 23 | Backend and frontend type-check, build and lint with 0 problems | PASS | Backend and frontend. Jest 102 of 102 |
+| 23 | Backend and frontend type-check, build and lint with 0 problems | PASS | Backend and frontend. Jest 102 of 102, but none of those tests cover the new code (audit F-1). `tsc` needs `prisma generate` first on a fresh checkout |
 
 ---
 
@@ -239,7 +240,7 @@ These were not in the ticket. Change them if the team disagrees.
 | # | Decision | Why |
 |---|----------|-----|
 | 1 | A `PENDING` enrollment stays `PENDING` after a program change | A shift should not confirm an enrollment |
-| 2 | A batch the trainee was in before cannot be chosen, even if they left it | The database allows one enrollment per trainee and batch |
+| 2 | A batch where the trainee already has another enrollment cannot be chosen, even if they left it | The database allows one enrollment per trainee and batch. The audit found the same enrollment can move back to a batch it held earlier, because it is one row |
 | 3 | Editing a contact number does not check if another trainee uses it | The ticket lists only the length check |
 
 ## Known Gaps

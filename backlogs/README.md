@@ -25,6 +25,7 @@ backlogs/
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
     enrollment/acceptance.md                     — MP-33: Admin Enrollments Module (IN PROGRESS)
     trainee-edit/acceptance.md                   — MP-42: Admin Edit Trainee, batch and program changes with history (BUILT, not merged)
+    trainee-edit/audit-dod.md                    — MP-42 Definition of Done audit (2026-11-09): 21 PASS, 1 PARTIAL, merge and unit tests open
     payments/acceptance.md                       — MP-25: Payments Module (30/30 PASS)
     inventory/acceptance.md                      — MP-35: Uniform Inventory (shared Admin and Registrar, ON DEV AND STAGING, not on main)
     notifications/acceptance.md                  — MP-54: Notification Bell, Admin Events (NOT STARTED)
@@ -59,6 +60,7 @@ backlogs/
     migration-bom-fresh-database/acceptance.md   — TECH-02: 0_init migration cannot be applied to a new database (byte-order mark) (LOGGED, not fixed)
     enrollment-base-fee-500/acceptance.md        — TECH-04: base fee is 500 without insurance coverage, should always be 450 (LOGGED, not fixed)
     migration-schema-drift/acceptance.md         — TECH-03: migration history disagrees with schema.prisma and Supabase (3 enums, 5 trainer columns) (LOGGED, not fixed)
+    id-card-sequence-collision/acceptance.md     — TECH-05: an ID card number clash returns a server error (LOGGED, not fixed)
 ```
 
 ---
@@ -125,7 +127,7 @@ backlogs/
 | MP-33 | Admin Enrollments | Chelsea Cllj | In Progress | 8 FAIL, 2 PARTIAL — 7 critical gaps |
 | MP-30 follow-up | Trainee dashboard: Attendance Summary, Competency Outcomes, Upcoming Sessions | Unassigned | Not Started | Tables are empty and nothing can write them (0 sessions, 0 attendance, 0 competencies, 0 outcomes). See `trainee/dashboard-data-gaps` |
 | MP-41 | Trainee Profile Page (view, edit, photo upload) | Vince Jon Gonzalez | Not Started | See `trainee/profile`. Photo storage is open in `to-be-discussed.md` |
-| MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Unassigned | Built, not merged | 22 PASS, 1 PARTIAL: the PM runs the migration on Supabase. See `admin/trainee-edit` |
+| MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Aubrien Fuentes | Built, audited 2026-11-09, not merged | 21 PASS, 1 PARTIAL (Jira AC): migration not on Supabase yet, no unit tests for the new code, merge open. See `admin/trainee-edit/audit-dod.md` |
 | MP-43 | Requirements Tracking (Admin and Registrar) | Chelsea Cllj | In Review | Audited 2026-11-06 (re-checked on `staging`): 15 of 23 criteria pass, 4 partial, 4 changed by decision. On `dev` (PR #88), `staging` (PR #89) and `main` (PR #90, 2026-11-06 11:34). Jira description needs updating. See `registrar/requirements/audit-dod.md` |
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
 | MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | Not Started | See `registrar/uniform-distribution` |
@@ -139,6 +141,7 @@ backlogs/
 | TECH-02 | `0_init` migration cannot be applied to a new database | Medium | Logged, not fixed | Byte-order mark is deliberate (commit `b13fe19`, matches the applied checksum). Deleting it would break Supabase. See `technical/migration-bom-fresh-database` |
 | TECH-04 | Enrollment base fee is 500 without insurance coverage, should always be 450 | Medium | Logged, not fixed | 7 of 9 receipts on Supabase carry 500. The chatbot already says 450. See `technical/enrollment-base-fee-500` |
 | TECH-03 | Migration history disagrees with `schema.prisma` and Supabase | Medium | Logged, not fixed | 3 enums and 5 trainer columns. Supabase already matches the schema. See `technical/migration-schema-drift` |
+| TECH-05 | An ID card number clash returns a server error | Low | Logged, not fixed | `generateIdCardNumber` never checks the number is free, so a clash on `id_card_number` is a 500. Found in the MP-42 audit. See `technical/id-card-sequence-collision` |
 | SEC-01  | Announcements API exposed the poster's password hash | High | Fixed, on dev and staging. Main pending | `include: { users: true }` returned the whole user row to every role. See `technical/announcements-password-hash-exposure` |
 | SEC-02  | `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs` | High | Logged, not fixed | Deferred by choice. `npm audit fix` is available. See `technical/multer-dos-advisory` |
 
