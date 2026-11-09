@@ -21,6 +21,10 @@
 5. **Merged into `main` is NOT DONE (F-3).** The branch is pushed but not merged into `dev` or `main`. A trial merge into both has no conflicts. Whether a pull request is open could not be checked. Jira already says Done.
 6. **Known integration gap with MP-47 (F-4).** MP-47 is already on `dev`. A shifted trainee's new enrollment has no receipt of its own, so the withdrawal page can show the enrollment fee as unpaid. The branch notes list this as a Known Gap. It needs a decision before the two meet in `main`.
 
+### Ready to merge into `dev`?
+
+**Almost. Yes for `dev`, once two things are done. Not for `main` yet.** Before `dev`: (1) fix F-15 (one line, `@IsDefined()` on `beneficiary`) or accept it knowingly, because no screen can trigger it; (2) the PM applies the migration to Supabase when the code reaches `dev`, or the history and change actions fail there (F-2). The branch is 0 behind `dev` and a trial merge has no conflicts. Before `main`: decide the MP-47 gap (F-4), decide whether the unit tests join the branch (F-1), and check one batch change and one program change in a browser.
+
 ## 1. Engineering checks
 
 | # | Check | Result |
@@ -213,7 +217,7 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 | F-12 | A new payment on a program change uses the existing base fee rule (500 without insurance, 450 with). That is TECH-04 | Medium (existing) | Fix TECH-04 once, in one place |
 | F-13 | TECH-03 (migration history against `schema.prisma`) meant I had to align 3 enums and 5 trainer columns on the throwaway database before the app would run on it | Medium (existing) | See TECH-03 |
 | F-14 | Untracked `text.txt` in the working tree | Low | Do not commit it |
-| F-15 | `PATCH /admin/trainees/:id` with no `beneficiary` field returns **500**. `@ValidateNested()` skips a missing value, and the service then reads a field of `undefined`. `null` and `{}` are correctly 400. Nothing is saved (rolled back). Breaks AC 2 ("not a server error") for a client that leaves the object out. The Edit form always sends it. The enrollment form shares `TraineeDetailsDto`, so `POST` enrollments may have the same weakness (not tested) | Medium | Add `@IsDefined()` (or `@IsNotEmptyObject()`) to `beneficiary` in `TraineeDetailsDto`. Two `it.failing` tests in my local specs will then start passing and tell you to remove `.failing` |
+| F-15 | `PATCH /admin/trainees/:id` with no `beneficiary` field returns **500**. `@ValidateNested()` skips a missing value, and the service then reads a field of `undefined`. `null` and `{}` are correctly 400. Nothing is saved (rolled back). Breaks AC 2 ("not a server error") for a client that leaves the object out. The Edit form always sends it. The enrollment form shares `TraineeDetailsDto`, so `POST` enrollments may have the same weakness (not tested) **Cause:** a code gap, not an account problem. It depends on what the request sends, not on which trainee it is for. The validator skips a missing field, then the service reads a field of `undefined` and crashes (rolled back, nothing saved). A trainee with no beneficiary row yet is fine: `saveBeneficiary` is an upsert, so the row is created on save (by code reading, not tested). The Edit form always sends the object, so only a direct API call can trigger it. | Medium | Add `@IsDefined()` (or `@IsNotEmptyObject()`) to `beneficiary` in `TraineeDetailsDto`. Two `it.failing` tests in my local specs will then start passing and tell you to remove `.failing` |
 
 ## 11. Gaps to ask the product owner
 
