@@ -72,7 +72,7 @@ Closed since 2026-11-09: the migration `20261106_trainee_enrollment_transfers` w
 
 | ID | Type | Item | Detail |
 |----|------|------|--------|
-| O-32 | Tidy | Local `dev` has one commit that is not pushed: "MP-47: audit of dev after the merge and push log entries" | It edits `push-log.md` and `shared/withdrawal/acceptance.md`, which MP-49 also edited. Push it through a docs branch and merge it before MP-49 |
+| O-32 | Tidy | The MP-47 audit of `dev` (`audit-dev-registrar.md`) and its push log rows were an unpushed local commit | Closed 2026-11-10: they are in the push log pull request of that day |
 | O-33 | Tidy | The stray file `text.txt` at the repository root is untracked | Delete it, or keep it out of commits |
 | O-34 | Tidy | The MP-49 unit test files are untracked in the working tree | `withdrawal.admin.service.spec.ts` and `admin-withdrawal.controller.spec.ts`. Kept local on purpose (D-11). Do not commit |
 | O-35 | Tidy | Old branches that are now merged | `docs/mp42-dod-audit`, `docs/mp42-dod-audit-uniform`, `docs/fix-mp41-acceptance-header`, `feature/MP-41`, `feature/MP42-admin-edit-trainee`, `feature/MP-47-registrar-withdrawal` |
