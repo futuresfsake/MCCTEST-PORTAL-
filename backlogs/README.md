@@ -16,7 +16,7 @@ backlogs/
     landing-page/acceptance.md                   — MP-20: Landing Page Chatbot
     notifications/acceptance.md                  — MP-52: Notification Foundation (shared bell, notifications table, live push) (NOT STARTED)
   to-be-discussed.md                           — Open decisions and gaps, with a summary table (photo storage, restock reminder, MP-58, MP-41, MP-42)
-  open-items.md                                — Everything still open across MP-42, MP-49 and the loose ends, one checklist (2026-11-09)
+  open-items.md                                — Everything still open across MP-41, MP-42, MP-47, MP-49 and the loose ends, one checklist (2026-11-10)
   admin/
     dashboard/acceptance.md                      — MP-8: Admin Dashboard (placeholder)
     programs/acceptance.md                       — MP-13: Programs Module
