@@ -12,6 +12,8 @@ import {
 } from '../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { REQUIREMENT_DOCUMENTS } from '../requirements/requirements.constants';
+import { AdminSignoffDto } from './dto/admin-signoff.dto';
+import { AdminWithdrawalQueryDto } from './dto/admin-withdrawal-query.dto';
 import { CreateWithdrawalDto } from './dto/create-withdrawal.dto';
 import { RegistrarWithdrawalQueryDto } from './dto/registrar-withdrawal-query.dto';
 import { TrainerWithdrawalQueryDto } from './dto/trainer-withdrawal-query.dto';
@@ -25,8 +27,8 @@ import { WithdrawalQueryDto } from './dto/withdrawal-query.dto';
  * PENDING_ADMIN_SIGNOFF -> admin -> APPROVED. Any validator can REJECT and the
  * trainee can CANCEL while the request is still PENDING_VALIDATION.
  *
- * This service is shared by every role. This file holds the trainee, trainer
- * and registrar sides; the admin methods are added by their own ticket.
+ * This service is shared by every role: it holds the trainee, trainer,
+ * registrar and admin sides.
  */
 
 /** A request in any of these states is still "open" for its enrollment. */
@@ -215,6 +217,34 @@ function actorName(
   actor: Pick<Actor, 'first_name' | 'last_name'> | null,
 ): string | null {
   return actor ? `${actor.first_name} ${actor.last_name}`.trim() : null;
+}
+
+/** What one validator decided, for the admin's list: still waiting, approved or rejected. */
+export type StageDecision = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+function trainerDecision(row: {
+  trainer_validated: boolean;
+  trainer_validated_by: string | null;
+}): StageDecision {
+  if (!row.trainer_validated_by) return 'PENDING';
+  return row.trainer_validated ? 'APPROVED' : 'REJECTED';
+}
+
+/**
+ * The registrar has no yes/no column: a request the registrar rejected is
+ * REJECTED with a registrar but no admin sign-off. One the admin rejected
+ * still counts as approved by the registrar.
+ */
+function registrarDecision(row: {
+  withdrawal_status: withdrawal_status_enum;
+  registrar_validated_by: string | null;
+  admin_signed_off_by: string | null;
+}): StageDecision {
+  if (!row.registrar_validated_by) return 'PENDING';
+  return row.withdrawal_status === withdrawal_status_enum.REJECTED &&
+    !row.admin_signed_off_by
+    ? 'REJECTED'
+    : 'APPROVED';
 }
 
 @Injectable()
@@ -555,12 +585,27 @@ export class WithdrawalService {
    * can be found.
    */
   async listForRegistrar(query: RegistrarWithdrawalQueryDto) {
+    return this.listAllRequests(
+      query,
+      withdrawal_status_enum.TRAINER_VALIDATED,
+      (row) => this.serializeRegistrarListRow(row),
+    );
+  }
+
+  /**
+   * The list the registrar and the admin share: every request, not scoped to a
+   * batch, with the same filters. Only the default status and the row shape
+   * differ per role.
+   */
+  private async listAllRequests<T>(
+    query: RegistrarWithdrawalQueryDto,
+    defaultStatus: withdrawal_status_enum,
+    serialize: (row: RegistrarListRow) => T,
+  ) {
     const page = query.page ?? DEFAULT_PAGE;
     const limit = query.limit ?? DEFAULT_LIMIT;
     const status =
-      query.status === 'ALL'
-        ? undefined
-        : (query.status ?? withdrawal_status_enum.TRAINER_VALIDATED);
+      query.status === 'ALL' ? undefined : (query.status ?? defaultStatus);
 
     // Each word must match the first, middle or last name or the system ID.
     const terms = (query.search ?? '').split(/\s+/).filter(Boolean).slice(0, 5);
@@ -605,7 +650,7 @@ export class WithdrawalService {
     ]);
 
     return {
-      data: rows.map((row) => this.serializeRegistrarListRow(row)),
+      data: rows.map((row) => serialize(row)),
       meta: {
         page,
         limit,
@@ -714,6 +759,133 @@ export class WithdrawalService {
     });
 
     return this.getForRegistrar(requestId);
+  }
+
+  // ------------------------------------------------------------------ admin
+
+  /**
+   * Every request, not scoped to a batch. Left without a status it shows what
+   * waits for the admin (PENDING_ADMIN_SIGNOFF); `ALL` shows every status. Each
+   * row also says what the trainer and the registrar decided.
+   */
+  async listForAdmin(query: AdminWithdrawalQueryDto) {
+    return this.listAllRequests(
+      query,
+      withdrawal_status_enum.PENDING_ADMIN_SIGNOFF,
+      (row) => this.serializeAdminListRow(row),
+    );
+  }
+
+  /** Programs, batches and statuses for the list filters. Same options as the registrar's. */
+  async getAdminFilterOptions() {
+    return this.getRegistrarFilterOptions();
+  }
+
+  /**
+   * One request with everything the admin reviews: the trainee and enrollment,
+   * the trainer's decision, the registrar's two checks, the ID confirmation
+   * (once signed off) and the full history.
+   */
+  async getForAdmin(requestId: string) {
+    const row = await this.prisma.withdrawal_request.findUnique({
+      where: { withdrawal_request_id: requestId },
+      include: registrarDetailInclude,
+    });
+    if (!row) throw new NotFoundException('Withdrawal request not found');
+    return this.serializeAdminDetail(row);
+  }
+
+  /**
+   * Final step. Only a request both the trainer and then the registrar
+   * approved (PENDING_ADMIN_SIGNOFF) can be signed off: anything else gives
+   * 400. Approve needs `surrendered_id = true`, sets the request to APPROVED
+   * and the enrollment to WITHDRAWN. Reject sets the request to REJECTED and
+   * leaves the enrollment alone. Both write a history row, all in one
+   * transaction, so the request and the enrollment never disagree.
+   */
+  async signOffByAdmin(
+    userId: string,
+    requestId: string,
+    dto: AdminSignoffDto,
+  ) {
+    const approve = dto.action === 'APPROVE';
+    const next = approve
+      ? withdrawal_status_enum.APPROVED
+      : withdrawal_status_enum.REJECTED;
+
+    await this.prisma.$transaction(async (tx) => {
+      const request = await tx.withdrawal_request.findUnique({
+        where: { withdrawal_request_id: requestId },
+        select: {
+          enrollment_id: true,
+          enrollments: { select: { enrollment_status: true } },
+        },
+      });
+      if (!request) throw new NotFoundException('Withdrawal request not found');
+
+      if (approve && dto.surrendered_id !== true) {
+        throw new BadRequestException(
+          'Confirm that the trainee surrendered their ID before approving',
+        );
+      }
+
+      // Conditional update: if two admins act at the same moment, only one
+      // write wins and the other gets a clean 400.
+      const updated = await tx.withdrawal_request.updateMany({
+        where: {
+          withdrawal_request_id: requestId,
+          withdrawal_status: withdrawal_status_enum.PENDING_ADMIN_SIGNOFF,
+        },
+        data: {
+          withdrawal_status: next,
+          ...(dto.surrendered_id !== undefined
+            ? { surrendered_id: dto.surrendered_id }
+            : {}),
+          admin_signed_off_by: userId,
+          admin_signed_off_at: new Date(),
+          admin_remarks: dto.remarks ?? null,
+        },
+      });
+      if (updated.count === 0) {
+        throw new BadRequestException(
+          'Only a request that is waiting for the admin can be signed off',
+        );
+      }
+
+      if (approve) {
+        // A finished or dropped enrollment must not be turned back into WITHDRAWN.
+        const current = request.enrollments.enrollment_status;
+        if (
+          current === enrollment_status_enum.COMPLETED ||
+          current === enrollment_status_enum.DROPPED
+        ) {
+          throw new ConflictException(
+            `This enrollment is already ${current.toLowerCase()}, so it cannot be withdrawn`,
+          );
+        }
+        // TODO: Account deactivation after withdrawal — decision pending
+        // (backlogs/to-be-discussed.md item 9). For now only the enrollment is
+        // withdrawn and the trainee's account stays as it is (option A).
+        // `users.is_active` already exists and login rejects inactive accounts,
+        // so option B or C needs no schema change.
+        await tx.enrollments.update({
+          where: { id: request.enrollment_id },
+          data: { enrollment_status: enrollment_status_enum.WITHDRAWN },
+        });
+      }
+
+      await tx.withdrawal_status_history.create({
+        data: {
+          withdrawal_request_id: requestId,
+          old_status: withdrawal_status_enum.PENDING_ADMIN_SIGNOFF,
+          new_status: next,
+          changed_by: userId,
+          remarks: dto.remarks ?? null,
+        },
+      });
+    });
+
+    return this.getForAdmin(requestId);
   }
 
   // ---------------------------------------------------------------- helpers
@@ -875,6 +1047,30 @@ export class WithdrawalService {
         total: REQUIREMENT_DOCUMENTS.length,
         missing,
       },
+    };
+  }
+
+  /** The registrar's list row plus what the trainer and the registrar decided. */
+  private serializeAdminListRow(row: RegistrarListRow) {
+    return {
+      ...this.serializeRegistrarListRow(row),
+      trainerStatus: trainerDecision(row),
+      registrarStatus: registrarDecision(row),
+    };
+  }
+
+  /**
+   * Detail for the admin: everything the registrar sees (trainer remarks, the
+   * registrar's checks, fee and document progress, for information), plus both
+   * validators' decisions, the ID confirmation and the admin's own remarks.
+   */
+  private serializeAdminDetail(row: RegistrarDetailRow) {
+    return {
+      ...this.serializeRegistrarDetail(row),
+      trainerStatus: trainerDecision(row),
+      registrarStatus: registrarDecision(row),
+      idSurrendered: row.surrendered_id,
+      adminRemarks: row.admin_remarks,
     };
   }
 

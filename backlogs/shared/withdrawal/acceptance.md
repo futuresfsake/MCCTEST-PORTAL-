@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-45 (schema), MP-46 (Trainee), MP-47 (Registrar), MP-48 (Trainer), MP-49 (Admin) |
 | **Type** | Feature |
-| **Status** | MP-45 IN PROGRESS, MP-46 to MP-49 NOT STARTED |
+| **Status** | MP-45 IN PROGRESS, MP-46 to MP-48 built, MP-49 BUILT on `feature/MP-49-admin-withdrawal-signoff` (not released) |
 | **Branch (MP-45)** | `feature/MP-45-withdrawal-schema` |
 | **Added** | 2026-11-04 |
 
@@ -157,27 +157,83 @@ No accounts, passwords or data are listed here. Use any registrar, trainer and t
 | TC-R16 | Open the same waiting request in two browsers as two registrars. Approve in one, then act in the other | The second gets a clear message and the panel reloads to the real state | NOT RUN |
 | TC-R17 | As a trainee, use the list, the detail page and Cancel on requests from the earlier tickets | They still work. The shared progress view only gained the one line | NOT RUN |
 
-## Acceptance Criteria (MP-49, Admin)
+## Acceptance Criteria (MP-49, Admin, final sign-off)
+
+Decisions: D-06 and D-09 in `registrar/decisions.md`. "API" means checked by real requests against a throwaway database (114 checks, 2026-11-09). Full Definition of Done audit: `audit-mp49-admin.md` (12 of 12 Jira criteria PASS over the API, browser run and merge still open). "Browser" means a person using the screens. Branch: `feature/MP-49-admin-withdrawal-signoff`.
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| A-1 | Default view shows `PENDING_ADMIN_SIGNOFF` | NOT STARTED | |
-| A-2 | Sign-off only when `PENDING_ADMIN_SIGNOFF`; otherwise 400 | NOT STARTED | |
-| A-3 | Approval sets `APPROVED` and the enrollment to `WITHDRAWN` in one transaction. Rejection leaves the enrollment unchanged | NOT STARTED | Account stays as is (gap item 1) |
-| A-3a | **Approval needs the ID surrendered tick (the trainee gives the ID to the admin).** The sign-off body carries `surrendered_id`, saved in the existing column. Rejecting does not need it | NOT STARTED | D-09 #2 |
-| A-4 | The panel shows the trainer validation (first), the registrar checks (finances, documents, second), who confirmed the ID, and the full timeline | NOT STARTED | D-09 |
-| A-5 | Responses exclude `password_hash`; non-admin roles get 403 | NOT STARTED | |
-| A-6 | End-to-end test of the pipeline, rejection at each stage, registrar blocked before the trainer (400), and cancellation | NOT STARTED | Definition of Done |
-| A-7 | Pages type-check, build and lint with 0 problems | NOT STARTED | |
+| A-1 | Default view shows `PENDING_ADMIN_SIGNOFF`. "All requests" and each status can be chosen. Filters by status, program, batch and trainee name, with server-side pagination | PASS (API). Browser not run | TC-A2 |
+| A-2 | Sign-off only when `PENDING_ADMIN_SIGNOFF`; otherwise 400 (still with the trainer, still with the registrar, approved, rejected, cancelled) | PASS (API) | TC-A4 |
+| A-3 | Approval sets `APPROVED` and the enrollment to `WITHDRAWN` in one transaction. Rejection leaves the enrollment unchanged | PASS (API) | TC-A5, TC-A6, TC-A8. A forced failure at the history step and at the enrollment step each rolled everything back. The account stays as is (gap item 1) |
+| A-3a | **Approval needs the ID surrendered tick (the trainee gives the ID to the admin).** The sign-off body carries `surrendered_id`, saved in the existing column. Rejecting does not need it and saves the value as sent | PASS (API) | TC-A5. D-09 #2. Missing or false gives 400 and changes nothing |
+| A-4 | The panel shows the trainer validation (first), the registrar checks (finances, documents, second), the ID confirmation and the full timeline | PASS (API data). Browser not run | TC-A3. Also shows the enrollment fee and document progress, for information only |
+| A-5 | Responses exclude `password_hash`; non-admin roles get 403 and no token gets 401 | PASS (API) | TC-A1 |
+| A-6 | End-to-end test of the pipeline, rejection at each stage, registrar blocked before the trainer (400), and cancellation | PASS (API) | TC-A5, TC-A6, TC-A7 |
+| A-7 | Backend and frontend type-check, build and lint with 0 problems | PASS | Backend: `tsc`, `nest build`, `eslint`. Frontend: `tsc -b`, `eslint .`, `vite build` |
+| A-8 | Two admins signing off together get one winner and one clear 400. A request or enrollment that changed in between is handled | PASS (API) | TC-A9, TC-A10 |
+| A-9 | Unit tests cover the service methods, the DTOs and the controller, including the unhappy paths | PARTIAL | 2 spec files, 65 tests, passed with the suite (167 of 167). A break-it run caught 19 of 19. **Kept out of the commit, as for MP-47 (decision D-11)** |
+| A-10 | The pages work in a browser (list, side panel, ID tick, approve and reject) | NOT RUN | TC-A11 to TC-A14 |
+| A-11 | Released on its own (per task). The sidebar link is visible | BUILT, not released | |
+
+### Test cases (MP-49)
+
+No accounts, passwords or data are listed here. Use any admin, registrar, trainer and trainee on a throwaway database.
+
+**Automated, run on a throwaway database (114 checks, all passed)**
+
+| TC | What is checked | Expected | Result |
+|----|-----------------|----------|--------|
+| TC-A1 | The four admin endpoints (list, filter options, detail, sign-off) with no token and with registrar, trainer, encoder and trainee. Malformed and unknown ids | No token: 401. Other roles: 403, nothing changed. Malformed id 400. Unknown id 404 | PASS |
+| TC-A2 | List: default, all statuses, one status, search by name and system ID, program and batch filters, pagination, bad values (unknown status, limit 51, page 0, bad ids) | Default is only `PENDING_ADMIN_SIGNOFF`. Not scoped to a batch. Each row shows the trainer and registrar decision. Bad values 400 | PASS |
+| TC-A3 | Detail of a request the trainer and registrar approved | Trainee, enrollment, reason, trainer (who, when, remarks), registrar checks (who, when, remarks), ID confirmation (not yet), 3-entry timeline. No password | PASS |
+| TC-A4 | Sign-off, approve and reject, on requests at every other status | 400 each time, nothing changed, no history row | PASS |
+| TC-A5 | The whole pipeline: trainee submits, trainer approves, registrar approves, admin approves. Before that, approve without the ID tick (missing and false) | 400 until the tick. Then request `APPROVED`, enrollment `WITHDRAWN`, ID flag, admin, time and trimmed remarks saved, one history row. Fields for who signed off, the status and the enrollment in the body are ignored. A second sign-off is 400. The trainee account stays active | PASS |
+| TC-A6 | Admin rejects (with no ID value, and with the ID value sent) | `REJECTED`, enrollment unchanged, value saved as sent, one history row | PASS |
+| TC-A7 | Rejection at the trainer stage, at the registrar stage, and cancellation by the trainee | Request ends. The admin sees who rejected. Admin sign-off is 400. The registrar acting before the trainer is 400 | PASS |
+| TC-A8 | Force a failure at the last step (history) and at the enrollment update | Both: the request is still waiting, no admin columns, no history row, enrollment unchanged. Afterwards the same request signs off normally | PASS |
+| TC-A9 | Five sign-offs of the same request at the same moment. Approve and reject at the same moment | One winner. The others get 400. One history row. The enrollment matches the winner | PASS |
+| TC-A10 | Approve when the enrollment is already `COMPLETED`, `DROPPED` or `WITHDRAWN` | COMPLETED and DROPPED: 409, nothing changed (reject still works). WITHDRAWN: approves | PASS |
+
+**Manual, in a browser (not run yet)**
+
+| TC | Steps | Expected | Result |
+|----|-------|----------|--------|
+| TC-A11 | Log in as the admin. Open Withdrawal Requests from the sidebar. Change the status, program, batch and search. Reload the page | The list opens on "Waiting for my sign-off". Filters and page survive the reload (URL) | NOT RUN |
+| TC-A12 | Click Review on a waiting request. Scroll the panel. Try Approve with the ID unticked, then ticked. Reject with no remarks | Approve stays disabled until the ID is ticked. Reject works without remarks. A confirm step comes first | NOT RUN |
+| TC-A13 | Approve one request. Check the list and the trainee's own view | The message says the enrollment is withdrawn. The list refreshes. The trainee sees APPROVED | NOT RUN |
+| TC-A14 | Open the same request in two browsers as two admins. Sign off in one, then in the other | The second gets a clear message and the panel reloads to the real state | NOT RUN |
+| TC-A15 | Log in as registrar, trainer, encoder and trainee and try `/admin/withdrawal-requests` | Each is kept out | NOT RUN |
+
+### Decisions made while building (MP-49)
+
+These were not in the ticket. Change them if the team disagrees.
+
+| # | Decision | Why |
+|---|----------|-----|
+| 1 | Remarks are optional for both approve and reject, as the ticket says. The trainer and the registrar must give a reason to reject | The ticket lists remarks as optional. The trainee will not see why an admin rejection happened unless the admin writes it. **Ask whether the admin should also need a reason to reject** |
+| 2 | Approving an enrollment that is already `COMPLETED` or `DROPPED` returns 409 and changes nothing. One that is already `WITHDRAWN` is accepted | A finished or dropped enrollment must not be turned back into `WITHDRAWN`. An already withdrawn one (for example after an MP-42 program change) needs no change |
+| 3 | Rejecting saves `surrendered_id` as sent and leaves it unchanged if it is not sent | Ticket: "saves the value as sent" |
+| 4 | The admin list reuses the registrar's list code and filters. Only the default status and the extra trainer and registrar columns differ | One copy of the filter and paging rules |
+| 5 | `exit_reason` on the enrollment is not set when a withdrawal is approved | The ticket only sets `enrollment_status`. MP-42 does set it for a program change |
+
+### Known gaps (MP-49)
+
+| # | Gap | Effect |
+|---|-----|--------|
+| 1 | The account after approval is not decided (gap item 1 below). Only the enrollment is withdrawn, with a TODO in `signOffByAdmin` | The trainee can still log in |
+| 2 | The pages were not run in a browser | TC-A11 to TC-A15 are open |
+| 3 | A request that stays open after an MP-42 program change is attached to the old, already withdrawn enrollment | Approving it changes nothing for the new enrollment. See the MP-42 audit |
+| 4 | The old `request_status` column is not updated and stays `PENDING` (gap item 14) | It disagrees with `withdrawal_status` on finished requests. Nothing reads it |
 
 ## Acceptance Criteria (pipeline rules across tickets)
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 7 | The request reaches `PENDING_ADMIN_SIGNOFF` only after the Trainer and then the Registrar have validated | NOT STARTED | D-06 |
-| 8 | The Registrar cannot validate unless the status is `TRAINER_VALIDATED`, and the Trainer cannot validate unless it is `PENDING_VALIDATION` (400) | NOT STARTED | MP-47, MP-48 |
-| 9 | The Admin cannot sign off unless the status is `PENDING_ADMIN_SIGNOFF` (400) | NOT STARTED | MP-49 |
-| 10 | Every status change writes a `withdrawal_status_history` row | NOT STARTED | |
+| 7 | The request reaches `PENDING_ADMIN_SIGNOFF` only after the Trainer and then the Registrar have validated | PASS (API) | D-06. Run end to end in the MP-49 check (TC-A5) |
+| 8 | The Registrar cannot validate unless the status is `TRAINER_VALIDATED`, and the Trainer cannot validate unless it is `PENDING_VALIDATION` (400) | PASS (API) | MP-47, MP-48. The registrar side was run again in the MP-49 check (TC-A7) |
+| 9 | The Admin cannot sign off unless the status is `PENDING_ADMIN_SIGNOFF` (400) | PASS (API) | MP-49, TC-A4 |
+| 10 | Every status change writes a `withdrawal_status_history` row | PASS (API) | Checked for every step of the pipeline in the MP-49 run (TC-A5 to TC-A7) |
 
 ---
 
@@ -192,6 +248,7 @@ No accounts, passwords or data are listed here. Use any registrar, trainer and t
 | 2026-11-04 | Trainee backend (MP-46, API half) built on `feature/withdrawal-trainee-request-api`: shared `WithdrawalService`, trainee controller, 20 unit tests, plus a throwaway real-database run (10 scenarios and a 60-race stress test). Found and fixed an error-mapping bug in that run. UI half still to do |
 | 2026-11-04 | Pipeline changed from parallel to sequential (Trainer, then Registrar, then Admin), decision D-06. Jira tickets MP-45 to MP-49 rewritten to match. `REGISTRAR_VALIDATED` removed. MP-48 is now ticket 3 of 5 and MP-47 ticket 4 of 5 |
 | 2026-11-06 | Registrar step (MP-47) decided and built on `feature/MP-47-registrar-withdrawal` (backend, page, side panel, 64 unit tests, 97 end-to-end checks on a throwaway database), decision D-08: manual ticks, a reason required to reject, a rejection final for that request, the registrar sees all requests, no history table, released on its own. Then **changed by D-09 the same day**: the registrar checks **finances cleared and documents submitted only** and sees whether the enrollment fee is paid (from the `ENROLLMENT` receipts); **ID surrendered moves to the Admin sign-off (MP-49)**, because the trainee hands in the ID after the registrar accepts the request. Jira MP-47 and MP-49 and these criteria updated. The MP-47 code was then changed to match (two checks, enrollment fee status, the tracker step), and **D-10** added a read-only payment history pop-up in the Enrollment fee box. 109 end-to-end checks on a throwaway database and 166 unit tests pass |
+| 2026-11-09 | Admin final sign-off (MP-49) built on `feature/MP-49-admin-withdrawal-signoff`: admin list, detail and sign-off under `/api/admin/withdrawal-requests`, the admin page and side panel, route and sidebar link. No migration (the columns came with MP-45). 65 unit tests kept local, 114 end-to-end checks on a throwaway database, 19 of 19 break-it checks. Browser checks still open |
 
 ---
 

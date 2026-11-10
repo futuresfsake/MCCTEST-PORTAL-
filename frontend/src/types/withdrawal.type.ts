@@ -179,3 +179,41 @@ export interface RegistrarFilterOptions {
   batches: { id: string; name: string; programId: string }[]
   statuses: WithdrawalStatus[]
 }
+
+// ---- Admin side (backend-nestjs/src/users/admin/withdrawal)
+
+/** What one validator decided: still waiting, approved or rejected. */
+export type StageDecision = 'PENDING' | 'APPROVED' | 'REJECTED'
+
+export interface AdminWithdrawalListItem extends RegistrarWithdrawalListItem {
+  trainerStatus: StageDecision
+  registrarStatus: StageDecision
+}
+
+/** Everything the registrar sees, plus both decisions, the ID confirmation and the admin's remarks. */
+export interface AdminWithdrawalDetail extends RegistrarWithdrawalDetail {
+  trainerStatus: StageDecision
+  registrarStatus: StageDecision
+  /** Confirmed by the admin at sign-off. False until then. */
+  idSurrendered: boolean
+  adminRemarks: string | null
+}
+
+export interface AdminWithdrawalListResponse {
+  data: AdminWithdrawalListItem[]
+  meta: WithdrawalListResponse['meta']
+}
+
+/** `''` = what is waiting for the admin (the API default), `ALL` = every status. */
+export type AdminStatusFilter = WithdrawalStatus | 'ALL' | ''
+
+export type AdminAction = 'APPROVE' | 'REJECT'
+
+export interface AdminSignoffInput {
+  action: AdminAction
+  /** Approving needs this to be true. Rejecting does not. */
+  surrendered_id: boolean
+  remarks?: string
+}
+
+export type AdminFilterOptions = RegistrarFilterOptions
