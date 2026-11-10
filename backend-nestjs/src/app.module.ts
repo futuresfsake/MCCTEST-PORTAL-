@@ -26,6 +26,7 @@ import { TraineeModule } from './users/trainee/trainee.module';
 import { TrainerTraineesModule } from './users/trainer/trainee-information/trainees.module';
 import { TrainerWithdrawalModule } from './users/trainer/withdrawal/trainer-withdrawal.module';
 import { RegistrarWithdrawalModule } from './users/registrar/withdrawal/registrar-withdrawal.module';
+import { AdminWithdrawalModule } from './users/admin/withdrawal/admin-withdrawal.module';
 import { EncoderTraineesModule } from './users/encoder/trainee-information/trainees.module';
 
 @Module({
@@ -62,6 +63,7 @@ import { EncoderTraineesModule } from './users/encoder/trainee-information/train
     TrainerTraineesModule,
     TrainerWithdrawalModule,
     RegistrarWithdrawalModule,
+    AdminWithdrawalModule,
     EncoderTraineesModule,
   ],
 

@@ -107,14 +107,22 @@ Items that need a team decision before they become a ticket or a backlog.
 |-------|-------|
 | **Related** | MP-42 |
 | **Added** | 2026-11-04 |
-| **Status** | OPEN GAPS (2) |
+| **Status** | OPEN GAPS (4 of 5). G-42-1 answered |
 
 | Gap | Question | Current assumption | Answer |
 |-----|----------|--------------------|--------|
-| G-42-1 | Who takes MP-42? The ticket has no assignee | Unassigned | OPEN |
+| G-42-1 | Who takes MP-42? The ticket has no assignee | Unassigned | **ANSWERED 2026-11-09:** Jira shows Aubrien Fuentes |
 | G-42-2 | All programs have the same payment, so is the "record a new payment instead" option on a program change still needed? | Kept as an option | OPEN |
 
 **Decided 2026-11-04:** on a program change, payment carries over by default, because all programs have the same payment.
+
+**Added 2026-11-09 (MP-42 audit, `admin/trainee-edit/audit-dod.md`):**
+
+| Gap | Question | Current assumption | Answer |
+|-----|----------|--------------------|--------|
+| G-42-3 | A shifted trainee's new enrollment has no receipt of its own, so the MP-47 withdrawal page reads the enrollment fee as unpaid. How should MP-47 and MP-49 treat it? Options: follow the `enrollment_transfers` chain back to the original receipt, or record a zero-amount carried receipt on the new enrollment | Left as built | OPEN |
+| G-42-4 | Jira already says Done (resolved 2026-11-08) but the branch is not merged. Move it back to In Review until the merge, or accept that Done means "built"? | Left as Done | OPEN |
+| G-42-5 | Who applies the migration `20261106_trainee_enrollment_transfers` to Supabase, and when? The branch notes say "the PM". Jira does not say who | Applied before the merge into `dev`, from the feature branch, with `npx prisma migrate deploy` | OPEN |
 
 ---
 
@@ -252,9 +260,57 @@ Items that need a team decision before they become a ticket or a backlog.
 
 **To answer:** retire it in a later migration, or keep it in sync. Decide before the admin sign-off ticket (MP-49).
 
+**Update 2026-11-09:** MP-49 is built and does **not** touch `request_status`. After an admin approval or rejection it still reads `PENDING`, so the two columns disagree on every finished request. This is now due: decide before MP-49 reaches `main`.
+
 ---
 
-## Gap Summary (all open gaps on 2026-11-04)
+## 15. MP-49: must the admin give a reason to reject
+
+| Field | Value |
+|-------|-------|
+| **Related** | MP-49 (Admin final sign-off), MP-47, MP-48, D-07, D-08 |
+| **Added** | 2026-11-09 |
+| **Status** | OPEN GAP |
+
+**Question:** The trainer (D-07) and the registrar (D-08) must write a reason to reject, so the trainee learns why. The MP-49 ticket says the admin's remarks are optional for both approve and reject. Should the admin also need a reason to reject?
+
+**Current:** built as the ticket says, remarks optional. An admin can reject with no reason.
+
+**To answer:** keep optional, or require it like the others. If required, it is a one-line change in `admin-signoff.dto.ts` and the panel.
+
+---
+
+## 16. MP-49: write the trainee's reason into the enrollment's `exit_reason` on approval
+
+| Field | Value |
+|-------|-------|
+| **Related** | MP-49, MP-42 (program change fills `exit_reason`) |
+| **Added** | 2026-11-09 |
+| **Status** | OPEN GAP |
+
+**Question:** When the admin approves a withdrawal, the enrollment becomes `WITHDRAWN`. Should its `exit_reason` also be filled with the trainee's reason?
+
+**Current:** not set. The ticket only sets `enrollment_status`.
+
+**To answer:** leave empty, or copy the request's reason.
+
+---
+
+## 17. MP-42 program change while a withdrawal request is open
+
+| Field | Value |
+|-------|-------|
+| **Related** | MP-42 (not merged), MP-47, MP-49 |
+| **Added** | 2026-11-09 |
+| **Status** | OPEN GAP |
+
+**Problem:** MP-42 lets an admin shift a trainee to another program even when a withdrawal request is open. The old enrollment becomes `WITHDRAWN` and a new one is created, but the request stays attached to the old one. If the admin then approves it, nothing changes for the new enrollment, so the trainee stays enrolled in the new program.
+
+**To answer:** block a program change while a request is open, move the request to the new enrollment, or accept it. Decide before MP-42 and MP-49 both reach `main`. Found in the MP-42 audit (F-4 and Known Gap 4) and the MP-49 audit (F-6).
+
+---
+
+## Gap Summary (all open gaps on 2026-11-09)
 
 | Gap | Ticket | Where logged |
 |-----|--------|--------------|
@@ -267,6 +323,9 @@ Items that need a team decision before they become a ticket or a backlog.
 | G-41-4 Is the `multer` fix (SEC-02) a blocker | MP-41 | item 5 |
 | G-42-1 Who takes MP-42 | MP-42 | item 6 |
 | G-42-2 Is "record a new payment instead" still needed | MP-42 | item 6 |
+| G-42-3 Shifted trainee reads as unpaid on the withdrawal page | MP-42, MP-47 | item 6 |
+| G-42-4 Jira says Done but MP-42 is not merged | MP-42 | item 6 |
+| G-42-5 Who applies the MP-42 migration on Supabase, and when | MP-42 | item 6 |
 | Sprint placement for MP-41, MP-42, MP-43, MP-59 | several | item 7 |
 | Can a PENDING enrollment receive a uniform | MP-53 | item 8 |
 | Withdrawal approved: deactivate the trainee's account or not (A, B or C) | MP-49 | item 9 |
@@ -274,4 +333,7 @@ Items that need a team decision before they become a ticket or a backlog.
 | Add `helmet` and remove `X-Powered-By` | audit A-1 | item 11 |
 | Withdrawal tests not in the repo (integration and frontend) | audit A-4 | item 12 |
 | Trainee sees staff names and remarks | audit A-8, MP-46 | item 13 |
-| Keep or retire the old `request_status` | audit A-9, MP-45, MP-49 | item 14 |
+| Keep or retire the old `request_status` (now due: MP-49 leaves it at `PENDING`) | audit A-9, MP-45, MP-49 | item 14 |
+| Must the admin give a reason to reject | MP-49 | item 15 |
+| Copy the trainee's reason into `exit_reason` on approval | MP-49 | item 16 |
+| MP-42 program change while a withdrawal request is open | MP-42, MP-49 | item 17 |
