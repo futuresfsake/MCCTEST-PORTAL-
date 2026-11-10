@@ -97,12 +97,12 @@ function localToday(): string {
 }
 
 /** @db.Date values arrive as UTC midnight; keep just the calendar day. */
-function toDateOnly(value: Date): string {
+export function toDateOnly(value: Date): string {
   return value.toISOString().slice(0, 10);
 }
 
 /** @db.Time values arrive on 1970-01-01 UTC; keep HH:mm. */
-function toTimeOfDay(value: Date): string {
+export function toTimeOfDay(value: Date): string {
   return value.toISOString().slice(11, 16);
 }
 

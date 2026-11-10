@@ -24,6 +24,10 @@ import {
   UpdateEnrollmentStatusDto,
   EnrollmentFilterDto,
 } from '../../../enrollments/dto/update-enrollment.dto';
+import {
+  ChangeBatchDto,
+  ChangeProgramDto,
+} from '../../../enrollments/dto/change-enrollment.dto';
 
 /**
  * Admin access to enrollments. Same shared EnrollmentsService and DTOs as the
@@ -131,6 +135,49 @@ export class AdminEnrollmentsController {
     return this.enrollmentsService.updateRequirementChecklist(
       enrollmentId,
       checklist,
+      currentUser.id,
+    );
+  }
+
+  /**
+   * GET /api/admin/enrollments/:id/change-options
+   * Batches this enrollment may move to: same program and other programs.
+   */
+  @Get(':id/change-options')
+  getChangeOptions(@Param('id', ParseUUIDPipe) enrollmentId: string) {
+    return this.enrollmentsService.getChangeOptions(enrollmentId);
+  }
+
+  /**
+   * POST /api/admin/enrollments/:id/change-batch
+   * Moves the enrollment to another batch of the same program.
+   */
+  @Post(':id/change-batch')
+  changeBatch(
+    @Param('id', ParseUUIDPipe) enrollmentId: string,
+    @Body() dto: ChangeBatchDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.enrollmentsService.changeBatch(
+      enrollmentId,
+      dto,
+      currentUser.id,
+    );
+  }
+
+  /**
+   * POST /api/admin/enrollments/:id/change-program
+   * Withdraws this enrollment and creates a new one in the other program.
+   */
+  @Post(':id/change-program')
+  changeProgram(
+    @Param('id', ParseUUIDPipe) enrollmentId: string,
+    @Body() dto: ChangeProgramDto,
+    @CurrentUser() currentUser: AuthenticatedUser,
+  ) {
+    return this.enrollmentsService.changeProgram(
+      enrollmentId,
+      dto,
       currentUser.id,
     );
   }
