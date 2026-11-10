@@ -1,10 +1,10 @@
-undefined | PARTIAL | Code removes the old file after saving the new one. Not run on real storage. A failed removal gives a 500 (audit F-3). undefined | PASS | Proven on the real project: the file is in the bucket, only the link is in `users.avatar_url`. undefined | NOT MET | The frontend passes. **The backend does not build as pushed**: `sharp` is imported but not in `package.json` (audit F-1). Fix prepared. undefined | PARTIAL | Only `sm:` breakpoints in the code. Not seen on a device. undefined | PARTIAL | Code reading: the cancel handler resets fields, photo and preview. Not seen. undefined | PASS | No password or hash in any response or in the backend log. undefined | PASS | No id in the routes. Another trainee's id in the body is ignored. undefined | PASS | Refused, password unchanged. undefined | PASS | Works and the new password logs in. Owner confirmed. undefined | PARTIAL | No file, text file, GIF and 3 MB image give 400. A fake image gives 500 (audit F-2). undefined | PARTIAL | A real upload works on the real project (one photo, link opens). Not run from the page, header update not seen. undefined | PASS | 8 invalid requests gave 400 and nothing was saved. undefined | PASS | A request with 13 forbidden fields changed none of them. undefined | PASS | Saved, read back and found in the database. undefined | PARTIAL | Code reading: only photo, contact and address are inputs. Not seen in a browser. undefined | PASS | Route is TRAINEE only. API: 401 with no token, 403 for admin, registrar, trainer and encoder. undefined | PARTIAL | The API returns all four groups and the page has the sections. Not seen in a browser. # Trainee Profile Page (View and Edit) | | | | | | | | | | | | | | | | |
+# Trainee Profile Page (View and Edit)
 
 | Field | Value |
 |-------|-------|
 | **Jira** | MP-41 |
 | **Type** | Feature |
-| **Status** | IN REVIEW. Audited 2026-11-06, see `audit-dod.md`. Branch `feature/MP-41` is pushed, no pull request, not merged |
+| **Status** | MERGED INTO `dev` (PR #95, 2026-11-10). Audited 2026-11-06 and re-checked 2026-11-10, see `audit-dod.md`. Not yet in `staging` or `main` |
 | **Priority** | Medium |
 | **Assignee** | Vince Jon Gonzalez |
 | **Related** | `to-be-discussed.md` item 1 (photo storage), SEC-02 (`multer` advisory) |
