@@ -10,6 +10,22 @@
 | **Not audited** | The pages in a real browser (TC-A11 to TC-A15). Two admins using the screens at the same time. A real sign-off on Supabase (writes are not allowed there). Supabase timing. Responsive layout (code reading only). The deployed site |
 | **Definition of Done used** | The Jira "Definition of Done" section (7 items) and its 12 acceptance criteria, plus the backlog rows A-1 to A-11 in `acceptance.md` |
 
+## Re-check on 2026-11-10 (branch brought up to date with `dev`)
+
+`dev` had moved on (MP-41 profile, MP-42 admin edit, MP-47 docs), so the branch was 20 commits behind. `dev` was merged into `feature/MP-49-admin-withdrawal-signoff` on 2026-11-10. The only conflict was the MP-41 and MP-42 rows of `backlogs/push-log.md`. Both rows were brought up to date. No code file conflicted. The branch is now 0 behind `dev`.
+
+| Check | Result on the merged branch |
+|-------|-----------------------------|
+| Backend `tsc`, `nest build`, eslint | Clean (after `prisma generate`) |
+| Backend `jest` | 102 of 102 (12 suites). The two MP-49 spec files are kept local on purpose (D-11) |
+| Frontend `tsc -b`, eslint, `vite build` | Clean |
+| Shared files (`AppRouter`, `Sidebar`, `withdrawal.type.ts`) | Carry the routes and links of MP-41, MP-42, MP-47 and MP-49 |
+| Migrations | None in this branch. Supabase is up to date (14 of 14) |
+| Cross-feature run on a throwaway Postgres (19 checks, all pass) | The admin list shows the request of a trainee who changed program (MP-42) and of a trainee who changed batch (MP-42). A trainer and a registrar get 403, no token gives 401. Approve without the ID confirmation is refused (400). Approve with it sets `APPROVED`, writes the admin history step and the enrollments end `WITHDRAWN`. A second sign-off on the same request is refused. Reject leaves the enrollment `ENROLLED`. The MP-41 profile and the MP-42 change history still load afterwards |
+| Account after approval | The trainee's account stays active (option A, item 9). Still the open decision O-24 |
+
+Still open: the pages in a real browser (TC-A11 to TC-A15), the decisions in `open-items.md`, and the jira and push log updates after the merge.
+
 ## Verdict
 
 **The code meets all 12 acceptance criteria over the API and is ready to merge into `dev`. The ticket is not done as the Definition of Done defines it: the pages have not been seen in a browser, and the branch is not merged.**
