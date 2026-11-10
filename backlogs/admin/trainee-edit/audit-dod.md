@@ -23,7 +23,7 @@
 
 ### Ready to merge into `dev`?
 
-**Almost. Yes for `dev`, once two things are done. Not for `main` yet.** Before `dev`: (1) fix F-15 (one line, `@IsDefined()` on `beneficiary`) or accept it knowingly, because no screen can trigger it; (2) the PM applies the migration to Supabase when the code reaches `dev`, or the history and change actions fail there (F-2). The branch is 0 behind `dev` and a trial merge has no conflicts. Before `main`: decide the MP-47 gap (F-4), decide whether unit tests are written for the branch (F-1), and check one batch change and one program change in a browser.
+**Almost. Yes for `dev`, once two things are done. Not for `main` yet.** Before `dev`: (1) fix F-15 (one line, `@IsDefined()` on `beneficiary`) or accept it knowingly, because no screen can trigger it; (2) the PM applies the migration to Supabase when the code reaches `dev`, or the history and change actions fail there (F-2). The branch is 0 behind `dev` and a trial merge has no conflicts. Before `main`: F-4 (the MP-47 gap) stays open as a known gap by decision D-7, decide whether unit tests are written for the branch (F-1), and check one batch change and one program change in a browser.
 
 ## 1. Engineering checks
 
@@ -199,6 +199,7 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 | D-4 | A contact number is not checked for uniqueness | Only the length check was asked for |
 | D-5 | "A batch the trainee was in before cannot be chosen" | **Narrower than written.** Tested: the same enrollment can move back to a batch it held earlier (it is one row, so there is no duplicate). A program change into a batch where the trainee has another row is rejected with 409. The wording in `acceptance.md` decision 2 should say that |
 | D-6 | **The old uniform is not returned to stock when a trainee changes program. The trainee keeps it** (decision by the owner, 2026-11-10) | A program change deducts one uniform from the new program only when the admin marks it as given. Nothing is added back to the old program (F-16) |
+| D-7 | **The enrollment payment is a one-time payment** (decision by the owner, 2026-11-10). A trainee who shifts program is not charged again, so the payment is carried over and the new enrollment gets no receipt of its own | MP-47 shows the enrollment fee as unpaid for a shifted trainee (F-4). This is listed as a known gap and is not fixed for now. The fee line there is for information only, so withdrawal approval is not blocked |
 
 ## 10. Findings
 
@@ -207,7 +208,7 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 | F-1 | The branch has no unit tests for the new service methods, DTOs, controllers or the five endpoints. The 102 passing tests are unchanged from `dev`. 215 tests were written and run, then deleted at the owner's request | Medium | Write unit tests for the branch if the team wants them (service, validators, controllers). The first run of them found F-15 |
 | F-2 | Migration `20261106_trainee_enrollment_transfers` is not applied on Supabase | Medium | PM applies it before the code reaches an environment that uses Supabase. Then re-run `migrate status` |
 | F-3 | The branch is not merged and Jira already says Done (resolved 2026-11-08). The DoD item "code reviewed and merged into `main`" is open. PR state unknown | Medium | Check for an open PR. Move the Jira status back to In Review until the merge, or accept that it means "built" |
-| F-4 | A shifted trainee's new enrollment has no receipt, so MP-47 (already on `dev`) reads it as an unpaid enrollment fee. The profile also hides the carried-over OR (remarks) and `exit_reason`. Listed as Known Gaps 1 and 3 in `acceptance.md`. Read in code (`withdrawal.service.ts` reads the enrollment's receipts), not run | Medium | Decide with the product owner before merge: follow the transfer chain in MP-47, or record a zero-amount carried receipt |
+| F-4 | A shifted trainee's new enrollment has no receipt, so MP-47 (already on `dev`) reads it as an unpaid enrollment fee. The profile also hides the carried-over OR (remarks) and `exit_reason`. Listed as Known Gaps 1 and 3 in `acceptance.md`. Read in code (`withdrawal.service.ts` reads the enrollment's receipts), not run | Medium | **Known gap, accepted for now (decision D-7).** Later options: follow the transfer chain in MP-47, or record a zero-amount carried receipt |
 | F-5 | Under heavy parallel use, program changes into the same batch mostly end in 409 "try again" even when the batch has room (2 of 8 won; room for 3). Safe and clear, but a nuisance | Low | Accept for admin-only, low-volume use. Revisit if admins complain |
 | F-6 | The change history endpoints return every row with no paging | Low | Fine for the expected volume (500 rows in 12 ms, 9 statements). Add a cap if histories grow |
 | F-7 | History is append-only by convention only. No database trigger blocks UPDATE or DELETE | Low | Same as the other history tables. Optional later |
@@ -229,7 +230,7 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 
 ## 12. Release steps still open
 
-1. Decide F-15 (fix the missing-beneficiary 500), F-1 (write unit tests for the branch) and F-4 (MP-47 interaction).
+1. Decide F-15 (fix the missing-beneficiary 500) and F-1 (write unit tests for the branch). F-4 (MP-47 interaction) is a known gap by decision D-7.
 2. Open or find the pull request, review it, and merge into `dev`.
 3. The PM applies the migration to Supabase, then `prisma migrate status` should say "Database schema is up to date".
 4. After `dev`, `staging` and `main` promotion, check one real batch change and one program change in a browser, then re-run the read-only Supabase checks (table shape, orphan rows, history rows against enrollments).
