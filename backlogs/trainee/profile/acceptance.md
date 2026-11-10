@@ -4,12 +4,13 @@
 |-------|-------|
 | **Jira** | MP-41 |
 | **Type** | Feature |
-| **Status** | NOT STARTED |
+| **Status** | MERGED INTO `dev` (PR #95, 2026-11-10). Audited 2026-11-06 and re-checked 2026-11-10, see `audit-dod.md`. Not yet in `staging` or `main` |
 | **Priority** | Medium |
 | **Assignee** | Vince Jon Gonzalez |
 | **Related** | `to-be-discussed.md` item 1 (photo storage), SEC-02 (`multer` advisory) |
 | **Planned route** | `/trainee/profile` |
-| **Updated** | 2026-11-04 (photo storage added) |
+| **Updated** | 2026-11-06 (Definition of Done audit) |
+| **Checked by** | Chelsea Cllj, 2026-11-06. Ran the branch locally with the `sharp` fix. The password change confirmed working. The profile view and the editable fields (criteria 1 and 3) checked in a browser |
 
 ---
 
@@ -85,25 +86,25 @@
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 1 | A logged-in trainee opening the profile sees account, personal, contact/address and background information | NOT STARTED | |
-| 2 | A non-trainee or logged-out user opening `/trainee/profile` is redirected like other protected routes | NOT STARTED | |
-| 3 | In edit mode only photo, contact number and address are editable. Other fields are read-only with the registrar note | NOT STARTED | |
-| 4 | Changing contact number and address and saving persists after a refresh | NOT STARTED | |
-| 5 | A request that tries to change a read-only field (name, date of birth) is rejected or ignored and the value does not change | NOT STARTED | |
-| 6 | An invalid contact number or a missing address field shows a validation error and nothing is saved | NOT STARTED | |
-| 7 | Uploading a JPG or PNG under the limit updates the photo, including in the header | NOT STARTED | |
-| 8 | An invalid file type or a file over the limit shows an error and the photo does not change | NOT STARTED | |
-| 9 | Changing the password with the correct current password works, and the new password logs in | NOT STARTED | |
-| 10 | A wrong current password is rejected with an error | NOT STARTED | |
-| 11 | A trainee can only view and update their own profile. No endpoint changes another user's data | NOT STARTED | |
-| 12 | No API response includes `password_hash` | NOT STARTED | |
-| 13 | Cancel discards unsaved changes | NOT STARTED | |
-| 14 | The page is responsive on mobile, tablet and desktop | NOT STARTED | |
-| 15 | Backend and frontend lint and build pass with no new errors | NOT STARTED | |
-| 16 | The photo file is stored in object storage, and only its path or URL is saved in `users.avatar_url` | NOT STARTED | |
-| 17 | Replacing the photo removes the old file from storage | NOT STARTED | |
-| 18 | Any logged-in user (every role) can see a trainee's photo | NOT STARTED | Decided 2026-11-04 |
-| 19 | The email is shown read-only. A request that tries to change it is rejected or ignored | NOT STARTED | Credentials are fixed except the password |
+| 1 | A logged-in trainee opening the profile sees account, personal, contact/address and background information | PASS | The API returns all four groups and the page shows the sections. Checked in a browser by Chelsea Cllj, 2026-11-06 |
+| 2 | A non-trainee or logged-out user opening `/trainee/profile` is redirected like other protected routes | PASS | Route is TRAINEE only. API: 401 with no token, 403 for admin, registrar, trainer and encoder |
+| 3 | In edit mode only photo, contact number and address are editable. Other fields are read-only with the registrar note | PASS | Code reading: only photo, contact and address are inputs. Checked in a browser by Chelsea Cllj, 2026-11-06 |
+| 4 | Changing contact number and address and saving persists after a refresh | PASS | Saved, read back and found in the database |
+| 5 | A request that tries to change a read-only field (name, date of birth) is rejected or ignored and the value does not change | PASS | A request with 13 forbidden fields changed none of them |
+| 6 | An invalid contact number or a missing address field shows a validation error and nothing is saved | PASS | 8 invalid requests gave 400 and nothing was saved |
+| 7 | Uploading a JPG or PNG under the limit updates the photo, including in the header | PARTIAL | A real upload works on the real project (one photo, link opens). Not run from the page, header update not seen |
+| 8 | An invalid file type or a file over the limit shows an error and the photo does not change | PARTIAL | No file, text file, GIF and 3 MB image give 400. A fake image gives 500 (audit F-2) |
+| 9 | Changing the password with the correct current password works, and the new password logs in | PASS | Works and the new password logs in. Owner confirmed |
+| 10 | A wrong current password is rejected with an error | PASS | Refused, password unchanged |
+| 11 | A trainee can only view and update their own profile. No endpoint changes another user's data | PASS | No id in the routes. Another trainee's id in the body is ignored |
+| 12 | No API response includes `password_hash` | PASS | No password or hash in any response or in the backend log |
+| 13 | Cancel discards unsaved changes | PARTIAL | Code reading: the cancel handler resets fields, photo and preview. Not seen |
+| 14 | The page is responsive on mobile, tablet and desktop | PARTIAL | Only `sm:` breakpoints in the code. Not seen on a device |
+| 15 | Backend and frontend lint and build pass with no new errors | PASS | The frontend passes. The backend needed `sharp` added to `package.json` (audit F-1). Fixed on the branch 2026-11-06 and checked from a clean install |
+| 16 | The photo file is stored in object storage, and only its path or URL is saved in `users.avatar_url` | PASS | Proven on the real project: the file is in the bucket, only the link is in `users.avatar_url` |
+| 17 | Replacing the photo removes the old file from storage | PARTIAL | Code removes the old file after saving the new one. Not run on real storage. A failed removal gives a 500 (audit F-3) |
+| 18 | Any logged-in user (every role) can see a trainee's photo | PARTIAL | The bucket is public, so every role can see it, but so can anyone with the link (audit F-8). Decision needed. Decided 2026-11-04 |
+| 19 | The email is shown read-only. A request that tries to change it is rejected or ignored | PASS | `email` in the body left the stored email unchanged. Credentials are fixed except the password |
 
 ---
 
@@ -143,4 +144,19 @@
 
 ---
 
-## Summary: 0/19 PASS, NOT STARTED
+### Test case results (2026-11-06)
+
+| TC | Result | Evidence |
+|----|--------|----------|
+| TC-01 View profile | PASS | API data complete. Page checked in a browser by Chelsea Cllj, 2026-11-06 |
+| TC-02 Edit contact and address | PASS | Saved, read back and found in the database |
+| TC-03 Read-only field by API | PASS | Nothing read-only changed |
+| TC-04 Validation | PASS | 16 characters and an empty street give 400, nothing saved |
+| TC-05 Photo upload | PARTIAL | A 3 MB image and a text file refused. A valid upload from the page not run. The real project holds one working upload |
+| TC-06 Photo replace | NOT RUN | Needs a second write to the real bucket |
+| TC-07 Password | PASS | Wrong refused, correct works, new password logs in |
+| TC-08 Other roles and other users | PASS | 403 for the four other roles. Another trainee's id ignored |
+
+Totals: 6 PASS, 1 PARTIAL, 1 NOT RUN. That is 8.
+
+## Summary: 13 PASS, 6 PARTIAL, 0 NOT MET (19). Audited 2026-11-06 (`audit-dod.md`)

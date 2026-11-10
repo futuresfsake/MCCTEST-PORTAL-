@@ -10,20 +10,39 @@
 | **Not audited** | The pages in a real browser (code reading only). Whether a pull request exists (`gh` is not installed here). A real save against Supabase (writes are not allowed there, and the migration is not applied there yet). Supabase timing. Attendance rows after a batch change (the enrollment keeps its id, so they should follow, but no attendance rows were seeded). The Known Gaps in `acceptance.md` about MP-47 were read, not run |
 | **Definition of Done used** | The Jira "Definition of Done" section and its 22 Acceptance Criteria, the backlog `acceptance.md` (23 rows) and its test cases TC-01 to TC-10 |
 
+## Re-check on 2026-11-10 (after the merge into `dev`)
+
+The branch was merged into `dev` as pull request #96 (merge commit `2f5f0e9`). Everything below was re-checked on that commit; the sections after it keep the 2026-11-09 audit as written, with the changes noted here.
+
+| Check | Result on 2026-11-10 |
+|-------|----------------------|
+| Merged into `dev` | **Yes**, PR #96, commit `2f5f0e9`. Not yet in `staging` or `main` |
+| Supabase migration `20261106_trainee_enrollment_transfers` | **Applied** with `prisma migrate deploy`. `migrate status`: 14 found, "Database schema is up to date!". The table `enrollment_transfers` exists with 0 rows and the migration record is finished (finding F-2 closed) |
+| Backend `tsc`, `nest build`, eslint, `prisma validate` | Clean on `2f5f0e9` |
+| Backend `jest` | 102 of 102 (12 suites). Still none for the new code (F-1) |
+| Frontend `tsc -b`, eslint, `vite build` | Clean |
+| `npm audit --omit=dev` (what ships) | 0 vulnerabilities in both projects |
+| `npm audit` (everything) | **New since 2026-11-09:** backend 28 (5 low, 23 moderate), frontend 10 (moderate), none high or critical, all in test and lint tools (jest, eslint, typescript-eslint, `@nestjs/cli`, minimatch, glob). Not caused by this branch (finding F-17) |
+| Uniform stock on a change, tested on a throwaway Postgres | A batch change and a program change without the uniform do not touch stock. A program change with the uniform given deducts 1 from the new program and writes a stock log entry. Out of stock gives 400 and saves nothing. Nothing is returned to the old program (F-16, decision D-6) |
+| Payment | The enrollment payment is one-time (decision D-7). The MP-47 fee line for a shifted trainee stays a known gap (F-4) |
+| Still open | F-15 (a missing `beneficiary` gives 500), F-1 (no unit tests), one batch change and one program change checked in a browser, Jira status |
+
 ## Verdict
 
-**The code meets 20 of the 22 acceptance criteria and has one real bug (F-15). The ticket is not done as the Definition of Done defines it, and it is not ready to merge until the points below are settled.**
+**The code meets 21 of the 22 acceptance criteria (20 on 2026-11-09; AC 20 passes now that the migration is applied) and has one real bug (F-15), which keeps AC 2 PARTIAL. As of 2026-11-10 it is merged into `dev` and the migration is applied on Supabase. It is not ready for `main` until the open points in the re-check table are settled.**
 
 1. **Behaviour is correct.** All 155 end-to-end checks pass on a clean database, including rollback after a forced failure, three-way races for the last slot, and every 401 and 403 combination. Lint, type-check, build and `prisma validate` are clean, and `npm audit` shows 0 vulnerabilities in both projects.
 2. **The branch has no unit tests for the new code (F-1).** About 770 changed lines in `enrollments.service.ts`, two DTOs and five endpoints have no spec file in the branch, and its 102 passing Jest tests are the same 102 as on `dev`. After the first audit I wrote 215 unit tests (4 spec files) and ran them: the whole suite was 317 of 317, the new service methods were 82 of 82 statements covered, and a break-it run caught 35 of 35 deliberate breaks. At the owner's request they were never committed, and the files were then deleted, so those results cannot be re-run without writing the tests again.
 3. **One real bug found by those tests (F-15).** `PATCH /admin/trainees/:id` with no `beneficiary` field at all returns **500**, not a clear 400. Confirmed on the live API. A `null` or empty `beneficiary` gives a correct 400, and nothing is saved. This makes AC 2 PARTIAL.
-4. **The migration is not on Supabase (F-2).** `prisma migrate status` lists `20261106_trainee_enrollment_transfers` as not applied and the table does not exist there. AC 20 stays PARTIAL until the PM applies it.
-5. **Merged into `main` is NOT DONE (F-3).** The branch is pushed but not merged into `dev` or `main`. A trial merge into both has no conflicts. Whether a pull request is open could not be checked. Jira already says Done.
+4. **The migration was not on Supabase (F-2). Fixed on 2026-11-10, it is applied.** On 2026-11-09 `prisma migrate status` listed `20261106_trainee_enrollment_transfers` as not applied and the table does not exist there. AC 20 stays PARTIAL until the PM applies it.
+5. **Merged into `main` is NOT DONE (F-3). On 2026-11-10 it is merged into `dev` (PR #96), not yet into `staging` or `main`.** On 2026-11-09 the branch was pushed but not merged into `dev` or `main`. A trial merge into both has no conflicts. Whether a pull request is open could not be checked. Jira already says Done.
 6. **Known integration gap with MP-47 (F-4).** MP-47 is already on `dev`. A shifted trainee's new enrollment has no receipt of its own, so the withdrawal page can show the enrollment fee as unpaid. The branch notes list this as a Known Gap. It needs a decision before the two meet in `main`.
 
 ### Ready to merge into `dev`?
 
-**Almost. Yes for `dev`, once two things are done. Not for `main` yet.** Before `dev`: (1) fix F-15 (one line, `@IsDefined()` on `beneficiary`) or accept it knowingly, because no screen can trigger it; (2) the PM applies the migration to Supabase when the code reaches `dev`, or the history and change actions fail there (F-2). The branch is 0 behind `dev` and a trial merge has no conflicts. Before `main`: decide the MP-47 gap (F-4), decide whether unit tests are written for the branch (F-1), and check one batch change and one program change in a browser.
+**Update 2026-11-10: merged into `dev` (PR #96) and the migration is applied on Supabase. The text below is the 2026-11-09 assessment.**
+
+**Almost. Yes for `dev`, once two things are done. Not for `main` yet.** Before `dev`: (1) fix F-15 (one line, `@IsDefined()` on `beneficiary`) or accept it knowingly, because no screen can trigger it; (2) the PM applies the migration to Supabase when the code reaches `dev`, or the history and change actions fail there (F-2). The branch is 0 behind `dev` and a trial merge has no conflicts. Before `main`: F-4 (the MP-47 gap) stays open as a known gap by decision D-7, decide whether unit tests are written for the branch (F-1), and check one batch change and one program change in a browser.
 
 ## 1. Engineering checks
 
@@ -36,7 +55,7 @@
 | 5 | `prisma validate` | PASS |
 | 6 | Frontend `eslint .` (whole project) | PASS, 0 problems |
 | 7 | Frontend `tsc -b` and `vite build` | PASS. Main bundle 649 kB, over the 500 kB warning (existing) |
-| 8 | `npm audit --omit=dev`, backend and frontend | 0 vulnerabilities in both |
+| 8 | `npm audit --omit=dev`, backend and frontend | 0 vulnerabilities in both (re-checked 2026-11-10: still 0; the full `npm audit` now lists dev-tool advisories, F-17) |
 | 9 | New dependencies | None. No `package.json` changed |
 | 10 | Frontend tests | The frontend has no test script |
 
@@ -49,7 +68,7 @@
 | 13 | Database from migrations compared with `schema.prisma` | PASS for the new table and enum: 0 differences. The only differences are the existing 3 enums and 5 trainer columns (TECH-03). After I aligned those on the throwaway database, `migrate diff` said "No difference detected" |
 | 14 | Foreign keys | PASS. 6 keys, all `NO ACTION`, so a trainee, enrollment, batch or admin with history cannot be deleted. That fits an append-only log |
 | 15 | Indexes for the new queries | PASS. `(trainee_id, created_at DESC, id DESC)` serves the history list (the planner used an index-only scan). `(to_enrollment_id)` serves the carried-payment walk |
-| 16 | Supabase: migration applied | **NOT YET.** `migrate status`: 14 found, 1 not applied. `to_regclass('enrollment_transfers')` is null |
+| 16 | Supabase: migration applied | **YES, since 2026-11-10.** On 2026-11-09 it was not applied (`to_regclass('enrollment_transfers')` was null). Now `migrate status` says up to date and the table exists with 0 rows |
 | 17 | Supabase: row level security | Off on all 40 tables, so the new table matches the others (finding F-10, existing) |
 | 18 | Supabase: enum labels the app expects | PASS. `employment_type_enum` has `FULL TIME` and `PART TIME`, as `schema.prisma` says |
 | 19 | Orphan rows, inconsistent rows | Not applicable. The table does not exist on Supabase yet |
@@ -83,7 +102,7 @@ Numbered as in Jira (22). The backlog `acceptance.md` has 23 rows because it add
 | 17 | Registrar sees no Edit or Change actions, and the admin endpoints return 403 | PASS (API and code) | 403 on all 5 admin endpoints. The Registrar's `canEdit` is false, so the Edit and Change buttons do not render. Not seen in a browser |
 | 18 | Trainee, trainer and encoder get 403. No token gets 401 | PASS | All 6 endpoints with no token: 401. Registrar, trainer, trainee and encoder on the 5 admin endpoints: 403. Admin, trainer, trainee and encoder on the registrar history endpoint: 403. The 403 calls changed nothing |
 | 19 | Responses never include `password_hash` | PASS | No `password`, `hash` or `email` in the PATCH, change-batch, change-program, change-options or history responses, nor in the admin and registrar profile responses |
-| 20 | Exactly one migration, and `migrate status` says up to date after applying | PARTIAL | One migration, applies cleanly to an empty database with 0 drift for the new table. On Supabase it is **not applied yet**, so "up to date" is not true there. The PM applies it |
+| 20 | Exactly one migration, and `migrate status` says up to date after applying | PASS (2026-11-10) | One migration, applies cleanly to an empty database with 0 drift for the new table. It was PARTIAL on 2026-11-09 because it was not applied on Supabase. Applied on 2026-11-10 and `migrate status` says "Database schema is up to date!" |
 | 21 | No logic copied from `EnrollmentsService` or the MP-24 module | PASS (code reading) | `changeBatch` and `changeProgram` call the shared `validateBatchAvailability`, `validateTraineeProgramRules`, `generateIdCardNumber`, `recordUniformDistribution` and `recordPayment`. The last two were moved out of `createEnrollment` into helpers, so there is one copy |
 | 22 | Type-check, build and lint with 0 problems | PASS | Section 1. Needs `prisma generate` first (F-9) |
 
@@ -198,15 +217,17 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 | D-3 | A `PENDING` enrollment stays `PENDING` after a program change | Checked, AC 13 |
 | D-4 | A contact number is not checked for uniqueness | Only the length check was asked for |
 | D-5 | "A batch the trainee was in before cannot be chosen" | **Narrower than written.** Tested: the same enrollment can move back to a batch it held earlier (it is one row, so there is no duplicate). A program change into a batch where the trainee has another row is rejected with 409. The wording in `acceptance.md` decision 2 should say that |
+| D-6 | **The old uniform is not returned to stock when a trainee changes program. The trainee keeps it** (decision by the owner, 2026-11-10) | A program change deducts one uniform from the new program only when the admin marks it as given. Nothing is added back to the old program (F-16) |
+| D-7 | **The enrollment payment is a one-time payment** (decision by the owner, 2026-11-10). A trainee who shifts program is not charged again, so the payment is carried over and the new enrollment gets no receipt of its own | MP-47 shows the enrollment fee as unpaid for a shifted trainee (F-4). This is listed as a known gap and is not fixed for now. The fee line there is for information only, so withdrawal approval is not blocked |
 
 ## 10. Findings
 
 | ID | Finding | Severity | Suggested action |
 |----|---------|----------|------------------|
 | F-1 | The branch has no unit tests for the new service methods, DTOs, controllers or the five endpoints. The 102 passing tests are unchanged from `dev`. 215 tests were written and run, then deleted at the owner's request | Medium | Write unit tests for the branch if the team wants them (service, validators, controllers). The first run of them found F-15 |
-| F-2 | Migration `20261106_trainee_enrollment_transfers` is not applied on Supabase | Medium | PM applies it before the code reaches an environment that uses Supabase. Then re-run `migrate status` |
-| F-3 | The branch is not merged and Jira already says Done (resolved 2026-11-08). The DoD item "code reviewed and merged into `main`" is open. PR state unknown | Medium | Check for an open PR. Move the Jira status back to In Review until the merge, or accept that it means "built" |
-| F-4 | A shifted trainee's new enrollment has no receipt, so MP-47 (already on `dev`) reads it as an unpaid enrollment fee. The profile also hides the carried-over OR (remarks) and `exit_reason`. Listed as Known Gaps 1 and 3 in `acceptance.md`. Read in code (`withdrawal.service.ts` reads the enrollment's receipts), not run | Medium | Decide with the product owner before merge: follow the transfer chain in MP-47, or record a zero-amount carried receipt |
+| F-2 | Migration `20261106_trainee_enrollment_transfers` was not applied on Supabase | Medium | **Closed 2026-11-10.** Applied with `prisma migrate deploy`; `migrate status` says up to date |
+| F-3 | Jira says Done (resolved 2026-11-08). On 2026-11-09 the branch was not merged. It is now merged into `dev` (PR #96, 2026-11-10) but not into `staging` or `main`, so the DoD item "merged into `main`" is still open | Low | Accept Done as "built and in `dev`", or keep it open until `main` |
+| F-4 | A shifted trainee's new enrollment has no receipt, so MP-47 (already on `dev`) reads it as an unpaid enrollment fee. The profile also hides the carried-over OR (remarks) and `exit_reason`. Listed as Known Gaps 1 and 3 in `acceptance.md`. Read in code (`withdrawal.service.ts` reads the enrollment's receipts), not run | Medium | **Known gap, accepted for now (decision D-7).** Later options: follow the transfer chain in MP-47, or record a zero-amount carried receipt |
 | F-5 | Under heavy parallel use, program changes into the same batch mostly end in 409 "try again" even when the batch has room (2 of 8 won; room for 3). Safe and clear, but a nuisance | Low | Accept for admin-only, low-volume use. Revisit if admins complain |
 | F-6 | The change history endpoints return every row with no paging | Low | Fine for the expected volume (500 rows in 12 ms, 9 statements). Add a cap if histories grow |
 | F-7 | History is append-only by convention only. No database trigger blocks UPDATE or DELETE | Low | Same as the other history tables. Optional later |
@@ -218,6 +239,8 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 | F-13 | TECH-03 (migration history against `schema.prisma`) meant I had to align 3 enums and 5 trainer columns on the throwaway database before the app would run on it | Medium (existing) | See TECH-03 |
 | F-14 | Untracked `text.txt` in the working tree | Low | Do not commit it |
 | F-15 | `PATCH /admin/trainees/:id` with no `beneficiary` field returns **500**. `@ValidateNested()` skips a missing value, and the service then reads a field of `undefined`. `null` and `{}` are correctly 400. Nothing is saved (rolled back). Breaks AC 2 ("not a server error") for a client that leaves the object out. The Edit form always sends it. The enrollment form shares `TraineeDetailsDto`, so `POST` enrollments may have the same weakness (not tested) **Cause:** a code gap, not an account problem. It depends on what the request sends, not on which trainee it is for. The validator skips a missing field, then the service reads a field of `undefined` and crashes (rolled back, nothing saved). A trainee with no beneficiary row yet is fine: `saveBeneficiary` is an upsert, so the row is created on save (by code reading, not tested). The Edit form always sends the object, so only a direct API call can trigger it. | Medium | Add `@IsDefined()` (or `@IsNotEmptyObject()`) to `beneficiary` in `TraineeDetailsDto`. The deleted specs had two tests for exactly this case, so add one when unit tests are written |
+| F-16 | Uniform stock on a program change. Tested on the Docker database (Cookery M = 1, Welding M = 5): a batch change does not touch stock; a program change with the uniform not given does not touch stock; a program change with the uniform given and size M deducts 1 from the new program (Cookery M 1 to 0), writes a `DISTRIBUTED` stock log entry and sets the new checklist to given, size M; with Cookery M at 0 the same request is refused with 400 "No M uniform is currently in stock for this program" and the trainee stays in the old batch. The old program's stock stays at 5, because nothing is returned (decision D-6). A trainee who already received a uniform and then marks a new one as given costs the stock two uniforms | Low (decision recorded) | Accepted by the owner: the trainee keeps the old uniform. Known gap, not a bug. Revisit if stock counts drift. The modal could warn the admin when the old enrollment already has a uniform given |
+| F-17 | New `npm audit` advisories since 2026-11-09, found in the 2026-11-10 re-check: backend 28 (5 low, 23 moderate), frontend 10 (moderate), 0 high or critical. All are in test and lint tools (jest, ts-jest, eslint, typescript-eslint, `@nestjs/cli`, minimatch, glob). `npm audit --omit=dev` is still 0 in both, so nothing that ships is affected. Not caused by this branch | Low | Update the dev tools in a separate chore. Most fixes are major upgrades (jest, `@nestjs/cli`, eslint), so test them first. Do not run `npm audit fix --force` |
 
 ## 11. Gaps to ask the product owner
 
@@ -227,8 +250,8 @@ These were made while building or in the Jira comment of 2026-11-04. They are re
 
 ## 12. Release steps still open
 
-1. Decide F-15 (fix the missing-beneficiary 500), F-1 (write unit tests for the branch) and F-4 (MP-47 interaction).
-2. Open or find the pull request, review it, and merge into `dev`.
-3. The PM applies the migration to Supabase, then `prisma migrate status` should say "Database schema is up to date".
+1. Decide F-15 (fix the missing-beneficiary 500) and F-1 (write unit tests for the branch). F-4 (MP-47 interaction) is a known gap by decision D-7.
+2. ~~Open or find the pull request, review it, and merge into `dev`.~~ Done: PR #96, 2026-11-10.
+3. ~~The PM applies the migration to Supabase.~~ Done on 2026-11-10; `prisma migrate status` says "Database schema is up to date!".
 4. After `dev`, `staging` and `main` promotion, check one real batch change and one program change in a browser, then re-run the read-only Supabase checks (table shape, orphan rows, history rows against enrollments).
 5. Update the Jira status to match.
