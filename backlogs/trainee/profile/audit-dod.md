@@ -11,6 +11,23 @@
 | **Not audited** | The pages in a real browser by me (the owner checked the profile view and the edit-mode fields, criteria 1 and 3, in a browser). A photo upload from the page, including the new photo appearing in the header. Replacing a photo and the old file being removed from storage (both need a write to the real bucket). The layout on a phone and a tablet. Two sessions at once |
 | **Definition of Done used** | The Jira "Definition of Done" (3 items) and its 19 Acceptance Criteria, plus the backlog `acceptance.md` (19 rows, identical to Jira's) and its test cases TC-01 to TC-08 |
 
+## Re-check on 2026-11-10 (branch brought up to date with `dev`)
+
+`dev` had moved on (MP-47 registrar withdrawal, MP-42 admin edit, their docs), so the branch was 11 commits behind. `dev` was merged into `feature/MP-41` on 2026-11-10. The only conflict was the MP-41 and MP-42 rows of `backlogs/README.md`. Both rows were kept, and the MP-42 row was brought up to date (it was merged into `dev` on 2026-11-10). No code file conflicted. After the merge the branch is 0 behind `dev`.
+
+| Check | Result on the merged branch |
+|-------|-----------------------------|
+| Backend `tsc`, `nest build`, eslint, `prisma validate` | Clean (after `prisma generate`) |
+| Backend `jest` | 102 of 102 (12 suites). Still no tests for the profile code |
+| Frontend `tsc -b`, eslint, `vite build` | Clean |
+| `sharp` | In `package.json` and the lockfile. It loads (0.35.5) and the build passes |
+| `npm audit --omit=dev` | 0 vulnerabilities in both projects |
+| Migrations | None in this branch. Supabase is up to date (14 of 14) |
+| Profile API smoke test on the merged code, against a throwaway Postgres | **69 of 70 pass.** The one failure is the known open bug: a "png" whose bytes are not an image gives 500, not 400 (finding in section 12). The photo upload to storage cannot be run on the dummy storage |
+| Conflicts with `dev` | None left. The branch is 0 behind `dev` |
+
+**Ready to merge into `dev`.** The two medium bugs (fake image gives 500, failed clean-up of the old photo reports an error), the unrelated edits and the missing tests are still open and are the same as in the audit below. Not ready for `main`.
+
 ## Verdict
 
 **Ready to merge into `dev` now that the `sharp` line is on the branch (fixed 2026-11-06). Not ready for `main` yet.** The feature works, the database is untouched, and the owner has checked it.
