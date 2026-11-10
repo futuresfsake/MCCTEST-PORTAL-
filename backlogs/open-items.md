@@ -48,7 +48,7 @@ Closed since 2026-11-09: the migration `20261106_trainee_enrollment_transfers` w
 
 | ID | Type | Item | Detail |
 |----|------|------|--------|
-| O-20 | Do | Bring the branch up to date with `dev` and merge | 20 behind `dev` on 2026-11-10. One conflict, `backlogs/push-log.md`. No migration |
+| O-20 | Do | Open the pull request for this branch into `dev` and merge | Brought up to date with `dev` on 2026-11-10 (0 behind, `push-log.md` conflict resolved, no code conflict). No migration. Re-checked the same day, see `audit-mp49-admin.md`. This branch also carries the refreshed `open-items.md` |
 | O-21 | Check | Browser cases TC-A11 to TC-A15, including one real sign-off, on `dev` after the merge. Then re-run the read-only Supabase checks | The pages were checked by code reading and through the API only. Audit F-1, F-8 |
 | O-22 | Decide | Must the admin give a reason to reject | Item 15. Audit F-3 |
 | O-23 | Decide | Copy the trainee's reason into `exit_reason` on approval | Item 16. Audit F-4 |
