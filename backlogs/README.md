@@ -62,6 +62,7 @@ backlogs/
     enrollment-base-fee-500/acceptance.md        — TECH-04: base fee is 500 without insurance coverage, should always be 450 (LOGGED, not fixed)
     migration-schema-drift/acceptance.md         — TECH-03: migration history disagrees with schema.prisma and Supabase (3 enums, 5 trainer columns) (LOGGED, not fixed)
     id-card-sequence-collision/acceptance.md     — TECH-05: an ID card number clash returns a server error (LOGGED, not fixed)
+    search-wildcards/acceptance.md               — TECH-06: a search for % or _ matches every row in the withdrawal lists (LOGGED, not fixed)
 ```
 
 ---
@@ -143,6 +144,7 @@ backlogs/
 | TECH-04 | Enrollment base fee is 500 without insurance coverage, should always be 450 | Medium | Logged, not fixed | 7 of 9 receipts on Supabase carry 500. The chatbot already says 450. See `technical/enrollment-base-fee-500` |
 | TECH-03 | Migration history disagrees with `schema.prisma` and Supabase | Medium | Logged, not fixed | 3 enums and 5 trainer columns. Supabase already matches the schema. See `technical/migration-schema-drift` |
 | TECH-05 | An ID card number clash returns a server error | Low | Logged, not fixed | `generateIdCardNumber` never checks the number is free, so a clash on `id_card_number` is a 500. Found in the MP-42 audit. See `technical/id-card-sequence-collision` |
+| TECH-06 | A search for `%` or `_` matches every row in the withdrawal lists | Low | Logged, not fixed | Prisma `contains` does not escape the wildcards. Found in the audit of `dev` before staging (`shared/withdrawal/audit-dev-pre-staging-mp49.md`). See `technical/search-wildcards/acceptance.md` |
 | SEC-01  | Announcements API exposed the poster's password hash | High | Fixed, on dev and staging. Main pending | `include: { users: true }` returned the whole user row to every role. See `technical/announcements-password-hash-exposure` |
 | SEC-02  | `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs` | High | Logged, not fixed | Deferred by choice. `npm audit fix` is available. See `technical/multer-dos-advisory` |
 
