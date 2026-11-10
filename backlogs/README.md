@@ -25,7 +25,7 @@ backlogs/
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
     enrollment/acceptance.md                     — MP-33: Admin Enrollments Module (IN PROGRESS)
     trainee-edit/acceptance.md                   — MP-42: Admin Edit Trainee, batch and program changes with history (BUILT, not merged)
-    trainee-edit/audit-dod.md                    — MP-42 Definition of Done audit (2026-11-09): 20 PASS, 2 PARTIAL, one 500 bug (F-15), merge and unit tests open
+    trainee-edit/audit-dod.md                    — MP-42 Definition of Done audit (2026-11-09, re-checked 2026-11-10): 21 PASS, 1 PARTIAL, one 500 bug (F-15), unit tests open. Merged into dev
     payments/acceptance.md                       — MP-25: Payments Module (30/30 PASS)
     inventory/acceptance.md                      — MP-35: Uniform Inventory (shared Admin and Registrar, ON DEV AND STAGING, not on main)
     notifications/acceptance.md                  — MP-54: Notification Bell, Admin Events (NOT STARTED)
@@ -47,7 +47,7 @@ backlogs/
     notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
-    profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (IN REVIEW). Audit: trainee/profile/audit-dod.md
+    profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (MERGED INTO DEV). Audit: trainee/profile/audit-dod.md
     dashboard-data-gaps/acceptance.md            — MP-30 follow-up: attendance, competencies, sessions not functional (NOT STARTED)
     account-generation/acceptance.md             — MP-26: Trainee Account Generation
   encoder/
