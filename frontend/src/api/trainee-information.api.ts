@@ -1,17 +1,23 @@
 import axios from 'axios';
 import type { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import type {
+  ChangeBatchPayload,
+  ChangeHistoryEntry,
+  ChangeOptions,
+  ChangeProgramPayload,
+  ChangeResult,
   TraineeInformationRole,
   TraineeFilterOptions,
   TraineeListQuery,
   TraineeListResponse,
   TraineeProfile,
+  UpdateTraineePayload,
 } from '../types/trainee-information.type';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
-function createClient(role: TraineeInformationRole): AxiosInstance {
-  const client = axios.create({ baseURL: `${API_BASE_URL}/api/${role}/trainees` });
+function createClient(path: string): AxiosInstance {
+  const client = axios.create({ baseURL: `${API_BASE_URL}/api/${path}` });
 
   client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('accessToken');
@@ -40,11 +46,14 @@ function createClient(role: TraineeInformationRole): AxiosInstance {
 }
 
 const clients: Record<TraineeInformationRole, AxiosInstance> = {
-  admin: createClient('admin'),
-  registrar: createClient('registrar'),
-  trainer: createClient('trainer'),
-  encoder: createClient('encoder'),
+  admin: createClient('admin/trainees'),
+  registrar: createClient('registrar/trainees'),
+  trainer: createClient('trainer/trainees'),
+  encoder: createClient('encoder/trainees'),
 };
+
+/** Batch and program changes are admin only. */
+const adminEnrollments = createClient('admin/enrollments');
 
 /** Only non-empty values are sent, so the URL and the request stay minimal. */
 function toParams(query: TraineeListQuery): Record<string, string | number> {
@@ -76,6 +85,36 @@ export async function getTraineeProfile(
   signal?: AbortSignal,
 ): Promise<TraineeProfile> {
   const response = await clients[role].get<TraineeProfile>(`/${encodeURIComponent(id)}`, { signal });
+  return response.data;
+}
+
+/** Admin only. Saves the Edit Trainee form and returns the updated profile. */
+export async function updateTrainee(id: string, payload: UpdateTraineePayload): Promise<TraineeProfile> {
+  const response = await clients.admin.patch<TraineeProfile>(`/${encodeURIComponent(id)}`, payload);
+  return response.data;
+}
+
+export async function getTraineeChangeHistory(
+  role: TraineeInformationRole,
+  id: string,
+  signal?: AbortSignal,
+): Promise<ChangeHistoryEntry[]> {
+  const response = await clients[role].get<ChangeHistoryEntry[]>(`/${encodeURIComponent(id)}/change-history`, { signal });
+  return response.data;
+}
+
+export async function getChangeOptions(enrollmentId: string, signal?: AbortSignal): Promise<ChangeOptions> {
+  const response = await adminEnrollments.get<ChangeOptions>(`/${encodeURIComponent(enrollmentId)}/change-options`, { signal });
+  return response.data;
+}
+
+export async function changeBatch(enrollmentId: string, payload: ChangeBatchPayload): Promise<ChangeResult> {
+  const response = await adminEnrollments.post<ChangeResult>(`/${encodeURIComponent(enrollmentId)}/change-batch`, payload);
+  return response.data;
+}
+
+export async function changeProgram(enrollmentId: string, payload: ChangeProgramPayload): Promise<ChangeResult> {
+  const response = await adminEnrollments.post<ChangeResult>(`/${encodeURIComponent(enrollmentId)}/change-program`, payload);
   return response.data;
 }
 

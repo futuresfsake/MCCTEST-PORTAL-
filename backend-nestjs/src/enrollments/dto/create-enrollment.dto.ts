@@ -14,6 +14,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { Trim } from '../../common/decorators/trim.decorator';
 import {
   size_enum,
   gender_enum,
@@ -26,6 +27,7 @@ import {
 } from '../../generated/prisma/enums';
 
 export class BeneficiaryDto {
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
@@ -35,26 +37,31 @@ export class BeneficiaryDto {
   @MaxLength(50)
   middleName!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
   lastName!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
   relationship!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @Matches(/^\+63\d{10}$/)
   contactNumber!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   address!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(50)
@@ -62,14 +69,11 @@ export class BeneficiaryDto {
 }
 
 /**
- * DTO for creating or updating a trainee during enrollment
+ * A trainee's details, the same on the enrollment form and the admin's edit form
  */
-export class TraineeInfoDto {
-  @IsOptional()
-  @IsUUID()
-  id?: string; // UUID of existing trainee (if selecting existing)
-
+export class TraineeDetailsDto {
   // Personal Information
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -79,6 +83,7 @@ export class TraineeInfoDto {
   @MaxLength(100)
   middleName!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -91,38 +96,45 @@ export class TraineeInfoDto {
   @IsEnum(gender_enum)
   gender!: gender_enum;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @Matches(/^\+63\d{10}$/)
   contactNumber!: string; // e.g., +63 900 000 0000
 
   // Address Information
+  @Trim()
   @IsString()
   @IsNotEmpty()
-  @MaxLength(255)
+  @MaxLength(100)
   streetAddress!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   barangay!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   municipality!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   district!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
   province!: string;
 
   // Additional Information
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
@@ -130,16 +142,19 @@ export class TraineeInfoDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   citizenship?: string; // Defaults to "FILIPINO"
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
-  @MaxLength(150)
+  @MaxLength(100)
   motherName!: string;
 
+  @Trim()
   @IsString()
   @IsNotEmpty()
-  @MaxLength(150)
+  @MaxLength(100)
   fatherName!: string;
 
   @IsEnum(civil_status_enum)
@@ -157,12 +172,21 @@ export class TraineeInfoDto {
   @IsEnum(employment_type_enum)
   employmentType!: employment_type_enum;
 
-  @IsBoolean()
-  isExistingTrainee!: boolean; // Flag to indicate if this is an existing or new trainee
-
   @ValidateNested()
   @Type(() => BeneficiaryDto)
   beneficiary!: BeneficiaryDto;
+}
+
+/**
+ * DTO for creating or updating a trainee during enrollment
+ */
+export class TraineeInfoDto extends TraineeDetailsDto {
+  @IsOptional()
+  @IsUUID()
+  id?: string; // UUID of existing trainee (if selecting existing)
+
+  @IsBoolean()
+  isExistingTrainee!: boolean; // Flag to indicate if this is an existing or new trainee
 }
 
 /**

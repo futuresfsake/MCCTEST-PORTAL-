@@ -1,14 +1,12 @@
-// src/api/auth.api.ts
-
 export function authHeaders(): HeadersInit {
-  const token = localStorage.getItem('accessToken');
-  const session = localStorage.getItem('sessionToken');
+  const token = localStorage.getItem('accessToken')
+  const session = localStorage.getItem('sessionToken')
 
   return {
     'Content-Type': 'application/json',
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...(session ? { 'X-Session-Token': session } : {}),
-  };
+  }
 }
 
 export async function apiFetch(
@@ -21,5 +19,5 @@ export async function apiFetch(
       ...authHeaders(),
       ...init.headers,
     },
-  });
+  })
 }
