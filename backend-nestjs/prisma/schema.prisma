@@ -51,24 +51,26 @@ model attendance {
 }
 
 model batch {
-  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  program_id        String             @db.Uuid
-  trainer_id        String             @db.Uuid
-  created_by        String             @db.Uuid
-  batch_name        String             @db.VarChar(100)
+  id                String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  program_id        String                 @db.Uuid
+  trainer_id        String                 @db.Uuid
+  created_by        String                 @db.Uuid
+  batch_name        String                 @db.VarChar(100)
   capacity          Int
-  start_date        DateTime           @db.Date
-  end_date          DateTime           @db.Date
-  batch_status      batch_status_enum  @default(OPEN)
+  start_date        DateTime               @db.Date
+  end_date          DateTime               @db.Date
+  batch_status      batch_status_enum      @default(OPEN)
   remarks           String?
-  created_at        DateTime           @default(now()) @db.Timestamptz(6)
+  created_at        DateTime               @default(now()) @db.Timestamptz(6)
   announcements     announcements[]
-  users             users              @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  programs          programs           @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  trainer           trainer            @relation(fields: [trainer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users             users                  @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  programs          programs               @relation(fields: [program_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  trainer           trainer                @relation(fields: [trainer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   batch_student_seq batch_student_seq?
   enrollments       enrollments[]
   training_session  training_session[]
+  transfers_from    enrollment_transfers[] @relation("enrollment_transfers_from_batch")
+  transfers_to      enrollment_transfers[] @relation("enrollment_transfers_to_batch")
 
   @@index([program_id], map: "idx_batch_program")
   @@index([batch_status], map: "idx_batch_status")
@@ -232,12 +234,38 @@ model enrollments {
   requirement_checklist_history requirement_checklist_history[]
   trainee_outcome_status        trainee_outcome_status[]
   withdrawal_request            withdrawal_request[]
+  transfers_from                enrollment_transfers[]          @relation("enrollment_transfers_from_enrollment")
+  transfers_to                  enrollment_transfers[]          @relation("enrollment_transfers_to_enrollment")
 
   @@unique([trainee_id, batch_id])
   @@index([batch_id], map: "idx_enrollments_batch")
   @@index([enrollment_status], map: "idx_enrollments_status")
   @@index([trainee_id], map: "idx_enrollments_trainee")
   @@index([enrolled_at], map: "idx_enrollments_enrolled_at")
+}
+
+/// Append-only log: one row per batch or program change. Never updated or deleted.
+/// A batch change moves the enrollment, so from and to enrollment are the same row.
+model enrollment_transfers {
+  id                 String                        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type               enrollment_transfer_type_enum
+  trainee_id         String                        @db.Uuid
+  from_enrollment_id String                        @db.Uuid
+  to_enrollment_id   String                        @db.Uuid
+  from_batch_id      String                        @db.Uuid
+  to_batch_id        String                        @db.Uuid
+  reason             String
+  performed_by       String                        @db.Uuid
+  created_at         DateTime                      @default(now()) @db.Timestamptz(6)
+  trainee            trainee                       @relation(fields: [trainee_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  from_enrollment    enrollments                   @relation("enrollment_transfers_from_enrollment", fields: [from_enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  to_enrollment      enrollments                   @relation("enrollment_transfers_to_enrollment", fields: [to_enrollment_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  from_batch         batch                         @relation("enrollment_transfers_from_batch", fields: [from_batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  to_batch           batch                         @relation("enrollment_transfers_to_batch", fields: [to_batch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users              users                         @relation(fields: [performed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([trainee_id, created_at(sort: Desc), id(sort: Desc)], map: "idx_enrollment_transfers_trainee")
+  @@index([to_enrollment_id], map: "idx_enrollment_transfers_to_enrollment")
 }
 
 model generated_certificate {
@@ -484,6 +512,7 @@ model trainee {
   employment_status     employment_status_enum
   employment_type       employment_type_enum
   enrollments           enrollments[]
+  enrollment_transfers  enrollment_transfers[]
   insurance_coverage    insurance_coverage[]
   users                 users?                 @relation(fields: [users_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   trainee_beneficiaries trainee_beneficiaries?
@@ -573,6 +602,7 @@ model users {
   clearance_approval                  clearance_approval[]
   distribution_checklist              distribution_checklist[]
   enrollments                         enrollments[]
+  enrollment_transfers                enrollment_transfers[]
   generated_certificate               generated_certificate[]
   inventory                           inventory[]
   inventory_transactions              inventory_transactions[]
@@ -745,6 +775,11 @@ enum employment_type_enum {
   CONTRACTUAL
   SEASONAL
   NA
+}
+
+enum enrollment_transfer_type_enum {
+  BATCH_CHANGE
+  PROGRAM_CHANGE
 }
 
 enum enrollment_status_enum {

@@ -253,6 +253,11 @@ const sidebarConfig: Record<
             path: '/trainee/announcements',
             icon: 'fa-solid fa-bullhorn',
           },
+          {
+            label: 'My Profile',
+            path: '/trainee/profile',
+            icon: 'fa-solid fa-user',
+          },
         ],
       },
 
@@ -457,6 +462,11 @@ const sidebarConfig: Record<
             label: 'Requirements',
             path: '/registrar/requirements',
             icon: 'fa-solid fa-list-check',
+          },
+          {
+            label: 'Withdrawal Requests',
+            path: '/registrar/withdrawal-requests',
+            icon: 'fa-solid fa-right-from-bracket',
           },
         ],
       },

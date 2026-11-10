@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ArrowLeft, Pencil } from 'lucide-react';
+import { ArrowLeft, ArrowRightLeft, Pencil } from 'lucide-react';
 import { getTraineeProfile, isRequestCancelled, requestErrorMessage } from '../../api/trainee-information.api';
 import EnrollmentStatusBadge from '../enrollment/EnrollmentStatusBadge';
 import { BatchStatusBadge } from '../registrar/batches/BatchStatusBadge';
 import type { TraineeInformationRole, TraineeProfile, TraineeProfileEnrollment } from '../../types/trainee-information.type';
 import type { TraineeListLocationState } from './TraineeListView';
+import ChangeHistorySection from './ChangeHistorySection';
+import EnrollmentChangeModal from './EnrollmentChangeModal';
+import TraineeEditModal from './TraineeEditModal';
 import { enumLabel, formatDateOnly, formatTime, formatTimestamp, fullName, valueOrDash } from './format';
 
 const tagClass = 'text-[10px] font-semibold uppercase tracking-wider';
@@ -34,9 +37,10 @@ const Section: React.FC<{ title: string; children: React.ReactNode; aside?: Reac
   </section>
 );
 
-const EnrollmentCard: React.FC<{ enrollment: TraineeProfileEnrollment }> = ({ enrollment }) => {
+const EnrollmentCard: React.FC<{ enrollment: TraineeProfileEnrollment; onChange?: () => void }> = ({ enrollment, onChange }) => {
   const { batch, program } = enrollment;
   const allSubmitted = enrollment.requirementsSubmitted === enrollment.requirementsTotal;
+  const canChange = enrollment.status === 'PENDING' || enrollment.status === 'ENROLLED';
 
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-5">
@@ -44,6 +48,16 @@ const EnrollmentCard: React.FC<{ enrollment: TraineeProfileEnrollment }> = ({ en
         <h3 className="font-semibold text-slate-900">{program.name}</h3>
         <span className={`${tagClass} text-slate-400`}>{program.isAccredited ? 'Accredited' : 'Non-accredited'}</span>
         <EnrollmentStatusBadge status={enrollment.status} />
+        {onChange && canChange && (
+          <button
+            type="button"
+            onClick={onChange}
+            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:border-blue-900 hover:text-blue-900"
+          >
+            <ArrowRightLeft aria-hidden="true" className="h-4 w-4" />
+            Change Batch / Program
+          </button>
+        )}
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -107,16 +121,33 @@ interface TraineeProfileViewProps {
   traineeId: string;
   /** List route, e.g. /admin/trainees */
   basePath: string;
-  /** Editing ships in MP-42; read-only while false. */
+  /** Shows the Edit and Change Batch / Program actions. */
   canEdit: boolean;
+  canViewHistory: boolean;
 }
 
-/** Read-only trainee profile, loaded on its own (not from the list data). */
-const TraineeProfileView: React.FC<TraineeProfileViewProps> = ({ role, traineeId, basePath, canEdit }) => {
+/** Trainee profile, loaded on its own (not from the list data). */
+const TraineeProfileView: React.FC<TraineeProfileViewProps> = ({ role, traineeId, basePath, canEdit, canViewHistory }) => {
   const location = useLocation();
   const [profile, setProfile] = useState<TraineeProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [editing, setEditing] = useState(false);
+  const [changingEnrollmentId, setChangingEnrollmentId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+  const handleSaved = (message: string) => {
+    setEditing(false);
+    setChangingEnrollmentId(null);
+    setToast(message);
+    setReloadKey((key) => key + 1);
+  };
 
   // Back returns to the list exactly as it was (page, search, filters, sort)
   const listSearch = (location.state as TraineeListLocationState | null)?.listSearch ?? '';
@@ -204,13 +235,14 @@ const TraineeProfileView: React.FC<TraineeProfileViewProps> = ({ role, traineeId
             </div>
           </div>
           {canEdit && (
-            <Link
-              to={`${basePath}/${profile.id}/edit`}
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-800"
             >
               <Pencil aria-hidden="true" className="h-4 w-4" />
               Edit
-            </Link>
+            </button>
           )}
         </div>
       </section>
@@ -295,9 +327,33 @@ const TraineeProfileView: React.FC<TraineeProfileViewProps> = ({ role, traineeId
         {profile.enrollments.length === 0 ? (
           <p className="rounded-lg border border-slate-200 bg-white p-5 text-sm text-slate-500">This trainee has no enrollments.</p>
         ) : (
-          profile.enrollments.map((enrollment) => <EnrollmentCard key={enrollment.id} enrollment={enrollment} />)
+          profile.enrollments.map((enrollment) => (
+            <EnrollmentCard
+              key={enrollment.id}
+              enrollment={enrollment}
+              onChange={canEdit ? () => setChangingEnrollmentId(enrollment.id) : undefined}
+            />
+          ))
         )}
       </section>
+
+      {canViewHistory && <ChangeHistorySection role={role} traineeId={traineeId} reloadKey={reloadKey} />}
+
+      {canEdit && editing && <TraineeEditModal profile={profile} onClose={() => setEditing(false)} onSaved={handleSaved} />}
+
+      {canEdit && changingEnrollmentId && (
+        <EnrollmentChangeModal
+          enrollmentId={changingEnrollmentId}
+          onClose={() => setChangingEnrollmentId(null)}
+          onSaved={handleSaved}
+        />
+      )}
+
+      {toast && (
+        <div role="status" className="fixed bottom-6 right-6 z-[110] rounded-lg bg-gray-900 px-4 py-3 text-sm font-medium text-white shadow-lg">
+          {toast}
+        </div>
+      )}
     </div>
   );
 };

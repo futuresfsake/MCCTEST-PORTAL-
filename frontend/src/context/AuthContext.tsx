@@ -21,12 +21,9 @@ interface AuthContextType {
   sessionToken: string | null
   isAuthenticated: boolean
   isLoading: boolean
-  login: (
-    accessToken: string,
-    sessionToken: string,
-    user: User,
-  ) => void
+  login: (accessToken: string, sessionToken: string, user: User) => void
   logout: () => Promise<void>
+  updateUser: (updates: Partial<User>) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -38,84 +35,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessionToken, setSessionToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  /*
-   * Restore the authentication state when the application starts.
-   */
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem('user')
-      const storedAccessToken = localStorage.getItem('accessToken')
-      const storedSessionToken = localStorage.getItem('sessionToken')
-
       if (storedUser) {
         try {
           setUser(JSON.parse(storedUser))
         } catch {
-          // Remove corrupted user data.
           localStorage.removeItem('user')
           setUser(null)
         }
       }
-
-      setAccessToken(storedAccessToken)
-      setSessionToken(storedSessionToken)
+      setAccessToken(localStorage.getItem('accessToken'))
+      setSessionToken(localStorage.getItem('sessionToken'))
     } finally {
       setIsLoading(false)
     }
   }, [])
 
-  /*
-   * Establish an authenticated session.
-   */
-  const login = (
-    newAccessToken: string,
-    newSessionToken: string,
-    newUser: User,
-  ) => {
+  const login = (newAccessToken: string, newSessionToken: string, newUser: User) => {
     localStorage.setItem('accessToken', newAccessToken)
     localStorage.setItem('sessionToken', newSessionToken)
     localStorage.setItem('user', JSON.stringify(newUser))
-
     setAccessToken(newAccessToken)
     setSessionToken(newSessionToken)
     setUser(newUser)
   }
 
-  /*
-   * End the authenticated session.
-   */
   const logout = async () => {
     try {
       if (sessionToken) {
-        await fetch(
-          `${apiUrl}/auth/logout`,
-          {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              'X-Session-Token': sessionToken,
-            },
+        await fetch(`${apiUrl}/auth/logout`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken ?? ''}`,
+            'X-Session-Token': sessionToken,
           },
-        )
+        })
       }
     } catch (error) {
       console.error('Logout request failed:', error)
     } finally {
-      /*
-       * Always clear the local session even if the
-       * backend logout request fails.
-       */
       localStorage.removeItem('accessToken')
       localStorage.removeItem('sessionToken')
       localStorage.removeItem('user')
-
       setUser(null)
       setAccessToken(null)
       setSessionToken(null)
     }
   }
 
-  const isAuthenticated = !!user && !!accessToken
+  const updateUser = (updates: Partial<User>) => {
+    setUser((current) => {
+      if (!current) return current
+      const updated = { ...current, ...updates }
+      localStorage.setItem('user', JSON.stringify(updated))
+      return updated
+    })
+  }
 
   return (
     <AuthContext.Provider
@@ -123,10 +100,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         accessToken,
         sessionToken,
-        isAuthenticated,
+        isAuthenticated: !!user && !!accessToken,
         isLoading,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}
@@ -136,10 +114,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext)
-
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-
+  if (!context) throw new Error('useAuth must be used within an AuthProvider')
   return context
 }

@@ -8,17 +8,17 @@ import TraineeListView from './TraineeListView';
 import TraineeProfileView from './TraineeProfileView';
 
 /**
- * What each role gets from the shared module. Both are read-only until
- * MP-42 adds editing; flip canEdit there.
+ * What each role gets from the shared module. Only the admin can edit. The
+ * admin and the registrar can read the change history.
  */
 export const TRAINEE_INFORMATION_ACCESS: Record<
   TraineeInformationRole,
-  { basePath: string; canEdit: boolean; moduleLabel: string }
+  { basePath: string; canEdit: boolean; canViewHistory: boolean; moduleLabel: string }
 > = {
-  admin: { basePath: '/admin/trainees', canEdit: false, moduleLabel: 'Admin Module' },
-  registrar: { basePath: '/registrar/trainees', canEdit: false, moduleLabel: 'Registrar Module' },
-  trainer: { basePath: '/trainer/trainees', canEdit: false, moduleLabel: 'Trainer Module' },
-  encoder: { basePath: '/encoder/trainees', canEdit: false, moduleLabel: 'Encoder Module' },
+  admin: { basePath: '/admin/trainees', canEdit: true, canViewHistory: true, moduleLabel: 'Admin Module' },
+  registrar: { basePath: '/registrar/trainees', canEdit: false, canViewHistory: true, moduleLabel: 'Registrar Module' },
+  trainer: { basePath: '/trainer/trainees', canEdit: false, canViewHistory: false, moduleLabel: 'Trainer Module' },
+  encoder: { basePath: '/encoder/trainees', canEdit: false, canViewHistory: false, moduleLabel: 'Encoder Module' },
 };
 
 const TraineeInformationLayout: React.FC<{
@@ -62,7 +62,7 @@ export const TraineeInformationListPage: React.FC<{ role: TraineeInformationRole
 
 export const TraineeInformationProfilePage: React.FC<{ role: TraineeInformationRole }> = ({ role }) => {
   const { id } = useParams<{ id: string }>();
-  const { basePath, canEdit } = TRAINEE_INFORMATION_ACCESS[role];
+  const { basePath, canEdit, canViewHistory } = TRAINEE_INFORMATION_ACCESS[role];
   if (!id) return <Navigate to={basePath} replace />;
 
   return (
@@ -72,7 +72,7 @@ export const TraineeInformationProfilePage: React.FC<{ role: TraineeInformationR
       description="Personal details, family, education, beneficiary, insurance, and every program enrollment."
     >
       {/* key: a different trainee starts from a clean state */}
-      <TraineeProfileView key={id} role={role} traineeId={id} basePath={basePath} canEdit={canEdit} />
+      <TraineeProfileView key={id} role={role} traineeId={id} basePath={basePath} canEdit={canEdit} canViewHistory={canViewHistory} />
     </TraineeInformationLayout>
   );
 };

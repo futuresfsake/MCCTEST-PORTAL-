@@ -19,6 +19,10 @@ A structured record of decisions that affect the Registrar, with the reason for 
 | D-05 | 2026-11-04 | MP-42, MP-43 | Payment carries over on a program change (all programs have the same payment). Requirements page defaults to ENROLLED | DECIDED |
 | D-06 | 2026-11-04 | MP-45 to MP-49 | Withdrawal validation is sequential: Trainer first, then Registrar, then Admin. No race condition, `REGISTRAR_VALIDATED` removed | DECIDED |
 | D-07 | 2026-11-04 | MP-48 | A trainer must give a reason when rejecting a withdrawal request. Remarks stay optional when approving | DECIDED |
+| D-08 | 2026-11-06 | MP-47 | Registrar withdrawal validation: three manual ticks, a reason is required on reject, a rejection is final for that request, the Registrar sees all requests, no history table, released on its own (per task) | DECIDED |
+| D-09 | 2026-11-06 | MP-47, MP-49 | The registrar checks finances and documents only (two ticks) and sees whether the enrollment fee is paid. ID surrendered moves to the Admin sign-off. Built in MP-47 | DECIDED |
+| D-10 | 2026-11-06 | MP-47 | The registrar reads the trainee's payment history in a pop-up from the Enrollment fee box, read only, without leaving the page | DECIDED |
+| D-11 | 2026-11-06 | MP-47 | Only the functional code is committed: the unit tests are kept in a local stash, and no test data or reference notes are in the code | DECIDED |
 
 ---
 
@@ -255,7 +259,158 @@ Remarks are **required when the trainer rejects** and **optional when the traine
 **Consequences**
 - The API refuses a reject with missing or blank remarks (400).
 - The trainer screen must make the reason field required when Reject is chosen.
-- The same question will come up for the Registrar (MP-47) and Admin (MP-49) rejections. Not decided here.
+- The same question will come up for the Registrar (MP-47) and Admin (MP-49) rejections. Not decided here. (The Registrar part is answered in D-08.)
+
+---
+
+## D-08. MP-47 Registrar withdrawal validation: manual checklist, reason on reject, released with MP-49
+
+| Field | Value |
+|-------|-------|
+| **ID** | D-08 |
+| **Date** | 2026-11-06 |
+| **Ticket** | MP-47 (Registrar: Validate Withdrawal Request) |
+| **Status** | DECIDED (answered by the owner, all eight accepted; #6 changed to "release on its own") |
+| **Registrar impact** | The Registrar validates requests the trainer approved, using three manual checks. A rejection needs a reason |
+| **Supersedes / Superseded by** | Answers the open point in D-07. Narrows MP-47, which said remarks were optional |
+
+**Context**
+The MP-47 ticket left eight points open. They were put to the owner on 2026-11-06 and each recommendation was accepted.
+
+**Decision**
+
+| # | Point | Decision |
+|---|-------|----------|
+| 1 | Reason when the Registrar rejects | **Required** (blank counts as none, up to 1000 characters), as for the trainer (D-07). Optional when approving |
+| 2 | Finances cleared | A **manual tick**. The database has no balance, only receipts. It may be derived from payments later |
+| 3 | Documents submitted | A **manual tick**. The panel shows the MP-43 progress (N / 6) **for information only**. It does not block approval |
+| 4 | ID surrendered | ~~A manual tick in `surrendered_id` for the registrar.~~ **Superseded by D-09:** the ID check moves to the Admin sign-off (MP-49) |
+| 5 | A Registrar rejection | **Final for that request**. The trainee may submit a new request |
+| 6 | Release | **On its own** (changed by the owner the same day, replacing "together with MP-49"). Releases are per task and the pipeline is built from the bottom up: the registrar sees a request as soon as the trainer approves it. The sidebar link is visible. Until MP-49 is released, an approved request waits at `PENDING_ADMIN_SIGNOFF` and the trainee cannot cancel it (known limit, see overview section 11) |
+| 7 | Who the Registrar sees | **All** requests, not scoped to a batch (the trainer is scoped to their own batches) |
+| 8 | History table | **No separate decided-requests table.** The status filter is enough for now |
+
+**Rationale**
+
+| # | Reason |
+|---|--------|
+| 1 | A rejection ends the request, so the trainee must be told why (same reason as D-07) |
+| 2 | Nothing in the database can prove finances are cleared. A manual tick keeps the build small and honest |
+| 3 | The Registrar decides, the progress number only informs |
+| 4 | The two fields mean different things (surrendered at withdrawal vs given at enrollment) |
+| 5 | Keeps each request a clean record and avoids reopening finished ones |
+| 6 | Releases are per task, and a request already waits at `TRAINER_VALIDATED` today with no one able to act. MP-47 lets the registrar act on it. The wait moves one step on, to the admin |
+
+**Consequences**
+- `PATCH /registrar/withdrawal-requests/:id/validate`: reject without a reason gives 400. Approve needs all three ticks (400 otherwise).
+- The detail response includes the MP-43 checklist progress (N / 6) for display only.
+- Only a request in `TRAINER_VALIDATED` can be validated. Anything else, including `PENDING_VALIDATION`, gives 400. An unknown id gives 404.
+- The write is one transaction with a conditional update, the same pattern as the trainer step, so two Registrars acting together get one winner and one 400.
+- MP-47 is released on its own. The Registrar sidebar link "Withdrawal Requests" is visible.
+- Until MP-49 ships, an approved request stops at `PENDING_ADMIN_SIGNOFF` (audit finding A-12, informational).
+
+---
+
+## D-09. The registrar checks finances and documents only. ID surrendered moves to the Admin. The registrar sees whether the enrollment fee was paid
+
+| Field | Value |
+|-------|-------|
+| **ID** | D-09 |
+| **Date** | 2026-11-06 |
+| **Ticket** | MP-47 (Registrar), MP-49 (Admin) |
+| **Status** | DECIDED by the owner. **Built in MP-47** (two checks, fee status, tracker step), checked on a throwaway database. The admin ID tick is MP-49, not built |
+| **Registrar impact** | The checklist has two items, not three. The panel also shows whether the enrollment fee is paid |
+| **Supersedes / Superseded by** | Supersedes D-08 point 4 (ID surrendered as a registrar tick) and narrows point 2 (finances cleared) |
+
+**Context**
+D-08 gave the registrar three manual ticks: ID surrendered, finances cleared, documents submitted. The owner then pointed out two things. The trainee hands the ID in at the admin, and the admin is the final sign-off, so the ID belongs to the admin step. And for finances, the registrar should be able to see whether the trainee actually paid, not only tick a box.
+
+**Decision**
+
+| # | Point | Decision |
+|---|-------|----------|
+| 1 | Registrar checklist | **Two manual ticks: finances cleared and documents submitted.** Approving needs both. Rejecting saves them as they are and needs a reason (unchanged from D-08) |
+| 2 | ID surrendered | **Admin only (MP-49).** The trainee gives the ID to the admin, and the admin confirms it as part of the sign-off. The existing `surrendered_id` column is kept and is now written by the admin step, not the registrar |
+| 3 | Fee cleared | The registrar panel **shows whether the enrollment fee is paid**: paid or not paid, and when paid the receipt number, date and amount. It reads the official receipts of that enrollment with the reason `ENROLLMENT` |
+| 4 | The tick stays manual | The "Finances cleared" tick is still the registrar's decision. The fee status is shown next to it to help, and it does not tick or block anything by itself |
+| 5 | Trainee tracker | **After the registrar approves, the trainee's progress view shows the last step: "Surrender your ID to the admin".** The Admin sign-off step turns active with that instruction, so the trainee knows what to do. It reads the status the tracker already has (`PENDING_ADMIN_SIGNOFF`), so it needs no notification system. It belongs to MP-47 because MP-47 is what puts a request in that state, and MP-47 is released on its own |
+
+**Rationale**
+
+| # | Reason |
+|---|--------|
+| 1 | The admin signs off last and is the one who receives the ID, so the ID check belongs there |
+| 2 | The registrar handles money and papers, so the two items match the registrar's job |
+| 3 | Payments are already recorded as receipts, so "paid" can be shown without new data |
+| 4 | Other fees (uniform, processing, assessment deposit, external) are separate and not part of "enrollment fee paid" |
+
+**Assumptions to confirm with the owner** (built this way unless told otherwise)
+1. "Fee paid" means at least one receipt with the reason `ENROLLMENT` exists for the enrollment. The amount is not compared with 450, because the base fee itself is still wrong in one case (500, TECH-04).
+2. Admin approval (MP-49) needs the ID surrendered tick, and the admin can reject without it.
+3. A request that reached the admin before this change keeps its saved `surrendered_id` value. The seeded and live request already at `PENDING_ADMIN_SIGNOFF` have it unset, so the admin ticks it.
+4. **RESOLVED (owner, 2026-11-06): the ID is surrendered after the registrar accepts, so the Admin confirms it at sign-off (option A).** The order is trainer, registrar, then the trainee hands the ID to the admin, then the admin signs off. The registrar cannot record an ID that has not been handed in yet. A notification from the registrar's approval ("bring your ID to the admin", sent to the trainee, and "ready for sign-off" to the admin) is a good fit later, but it needs MP-52 (notification foundation) and MP-54 (Admin events), which are not built. Until then the trainee's progress view can show the next step in words. The notification is a pointer only: the saved `surrendered_id` tick, with who and when, stays the record.
+
+**Consequences**
+- MP-47 code to change: drop `surrendered_id` from the validate body and the approve rule (two ticks, not three), show two checkboxes in the panel, and add the fee status to the detail response and the panel. Unit tests and the seed data change with it.
+- MP-49 gains the ID surrendered tick on the sign-off: the sign-off body carries `surrendered_id`, approve needs it true, and the panel shows who confirmed it.
+- MP-47 also changes the shared progress view (`WithdrawalPipeline` and `buildPipeline`): the Admin step shows the ID instruction while the request is at `PENDING_ADMIN_SIGNOFF`. This touches the trainee's screens from MP-46, so those need a check too.
+- D-08 point 4 no longer applies. Points 1, 3 and 5 to 8 stand.
+
+---
+
+## D-10. The registrar reads the trainee's payment history in a pop-up, without leaving the page
+
+| Field | Value |
+|-------|-------|
+| **ID** | D-10 |
+| **Date** | 2026-11-06 |
+| **Ticket** | MP-47 (Registrar) |
+| **Status** | DECIDED by the owner. Built and checked on a throwaway database |
+| **Registrar impact** | One click in the Enrollment fee box shows every payment of the trainee, so the registrar does not have to open the Payments page to judge "finances cleared" |
+| **Supersedes / Superseded by** | Extends D-09 point 3 (fee status). Nothing superseded |
+
+**Context**
+D-09 added a paid / not paid line for the enrollment fee. The owner then asked that the registrar be able to see the payments themselves in a pop-up, instead of visiting another page.
+
+**Decision**
+
+| # | Point | Decision |
+|---|-------|----------|
+| 1 | Where | A **View payment history** button in the Enrollment fee box opens a pop-up over the side panel. Closing it (button, backdrop or Escape) returns to the panel as it was. Escape closes the pop-up first, then the panel |
+| 2 | What it shows | **Every** payment of that enrollment, oldest first: date, receipt number, what it was for, method and amount. Enrollment fee rows are marked "counts as paid" |
+| 3 | What "paid" means | Unchanged from D-09: only an `ENROLLMENT` receipt makes the box say Paid. Other fees (uniform and ID, processing, assessment deposit, external) are listed but do not count |
+| 4 | Read only | It is information. It never ticks "Finances cleared" and never blocks an approval |
+| 5 | Amounts | Always shown with centavos, for example `PHP 450.00` |
+
+**Consequences**
+- The detail response gains `enrollmentFee.payments`: at most 50 receipts, each with only `orNumber`, `paymentDate`, `amount`, `method` and `reason`. No staff name, contact detail or internal id is returned.
+- No new endpoint, no migration. It reads the existing `official_receipts` table.
+- It reuses the registrar's existing access to payment information (the Payments module already shows registrars these receipts).
+
+---
+
+## D-11. MP-47 ships only the functional code: no unit tests, test data or reference notes in the commit
+
+| Field | Value |
+|-------|-------|
+| **ID** | D-11 |
+| **Date** | 2026-11-06 |
+| **Ticket** | MP-47 |
+| **Status** | DECIDED by the owner |
+| **Registrar impact** | None. This is about what goes into the commit |
+| **Supersedes / Superseded by** | Same choice as D-08 of MP-43 (unit tests kept out of the branch) |
+
+**Decision**
+The commit contains only the code the feature needs, and the backlog text. It does not contain the unit test files, any test data (accounts, seed data, scripts) or reference notes such as decision or ticket numbers inside code comments.
+
+**What was done**
+- The 3 unit test files (64 tests) were moved into a local git stash named "MP-47 unit tests (kept local, not committed)". They passed with the rest of the suite (166 of 166) and can be brought back with `git stash pop`.
+- The sandbox database, its seed data and the end-to-end script live outside the repository and are never committed.
+- Decision and ticket numbers were removed from the code comments. They stay in the backlog.
+
+**Consequences**
+- The registrar step has no unit tests in the repository (audit finding, as F-9 was for MP-43). Its behaviour was checked by 109 requests against a throwaway database instead.
+- The backend suite in the repository stays at the 102 tests that existed before.
 
 ---
 
