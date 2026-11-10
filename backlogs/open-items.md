@@ -31,7 +31,7 @@ Type: **Decide** = needs an answer from the team or product owner. **Do** = a ta
 | O-12 | Decide | Known gap: the withdrawal page shows the enrollment fee as unpaid for a trainee who changed program | Decision D-7 (2026-11-10): the payment is one-time, kept as a known gap. Later options: follow the transfer chain in MP-47, or write a zero-amount carried receipt. Audit F-4 |
 | O-13 | Decide | Known gap: the old uniform is not returned to stock when a trainee changes program | Decision D-6 (2026-11-10): the trainee keeps it. Audit F-16 |
 | O-14 | Decide | Is "record a new payment instead" still needed on a program change | Gap G-42-2 |
-| O-15 | Decide | MP-42 program change while a withdrawal request is open | Item 17. A batch change with an open request was tested on 2026-11-10 and the request follows the trainee to the new batch. A program change with an open request is not tested |
+| O-15 | Decide | MP-42 program change while a withdrawal request is open | Item 17. Tested on 2026-11-10 (audit F-6): the old enrollment becomes `WITHDRAWN`, the open request stays at its stage pointing at it, the registrar and admin can still approve it and nothing changes, and the trainee stays enrolled in the new program. A batch change is fine: the request follows the enrollment. Decide: cancel or move the request, or block the program change |
 | O-16 | Check | Re-check one real batch change and one program change on `main` | Checked in a browser by the owner on 2026-11-10. Re-read the Supabase history rows after the first real change |
 
 Closed since 2026-11-09: the migration `20261106_trainee_enrollment_transfers` was applied on Supabase on 2026-11-10 (`migrate status`: up to date). The pull request was merged into `dev` (PR #96) and promoted to `staging` and `main`. The audit docs were merged (PR #97). Jira says Done and the code is on `main`.
@@ -50,6 +50,7 @@ Closed since 2026-11-09: the migration `20261106_trainee_enrollment_transfers` w
 |----|------|------|--------|
 | O-20 | Do | Open the pull request for this branch into `dev` and merge | Brought up to date with `dev` on 2026-11-10 (0 behind, `push-log.md` conflict resolved, no code conflict). No migration. Re-checked the same day, see `audit-mp49-admin.md`. This branch also carries the refreshed `open-items.md` |
 | O-21 | Check | Browser cases TC-A11 to TC-A15, including one real sign-off, on `dev` after the merge. Then re-run the read-only Supabase checks | The pages were checked by code reading and through the API only. Audit F-1, F-8 |
+| O-37 | Check | After `staging`: run the admin withdrawal page in a browser (TC-A11 to TC-A15) and one real sign-off, then re-run the read-only Supabase checks | Audit `audit-dev-pre-staging-mp49.md`, finding F-3 |
 | O-22 | Decide | Must the admin give a reason to reject | Item 15. Audit F-3 |
 | O-23 | Decide | Copy the trainee's reason into `exit_reason` on approval | Item 16. Audit F-4 |
 | O-24 | Decide | What happens to the trainee's account after approval (A, B or C) | Item 9. Built as option A with a TODO in `signOffByAdmin` |
@@ -61,6 +62,7 @@ Closed since 2026-11-09: the migration `20261106_trainee_enrollment_transfers` w
 | ID | Type | Item | Detail |
 |----|------|------|--------|
 | O-27 | Do | TECH-01 to TECH-05 and SEC-02 | See `README.md` (Technical Debt). TECH-05 is the ID card number clash that returns a 500 |
+| O-36 | Do | Escape `%` and `_` in the search of the withdrawal lists (and check the other searches that use `contains`) | TECH-06, found in the audit of `dev` before staging |
 | O-28 | Decide | Supabase row level security is off on every table | Item 10 |
 | O-29 | Do | Make sure the build and CI run `prisma generate` before `tsc` | The generated client is git-ignored, so `tsc` fails on a fresh checkout until it runs |
 | O-30 | Do | Update the dev tools that `npm audit` now flags | Audit F-17 (MP-42): backend 28 and frontend 10 advisories, none high or critical, all in test and lint tools. `npm audit --omit=dev` is 0. Most fixes are major upgrades, so test them first. Do not run `npm audit fix --force` |
