@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-42 |
 | **Type** | Feature (Admin edits, Registrar reads the history) |
-| **Status** | NOT STARTED |
+| **Status** | BUILT, not merged. The PM applies the migration to Supabase |
 | **Priority** | Medium |
 | **Assignee** | Not assigned (open gap 1) |
 | **Depends on** | MP-24 (Student Information module, must be done first), MP-33 (shared `EnrollmentsService`), MP-35 (uniform stock on program change) |
@@ -124,59 +124,59 @@ Update, change-batch and change-program endpoints are `ADMIN` only. There are no
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 1 | An admin on a trainee's profile clicks Edit, changes details and saves. The changes persist after a refresh | NOT STARTED | |
-| 2 | Invalid input (future birth date, missing required field, duplicate email) shows a clear error, not a server error | NOT STARTED | |
-| 3 | The username (system ID) and password cannot be edited | NOT STARTED | |
+| 1 | An admin on a trainee's profile clicks Edit, changes details and saves. The changes persist after a refresh | PASS | API and browser |
+| 2 | Invalid input (future birth date, missing required field, duplicate email) shows a clear error, not a server error | PASS | API and browser. Also added: text too long for its column is a 400, not a server error |
+| 3 | The username (system ID) and password cannot be edited | PASS | API and browser. Sent values are ignored; the hash and username stay unchanged |
 
 ### Change Batch
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 4 | An `ENROLLED` trainee in Program A, Batch 1 is moved to Batch 2 of Program A with a reason. The same enrollment shows Batch 2 and its schedule. ID card number, OR, uniform and documents are unchanged | NOT STARTED | |
-| 5 | Only open, non-full batches of the same program are offered. A full, closed or past batch is rejected with a clear message | NOT STARTED | |
-| 6 | For non-accredited programs, a batch whose schedule overlaps the trainee's other active enrollments is rejected | NOT STARTED | |
+| 4 | An `ENROLLED` trainee in Program A, Batch 1 is moved to Batch 2 of Program A with a reason. The same enrollment shows Batch 2 and its schedule. ID card number, OR, uniform and documents are unchanged | PASS | API and browser |
+| 5 | Only open, non-full batches of the same program are offered. A full, closed or past batch is rejected with a clear message | PASS | API. A batch ending today is allowed |
+| 6 | For non-accredited programs, a batch whose schedule overlaps the trainee's other active enrollments is rejected | PASS | API |
 
 ### Change Program
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 7 | An `ENROLLED` trainee in Program A is changed to Program B, Batch 3 with a reason. The Program A enrollment becomes `WITHDRAWN` with an exit reason mentioning the shift, and a new `ENROLLED` enrollment exists in Program B, Batch 3 | NOT STARTED | |
-| 8 | The new enrollment gets a new ID card number with Program B's prefix, and the requirement checklist is copied over | NOT STARTED | |
-| 9 | Payment carries over by default. Choosing "new payment" records a new OR | NOT STARTED | |
-| 10 | If a uniform is marked given for the new program, stock goes down by 1 (MP-35). Out of stock blocks the change | NOT STARTED | |
-| 11 | The one-active-accredited-program, capacity and schedule-overlap rules are enforced | NOT STARTED | |
+| 7 | An `ENROLLED` trainee in Program A is changed to Program B, Batch 3 with a reason. The Program A enrollment becomes `WITHDRAWN` with an exit reason mentioning the shift, and a new `ENROLLED` enrollment exists in Program B, Batch 3 | PASS | API and browser |
+| 8 | The new enrollment gets a new ID card number with Program B's prefix, and the requirement checklist is copied over | PASS | API and browser |
+| 9 | Payment carries over by default. Choosing "new payment" records a new OR | PASS | API. The new enrollment remarks reference the old OR, also after a second shift |
+| 10 | If a uniform is marked given for the new program, stock goes down by 1 (MP-35). Out of stock blocks the change | PASS | API and browser. Stock history entry written |
+| 11 | The one-active-accredited-program, capacity and schedule-overlap rules are enforced | PASS | API |
 
 ### Every Save
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 12 | A reason is required for batch and program changes. Saving without one is rejected | NOT STARTED | |
-| 13 | Only `PENDING` and `ENROLLED` enrollments can change batch or program | NOT STARTED | |
-| 14 | If any part of a save fails, nothing is saved: no partial info update, no moved batch, no half-created enrollment | NOT STARTED | |
+| 12 | A reason is required for batch and program changes. Saving without one is rejected | PASS | API and browser. A reason of only spaces is also rejected |
+| 13 | Only `PENDING` and `ENROLLED` enrollments can change batch or program | PASS | API |
+| 14 | If any part of a save fails, nothing is saved: no partial info update, no moved batch, no half-created enrollment | PASS | API. Forced failure at the last step: every table unchanged, including the ID, OR and stock counters |
 
 ### Change History
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 15 | Every batch or program change creates a history row with the date and time and the admin's `users.id` | NOT STARTED | D-01 |
-| 16 | The profile shows the change history, newest first, for Admin and Registrar | NOT STARTED | |
-| 17 | History rows cannot be edited or deleted. For a batch change, from and to enrollment are the same enrollment | NOT STARTED | Append-only |
+| 15 | Every batch or program change creates a history row with the date and time and the admin's `users.id` | PASS | D-01. API |
+| 16 | The profile shows the change history, newest first, for Admin and Registrar | PASS | API and browser |
+| 17 | History rows cannot be edited or deleted. For a batch change, from and to enrollment are the same enrollment | PASS | Append-only. API. No update or delete route exists, and the code never updates or deletes rows. No database trigger, same as the other history tables |
 
 ### Access Control
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 18 | The Registrar sees no Edit or Change actions, and calling the admin update endpoints returns 403 | NOT STARTED | |
-| 19 | Trainee, trainer and encoder get 403 from all these endpoints. Requests without a token get 401 | NOT STARTED | |
-| 20 | Responses never include `password_hash` | NOT STARTED | |
+| 18 | The Registrar sees no Edit or Change actions, and calling the admin update endpoints returns 403 | PASS | API and browser |
+| 19 | Trainee, trainer and encoder get 403 from all these endpoints. Requests without a token get 401 | PASS | API |
+| 20 | Responses never include `password_hash` | PASS | API |
 
 ### Data and Quality
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 21 | Exactly one migration is added, for `enrollment_transfers`. `npx prisma migrate status` says "Database schema is up to date" after applying it | NOT STARTED | |
-| 22 | No logic is copied from `EnrollmentsService` or the MP-24 module. This ticket extends them | NOT STARTED | |
-| 23 | Backend and frontend type-check, build and lint with 0 problems | NOT STARTED | |
+| 21 | Exactly one migration is added, for `enrollment_transfers`. `npx prisma migrate status` says "Database schema is up to date" after applying it | PARTIAL | One migration added, `20261106_trainee_enrollment_transfers`. "Up to date" on a throwaway database (with the TECH-02 byte-order mark removed from a copy of `0_init`), and no drift from `schema.prisma`. The PM runs it on Supabase |
+| 22 | No logic is copied from `EnrollmentsService` or the MP-24 module. This ticket extends them | PASS | Shared rules, payment and uniform steps are reused; the last two were moved out of `createEnrollment` into helpers |
+| 23 | Backend and frontend type-check, build and lint with 0 problems | PASS | Backend and frontend. Jest 102 of 102 |
 
 ---
 
@@ -226,4 +226,32 @@ Update, change-batch and change-program endpoints are `ADMIN` only. There are no
 
 ---
 
-## Summary: 0/23 PASS, NOT STARTED
+## How It Was Checked
+
+On a throwaway Postgres 17 outside the repository, which was then shut down. "API" is real requests against the built backend (194 checks, all passed). "Browser" is the real pages in headless Edge as Admin, Registrar and Encoder (30 checks, all passed). Nothing was run against Supabase.
+
+Not exercised: attendance rows on a batch change. The enrollment row keeps its id, and attendance points to that id.
+
+## Decisions Made While Building
+
+These were not in the ticket. Change them if the team disagrees.
+
+| # | Decision | Why |
+|---|----------|-----|
+| 1 | A `PENDING` enrollment stays `PENDING` after a program change | A shift should not confirm an enrollment |
+| 2 | A batch the trainee was in before cannot be chosen, even if they left it | The database allows one enrollment per trainee and batch |
+| 3 | Editing a contact number does not check if another trainee uses it | The ticket lists only the length check |
+
+## Known Gaps
+
+| # | Gap | Effect |
+|---|-----|--------|
+| 1 | A carried-over payment makes no receipt on the new enrollment, as decided | The withdrawal page (MP-47) reads receipts of the enrollment, so it shows the enrollment fee as unpaid for a shifted trainee. The profile shows no OR number for it either, and does not show the enrollment remarks that hold the carried-over OR |
+| 2 | The schedule belongs to the program, not the batch | A batch change within a program changes the dates, trainer and capacity, but the days and times stay the same |
+| 3 | The profile does not show `exit_reason` | The shift reason is saved on the withdrawn enrollment and shown in Change History, but not on its card |
+| 4 | The ticket does not cover an open withdrawal request | A change is allowed while one is open. After a program change the request stays attached to the withdrawn enrollment |
+| 5 | Two saves that clash at commit reach `createEnrollment` and the status update as a server error | Found while building. Those two flows are outside this ticket, so they were left as they were. Batch and program changes return a clear 409 |
+
+---
+
+## Summary: 22 PASS, 1 PARTIAL (the PM runs the migration on Supabase)
