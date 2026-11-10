@@ -241,7 +241,7 @@ export default function TrainerWithdrawalPanel({ requestId, onClose, onChanged }
 
               <section aria-label="Approval progress">
                 <h3 className="mb-4 text-base font-semibold text-slate-900">Approval progress</h3>
-                <WithdrawalPipeline detail={detail} />
+                <WithdrawalPipeline detail={detail} audience="staff" />
               </section>
 
               <section aria-label="History">

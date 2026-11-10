@@ -25,6 +25,7 @@ import TraineeDashboard from '../pages/users/trainee/dashboard/TraineeDashboard'
 import TraineeAnnouncementsPage from '../pages/users/trainee/announcements/TraineeAnnouncementsPage'
 import WithdrawalPage from '../pages/users/trainee/withdrawal/WithdrawalPage'
 import WithdrawalDetailPage from '../pages/users/trainee/withdrawal/WithdrawalDetailPage'
+import TraineeProfilePage from '../pages/users/trainee/profile/TraineeProfilePage'
 import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 import EncoderAnnouncementsPage from '../pages/users/encoder/announcements/EncoderAnnouncementsPage'
 
@@ -35,6 +36,7 @@ const AdminPaymentsPage = lazy(() => import('../pages/users/admin/AdminPaymentsP
 const RegistrarPaymentsPage = lazy(() => import('../pages/users/registrar/RegistrarPaymentsPage'))
 const AdminRequirementsPage = lazy(() => import('../pages/users/admin/requirements/AdminRequirementsPage'))
 const RegistrarRequirementsPage = lazy(() => import('../pages/users/registrar/requirements/RegistrarRequirementsPage'))
+const RegistrarWithdrawalPage = lazy(() => import('../pages/users/registrar/withdrawal/RegistrarWithdrawalPage'))
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
@@ -260,6 +262,17 @@ return ( <Routes>
     }
   />
 
+  <Route
+    path="/registrar/withdrawal-requests"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading withdrawal requests...</div>}>
+          <RegistrarWithdrawalPage />
+        </Suspense>
+      </ProtectedRoute>
+    }
+  />
+
   {/* Trainee Information (MP-24): shared, read-only */}
   <Route
     path="/admin/trainees"
@@ -378,6 +391,15 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['TRAINEE']}>
         <TraineeAnnouncementsPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/trainee/profile"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINEE']}>
+        <TraineeProfilePage />
       </ProtectedRoute>
     }
   />

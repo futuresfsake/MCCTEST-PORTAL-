@@ -9,15 +9,29 @@ import { PrismaService } from '../prisma/prisma.service';
 import { InventoryService } from '../inventory/inventory.service';
 import { RequirementsService } from '../requirements/requirements.service';
 import {
+  toDateOnly,
+  toTimeOfDay,
+} from '../trainee-information/trainee-information.service';
+import {
   CreateEnrollmentDto,
+  EnrollmentPaymentDto,
+  TraineeDetailsDto,
   TraineeInfoDto,
   RequirementChecklistDto,
 } from './dto/create-enrollment.dto';
+import { ChangeBatchDto, ChangeProgramDto } from './dto/change-enrollment.dto';
+import { UpdateTraineeDto } from './dto/update-trainee.dto';
 import {
   UpdateEnrollmentStatusDto,
   EnrollmentFilterDto,
 } from './dto/update-enrollment.dto';
-import { day_enum, enrollment_status_enum } from '../generated/prisma/enums';
+import { Prisma } from '../generated/prisma/client';
+import {
+  day_enum,
+  enrollment_status_enum,
+  enrollment_transfer_type_enum,
+  size_enum,
+} from '../generated/prisma/enums';
 import { generateOrNumber } from '../payments/or-number';
 
 /** Initial portal password for new trainee accounts (shown once on the success screen). */
@@ -27,6 +41,8 @@ const ACTIVE_ENROLLMENT_STATUSES: enrollment_status_enum[] = [
   'PENDING',
   'ENROLLED',
 ];
+
+const EMAIL_IN_USE_MESSAGE = 'This email is already used by another account.';
 
 /** Statuses that mean the trainee left the batch early */
 const EXIT_ENROLLMENT_STATUSES: enrollment_status_enum[] = [
@@ -126,6 +142,23 @@ function toUsernamePart(value: string): string {
     .replace(/[^a-z]/g, '');
 }
 
+/**
+ * Whether Postgres cancelled the transaction because it clashed with another.
+ * During the transaction this arrives as P2034. At commit it arrives as the
+ * driver adapter's own error, which has no Prisma code.
+ */
+function isWriteConflict(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  if ('code' in error && error.code === 'P2034') return true;
+  const cause = 'cause' in error ? error.cause : undefined;
+  return (
+    typeof cause === 'object' &&
+    cause !== null &&
+    'kind' in cause &&
+    cause.kind === 'TransactionWriteConflict'
+  );
+}
+
 function isUniqueViolation(error: unknown): error is { meta?: unknown } {
   return (
     typeof error === 'object' &&
@@ -138,6 +171,114 @@ function isUniqueViolation(error: unknown): error is { meta?: unknown } {
 /** Whether a unique-violation error mentions the given column. */
 function uniqueViolationMentions(error: { meta?: unknown }, column: string) {
   return JSON.stringify(error.meta ?? {}).includes(column);
+}
+
+/** Rejects anything but a real calendar date (YYYY-MM-DD) up to today. */
+function assertValidBirthDate(dateOfBirth: string) {
+  const dateParts = dateOfBirth.split('-').map(Number);
+  const parsedDateOfBirth = new Date(
+    Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]),
+  );
+  const today = new Date();
+  const todayUtc = Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    today.getUTCDate(),
+  );
+  const normalizedDateOfBirth = Date.UTC(
+    parsedDateOfBirth.getUTCFullYear(),
+    parsedDateOfBirth.getUTCMonth(),
+    parsedDateOfBirth.getUTCDate(),
+  );
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) ||
+    Number.isNaN(normalizedDateOfBirth) ||
+    parsedDateOfBirth.getUTCFullYear() !== dateParts[0] ||
+    parsedDateOfBirth.getUTCMonth() !== dateParts[1] - 1 ||
+    parsedDateOfBirth.getUTCDate() !== dateParts[2] ||
+    normalizedDateOfBirth > todayUtc
+  ) {
+    throw new BadRequestException(
+      'Date of birth must be a valid calendar date that is not in the future.',
+    );
+  }
+}
+
+/** What a batch or program change needs to know about the enrollment. */
+const movableEnrollmentSelect = {
+  id: true,
+  trainee_id: true,
+  batch_id: true,
+  enrollment_status: true,
+  uniform_size: true,
+  batch: {
+    select: {
+      id: true,
+      batch_name: true,
+      program_id: true,
+      programs: { select: { name: true } },
+    },
+  },
+  requirement_checklist: {
+    select: {
+      bc_nso_psa_copy: true,
+      diploma_tor: true,
+      brgy_clearance: true,
+      one_by_one_pic: true,
+      two_by_two_pic: true,
+      passport_size: true,
+      commitment_fee: true,
+      remarks: true,
+    },
+  },
+} satisfies Prisma.enrollmentsSelect;
+
+const transferBatchSelect = {
+  select: {
+    id: true,
+    batch_name: true,
+    programs: { select: { name: true } },
+  },
+} satisfies Prisma.batchDefaultArgs;
+
+/** One history row. Only the admin's name is read from the account. */
+const transferHistorySelect = {
+  id: true,
+  type: true,
+  reason: true,
+  created_at: true,
+  from_enrollment_id: true,
+  to_enrollment_id: true,
+  from_batch: transferBatchSelect,
+  to_batch: transferBatchSelect,
+  users: { select: { first_name: true, last_name: true } },
+} satisfies Prisma.enrollment_transfersSelect;
+
+type TransferHistoryRow = Prisma.enrollment_transfersGetPayload<{
+  select: typeof transferHistorySelect;
+}>;
+
+function toChangeHistoryEntry(row: TransferHistoryRow) {
+  return {
+    id: row.id,
+    type: row.type,
+    reason: row.reason,
+    createdAt: row.created_at,
+    performedBy: `${row.users.first_name} ${row.users.last_name}`.trim(),
+    from: {
+      enrollmentId: row.from_enrollment_id,
+      batchId: row.from_batch.id,
+      batchName: row.from_batch.batch_name,
+      programName: row.from_batch.programs.name,
+    },
+    to: {
+      enrollmentId: row.to_enrollment_id,
+      batchId: row.to_batch.id,
+      batchName: row.to_batch.batch_name,
+      programName: row.to_batch.programs.name,
+    },
+  };
 }
 
 @Injectable()
@@ -244,14 +385,19 @@ export class EnrollmentsService {
       );
   }
 
-  async getAvailableBatches(traineeId?: string) {
-    const today = new Date();
-    today.setUTCHours(0, 0, 0, 0);
+  /**
+   * @param movingEnrollmentId the enrollment the trainee is leaving, for a batch
+   * or program change. It does not count against the rules, because it will no
+   * longer be active in that batch afterwards.
+   */
+  async getAvailableBatches(traineeId?: string, movingEnrollmentId?: string) {
+    const today = localCalendarDay(new Date());
 
     const traineeEnrollments = traineeId
       ? await this.prisma.enrollments.findMany({
           where: { trainee_id: traineeId },
           select: {
+            id: true,
             batch_id: true,
             enrollment_status: true,
             batch: { select: programRuleBatchSelect },
@@ -260,7 +406,11 @@ export class EnrollmentsService {
       : [];
     const pastBatchIds = new Set(traineeEnrollments.map((e) => e.batch_id));
     const activeBatches = traineeEnrollments
-      .filter((e) => ACTIVE_ENROLLMENT_STATUSES.includes(e.enrollment_status))
+      .filter(
+        (e) =>
+          ACTIVE_ENROLLMENT_STATUSES.includes(e.enrollment_status) &&
+          e.id !== movingEnrollmentId,
+      )
       .map((e) => e.batch);
 
     const batches = await this.prisma.batch.findMany({
@@ -283,9 +433,16 @@ export class EnrollmentsService {
             id: true,
             name: true,
             is_accredited: true,
+            is_active: true,
             control_number_prefix: true,
             program_schedule: {
-              select: { days: true, start_time: true, end_time: true },
+              orderBy: { start_time: 'asc' },
+              select: {
+                schedule_name: true,
+                days: true,
+                start_time: true,
+                end_time: true,
+              },
             },
           },
         },
@@ -364,7 +521,8 @@ export class EnrollmentsService {
       throw new BadRequestException('The selected batch is no longer open.');
     }
 
-    if (batch.end_date < new Date()) {
+    // end_date is a calendar day, so a batch ending today is still running.
+    if (batch.end_date < localCalendarDay(new Date())) {
       throw new BadRequestException('The selected batch has already ended.');
     }
 
@@ -379,6 +537,7 @@ export class EnrollmentsService {
     tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
     traineeId: string,
     batchId: string,
+    movingEnrollmentId?: string,
   ) {
     const selectedBatch = await tx.batch.findUnique({
       where: { id: batchId },
@@ -389,6 +548,7 @@ export class EnrollmentsService {
     const traineeEnrollments = await tx.enrollments.findMany({
       where: { trainee_id: traineeId },
       select: {
+        id: true,
         batch_id: true,
         enrollment_status: true,
         batch: { select: programRuleBatchSelect },
@@ -403,7 +563,11 @@ export class EnrollmentsService {
 
     const conflict = findProgramRuleConflict(
       traineeEnrollments
-        .filter((e) => ACTIVE_ENROLLMENT_STATUSES.includes(e.enrollment_status))
+        .filter(
+          (e) =>
+            ACTIVE_ENROLLMENT_STATUSES.includes(e.enrollment_status) &&
+            e.id !== movingEnrollmentId,
+        )
         .map((e) => e.batch),
       selectedBatch,
     );
@@ -485,7 +649,7 @@ export class EnrollmentsService {
   }
 
   /** Maps the enrollment form's trainee fields to trainee table columns. */
-  private toTraineeRecord(traineeData: TraineeInfoDto) {
+  private toTraineeRecord(traineeData: TraineeDetailsDto) {
     return {
       contact_number: traineeData.contactNumber,
       street_address: traineeData.streetAddress,
@@ -584,11 +748,15 @@ export class EnrollmentsService {
     });
   }
 
-  /** Updates the trainee's name on their account and returns their portal username. */
+  /**
+   * Updates the trainee's name, and the email when one is given, on their
+   * account and returns their portal username.
+   */
   private async updateUser(
     tx: Parameters<Parameters<typeof this.prisma.$transaction>[0]>[0],
     userId: string,
-    traineeData: TraineeInfoDto,
+    traineeData: TraineeDetailsDto,
+    email?: string | null,
   ): Promise<string> {
     const user = await tx.users.update({
       where: { id: userId },
@@ -596,10 +764,100 @@ export class EnrollmentsService {
         first_name: traineeData.firstName,
         middle_name: traineeData.middleName || '',
         last_name: traineeData.lastName,
+        ...(email !== undefined ? { email } : {}),
       },
       select: { system_id: true },
     });
     return user.system_id ?? '';
+  }
+
+  /**
+   * Writes the enrollment's distribution checklist. A given uniform also takes
+   * one off the program's stock and logs it, in the caller's transaction, so
+   * running out of stock cancels the whole save.
+   */
+  private async recordUniformDistribution(
+    tx: Prisma.TransactionClient,
+    enrollmentId: string,
+    programId: string,
+    uniform: { given: boolean; size: size_enum | null },
+    userId: string,
+  ) {
+    const issuedSize = uniform.given ? uniform.size : null;
+    const inventoryId = issuedSize
+      ? await this.inventoryService.deductAndLog(
+          tx,
+          programId,
+          issuedSize,
+          enrollmentId,
+          userId,
+        )
+      : null;
+
+    await tx.distribution_checklist.create({
+      data: {
+        enrollment_id: enrollmentId,
+        inventory_id: inventoryId,
+        uniform_given: Boolean(issuedSize),
+        size_issued: issuedSize,
+        date_distributed: issuedSize ? new Date() : null,
+        distributed_by: issuedSize ? userId : null,
+      },
+    });
+  }
+
+  /**
+   * Records an official receipt for the enrollment and, when the trainee has no
+   * active insurance, starts their one-year coverage. Returns the OR number.
+   */
+  private async recordPayment(
+    tx: Prisma.TransactionClient,
+    enrollmentId: string,
+    traineeId: string,
+    payment: EnrollmentPaymentDto,
+    userId: string,
+  ): Promise<string> {
+    const paymentDate = new Date();
+    // Insurance dates are DATE columns, so compare and store
+    // calendar days (the local day, as UTC midnight).
+    const coverageToday = localCalendarDay(paymentDate);
+    const activeCoverage = await tx.insurance_coverage.findFirst({
+      where: {
+        trainee_id: traineeId,
+        effective_date: { lte: coverageToday },
+        expiry_date: { gte: coverageToday },
+      },
+      select: { coverage_id: true },
+    });
+    const baseFee = activeCoverage ? 450 : 500;
+    const orNumber = await generateOrNumber(tx, paymentDate);
+    const receipt = await tx.official_receipts.create({
+      data: {
+        enrollment_id: enrollmentId,
+        or_number: orNumber,
+        base_fee: baseFee,
+        amount: payment.amount!,
+        payment_date: paymentDate,
+        payment_method: payment.paymentMethod!,
+        reason_of_dues: payment.reasonOfDues || 'ENROLLMENT',
+        remarks: payment.remarks,
+        confirmed_by: userId,
+      },
+    });
+
+    if (!activeCoverage) {
+      await tx.insurance_coverage.create({
+        data: {
+          trainee_id: traineeId,
+          effective_date: coverageToday,
+          // Exactly one year later (previously stored a day short)
+          expiry_date: localCalendarDay(paymentDate, 1),
+          official_receipt_id: receipt.id,
+        },
+      });
+    }
+
+    return orNumber;
   }
 
   async createEnrollment(
@@ -616,35 +874,7 @@ export class EnrollmentsService {
       payment,
     } = createDto;
 
-    const dateOfBirth = traineeData.dateOfBirth;
-    const dateParts = dateOfBirth.split('-').map(Number);
-    const parsedDateOfBirth = new Date(
-      Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2]),
-    );
-    const today = new Date();
-    const todayUtc = Date.UTC(
-      today.getUTCFullYear(),
-      today.getUTCMonth(),
-      today.getUTCDate(),
-    );
-    const normalizedDateOfBirth = Date.UTC(
-      parsedDateOfBirth.getUTCFullYear(),
-      parsedDateOfBirth.getUTCMonth(),
-      parsedDateOfBirth.getUTCDate(),
-    );
-
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) ||
-      Number.isNaN(normalizedDateOfBirth) ||
-      parsedDateOfBirth.getUTCFullYear() !== dateParts[0] ||
-      parsedDateOfBirth.getUTCMonth() !== dateParts[1] - 1 ||
-      parsedDateOfBirth.getUTCDate() !== dateParts[2] ||
-      normalizedDateOfBirth > todayUtc
-    ) {
-      throw new BadRequestException(
-        'Date of birth must be a valid calendar date that is not in the future.',
-      );
-    }
+    assertValidBirthDate(traineeData.dateOfBirth);
 
     const maxAttempts = 3;
 
@@ -733,18 +963,13 @@ export class EnrollmentsService {
               },
             });
 
-            // Deduct uniform stock and record its history in this same
-            // transaction, now that the enrollment ID is available.
-            let inventoryId: string | null = null;
-            if (uniformGiven) {
-              inventoryId = await this.inventoryService.deductAndLog(
-                tx,
-                batch.program_id,
-                uniformSize,
-                enrollment.id,
-                enrolledByUserId,
-              );
-            }
+            await this.recordUniformDistribution(
+              tx,
+              enrollment.id,
+              batch.program_id,
+              { given: uniformGiven, size: uniformSize },
+              enrolledByUserId,
+            );
 
             await tx.requirement_checklist.create({
               data: {
@@ -761,58 +986,15 @@ export class EnrollmentsService {
               },
             });
 
-            await tx.distribution_checklist.create({
-              data: {
-                enrollment_id: enrollment.id,
-                inventory_id: inventoryId,
-                uniform_given: uniformGiven,
-                size_issued: uniformGiven ? uniformSize : null,
-                date_distributed: uniformGiven ? new Date() : null,
-                distributed_by: uniformGiven ? enrolledByUserId : null,
-              },
-            });
-
             let orNumber: string | null = null;
             if (payment.processPayment) {
-              const paymentDate = new Date();
-              // Insurance dates are DATE columns, so compare and store
-              // calendar days (the local day, as UTC midnight).
-              const coverageToday = localCalendarDay(paymentDate);
-              const activeCoverage = await tx.insurance_coverage.findFirst({
-                where: {
-                  trainee_id: traineeId,
-                  effective_date: { lte: coverageToday },
-                  expiry_date: { gte: coverageToday },
-                },
-                select: { coverage_id: true },
-              });
-              const baseFee = activeCoverage ? 450 : 500;
-              orNumber = await generateOrNumber(tx, paymentDate);
-              const receipt = await tx.official_receipts.create({
-                data: {
-                  enrollment_id: enrollment.id,
-                  or_number: orNumber,
-                  base_fee: baseFee,
-                  amount: payment.amount!,
-                  payment_date: paymentDate,
-                  payment_method: payment.paymentMethod!,
-                  reason_of_dues: payment.reasonOfDues || 'ENROLLMENT',
-                  remarks: payment.remarks,
-                  confirmed_by: enrolledByUserId,
-                },
-              });
-
-              if (!activeCoverage) {
-                await tx.insurance_coverage.create({
-                  data: {
-                    trainee_id: traineeId,
-                    effective_date: coverageToday,
-                    // Exactly one year later (previously stored a day short)
-                    expiry_date: localCalendarDay(paymentDate, 1),
-                    official_receipt_id: receipt.id,
-                  },
-                });
-              }
+              orNumber = await this.recordPayment(
+                tx,
+                enrollment.id,
+                traineeId,
+                payment,
+                enrolledByUserId,
+              );
             }
 
             return {
@@ -1217,6 +1399,29 @@ export class EnrollmentsService {
   }
 
   /**
+   * Runs one all-or-nothing save at the strictest isolation, so two saves
+   * cannot both take the last slot of a batch. A clash becomes a clear 409.
+   */
+  private async runSerializable<T>(
+    work: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await this.prisma.$transaction(work, {
+        isolationLevel: 'Serializable',
+        maxWait: 10000,
+        timeout: 15000,
+      });
+    } catch (error) {
+      if (isWriteConflict(error)) {
+        throw new ConflictException(
+          'Another change to this batch was saved at the same time. Please try again.',
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Rules for returning an inactive enrollment to PENDING/ENROLLED: the batch
    * must not be closed or cancelled, must have a free slot, and the trainee's
    * other active enrollments must allow it (same rules as enrolling).
@@ -1302,5 +1507,364 @@ export class EnrollmentsService {
       checked_at: saved.checked_at,
       users: saved.users,
     };
+  }
+
+  /**
+   * The admin's Edit Trainee form: account name and email, trainee details and
+   * beneficiary, saved together. The username and password are never touched.
+   */
+  async updateTrainee(traineeId: string, dto: UpdateTraineeDto) {
+    assertValidBirthDate(dto.dateOfBirth);
+
+    try {
+      await this.prisma.$transaction(
+        async (tx) => {
+          const userId = await this.getTraineeUserId(tx, traineeId);
+
+          if (dto.email) {
+            const emailOwner = await tx.users.findFirst({
+              where: {
+                email: { equals: dto.email, mode: 'insensitive' },
+                id: { not: userId },
+              },
+              select: { id: true },
+            });
+            if (emailOwner) throw new ConflictException(EMAIL_IN_USE_MESSAGE);
+          }
+
+          await this.updateUser(tx, userId, dto, dto.email);
+          await tx.trainee.update({
+            where: { id: traineeId },
+            data: this.toTraineeRecord(dto),
+          });
+          await this.saveBeneficiary(tx, traineeId, dto.beneficiary);
+        },
+        { maxWait: 10000, timeout: 15000 },
+      );
+    } catch (error) {
+      // Another account took the email between the check and the save.
+      if (isUniqueViolation(error) && uniqueViolationMentions(error, 'email')) {
+        throw new ConflictException(EMAIL_IN_USE_MESSAGE);
+      }
+      throw error;
+    }
+  }
+
+  /** The enrollment if it may change batch or program: it must be active. */
+  private async getMovableEnrollment(
+    tx: Prisma.TransactionClient,
+    enrollmentId: string,
+  ) {
+    const enrollment = await tx.enrollments.findUnique({
+      where: { id: enrollmentId },
+      select: movableEnrollmentSelect,
+    });
+
+    if (!enrollment) {
+      throw new NotFoundException('Enrollment not found.');
+    }
+
+    if (!ACTIVE_ENROLLMENT_STATUSES.includes(enrollment.enrollment_status)) {
+      throw new BadRequestException(
+        'Only PENDING and ENROLLED enrollments can change batch or program.',
+      );
+    }
+
+    return enrollment;
+  }
+
+  /**
+   * Eligible targets for the Change Batch / Program modal: other batches of the
+   * same program, and batches of other active programs. Uses the same rules as
+   * the enrollment form, without the enrollment being moved.
+   */
+  async getChangeOptions(enrollmentId: string) {
+    const enrollment = await this.getMovableEnrollment(
+      this.prisma,
+      enrollmentId,
+    );
+    const batches = await this.getAvailableBatches(
+      enrollment.trainee_id,
+      enrollment.id,
+    );
+
+    const currentProgramId = enrollment.batch.program_id;
+    const options = batches
+      .filter((batch) => batch.eligible && batch.programs.is_active)
+      .map((batch) => ({
+        id: batch.id,
+        name: batch.batch_name,
+        programId: batch.programs.id,
+        programName: batch.programs.name,
+        isAccredited: batch.programs.is_accredited,
+        startDate: toDateOnly(batch.start_date),
+        endDate: toDateOnly(batch.end_date),
+        remainingSlots: batch.remainingCapacity,
+        schedules: batch.programs.program_schedule.map((schedule) => ({
+          name: schedule.schedule_name,
+          days: schedule.days,
+          startTime: toTimeOfDay(schedule.start_time),
+          endTime: toTimeOfDay(schedule.end_time),
+        })),
+      }));
+
+    return {
+      enrollment: {
+        id: enrollment.id,
+        status: enrollment.enrollment_status,
+        uniformSize: enrollment.uniform_size,
+        batchName: enrollment.batch.batch_name,
+        programName: enrollment.batch.programs.name,
+      },
+      sameProgramBatches: options.filter(
+        (batch) => batch.programId === currentProgramId,
+      ),
+      otherProgramBatches: options.filter(
+        (batch) => batch.programId !== currentProgramId,
+      ),
+    };
+  }
+
+  /**
+   * Moves the enrollment to another batch of the same program. It stays the same
+   * row, so the ID card, payment, uniform, documents and attendance all stay.
+   */
+  async changeBatch(
+    enrollmentId: string,
+    dto: ChangeBatchDto,
+    performedByUserId: string,
+  ) {
+    return this.runSerializable(async (tx) => {
+      const enrollment = await this.getMovableEnrollment(tx, enrollmentId);
+      const target = await this.getTransferTarget(tx, dto.batchId);
+
+      if (target.id === enrollment.batch_id) {
+        throw new BadRequestException(
+          'The trainee is already in the selected batch.',
+        );
+      }
+      if (target.program_id !== enrollment.batch.program_id) {
+        throw new BadRequestException(
+          'The selected batch belongs to another program. Use Change Program instead.',
+        );
+      }
+
+      await this.validateTransferTarget(tx, enrollment, target.id);
+      await tx.enrollments.update({
+        where: { id: enrollment.id },
+        data: { batch_id: target.id },
+      });
+
+      return this.recordTransfer(tx, {
+        type: enrollment_transfer_type_enum.BATCH_CHANGE,
+        trainee_id: enrollment.trainee_id,
+        from_enrollment_id: enrollment.id,
+        to_enrollment_id: enrollment.id,
+        from_batch_id: enrollment.batch_id,
+        to_batch_id: target.id,
+        reason: dto.reason,
+        performed_by: performedByUserId,
+      });
+    });
+  }
+
+  /**
+   * Shifts the trainee to another program: the old enrollment is withdrawn and a
+   * new one is created with its own ID card number, the same documents and,
+   * unless a new payment is recorded, the old payment carried over.
+   */
+  async changeProgram(
+    enrollmentId: string,
+    dto: ChangeProgramDto,
+    performedByUserId: string,
+  ) {
+    return this.runSerializable(async (tx) => {
+      const enrollment = await this.getMovableEnrollment(tx, enrollmentId);
+      const target = await this.getTransferTarget(tx, dto.batchId);
+
+      if (target.program_id === enrollment.batch.program_id) {
+        throw new BadRequestException(
+          'The selected batch is in the same program. Use Change Batch instead.',
+        );
+      }
+      if (!target.programs.is_active) {
+        throw new BadRequestException('The selected program is not active.');
+      }
+
+      await this.validateTransferTarget(tx, enrollment, target.id);
+
+      const oldProgramName = enrollment.batch.programs.name;
+      const newPayment = dto.payment?.processPayment ? dto.payment : null;
+      const carriedOrNumber = newPayment
+        ? null
+        : await this.findCarriedOrNumber(tx, enrollment.id);
+
+      await tx.enrollments.update({
+        where: { id: enrollment.id },
+        data: {
+          enrollment_status: 'WITHDRAWN',
+          exit_reason: `Shifted to ${target.programs.name}: ${dto.reason}`,
+        },
+      });
+
+      const idCardNumber = await this.generateIdCardNumber(
+        tx,
+        target.program_id,
+      );
+      const uniformSize = dto.uniformSize ?? enrollment.uniform_size;
+
+      const created = await tx.enrollments.create({
+        data: {
+          trainee_id: enrollment.trainee_id,
+          batch_id: target.id,
+          // A shift does not confirm a PENDING enrollment.
+          enrollment_status: enrollment.enrollment_status,
+          uniform_size: uniformSize,
+          id_card_number: idCardNumber,
+          enrolled_by: performedByUserId,
+          remarks: newPayment
+            ? `Shifted from ${oldProgramName}. A new payment was recorded.`
+            : carriedOrNumber
+              ? `Shifted from ${oldProgramName}. Payment carried over from OR ${carriedOrNumber}.`
+              : `Shifted from ${oldProgramName}. No payment on record to carry over.`,
+        },
+        select: { id: true },
+      });
+
+      const previousChecklist = enrollment.requirement_checklist;
+      await tx.requirement_checklist.create({
+        data: {
+          ...previousChecklist,
+          enrollment_id: created.id,
+          checked_by: performedByUserId,
+          commitment_fee:
+            Boolean(newPayment) || Boolean(previousChecklist?.commitment_fee),
+        },
+      });
+
+      await this.recordUniformDistribution(
+        tx,
+        created.id,
+        target.program_id,
+        { given: dto.uniformGiven === true, size: uniformSize },
+        performedByUserId,
+      );
+
+      const orNumber = newPayment
+        ? await this.recordPayment(
+            tx,
+            created.id,
+            enrollment.trainee_id,
+            newPayment,
+            performedByUserId,
+          )
+        : null;
+
+      const transfer = await this.recordTransfer(tx, {
+        type: enrollment_transfer_type_enum.PROGRAM_CHANGE,
+        trainee_id: enrollment.trainee_id,
+        from_enrollment_id: enrollment.id,
+        to_enrollment_id: created.id,
+        from_batch_id: enrollment.batch_id,
+        to_batch_id: target.id,
+        reason: dto.reason,
+        performed_by: performedByUserId,
+      });
+
+      return { ...transfer, idCardNumber, orNumber };
+    });
+  }
+
+  /** The batch a change is moving to. */
+  private async getTransferTarget(
+    tx: Prisma.TransactionClient,
+    batchId: string,
+  ) {
+    const target = await tx.batch.findUnique({
+      where: { id: batchId },
+      select: {
+        id: true,
+        program_id: true,
+        programs: { select: { name: true, is_active: true } },
+      },
+    });
+    if (!target) throw new NotFoundException('Batch not found.');
+    return target;
+  }
+
+  /** The enrollment rules, not counting the enrollment being moved. */
+  private async validateTransferTarget(
+    tx: Prisma.TransactionClient,
+    enrollment: { id: string; trainee_id: string },
+    batchId: string,
+  ) {
+    await this.validateBatchAvailability(tx, batchId);
+    await this.validateTraineeProgramRules(
+      tx,
+      enrollment.trainee_id,
+      batchId,
+      enrollment.id,
+    );
+  }
+
+  /**
+   * The latest OR behind this enrollment. A carried-over enrollment has none of
+   * its own, so earlier program changes are followed back to the original one.
+   */
+  private async findCarriedOrNumber(
+    tx: Prisma.TransactionClient,
+    enrollmentId: string,
+  ): Promise<string | null> {
+    let currentId: string | undefined = enrollmentId;
+
+    while (currentId) {
+      const receipt: { or_number: string } | null =
+        await tx.official_receipts.findFirst({
+          where: { enrollment_id: currentId },
+          orderBy: { created_at: 'desc' },
+          select: { or_number: true },
+        });
+      if (receipt) return receipt.or_number;
+
+      const previous: { from_enrollment_id: string } | null =
+        await tx.enrollment_transfers.findFirst({
+          where: {
+            to_enrollment_id: currentId,
+            type: enrollment_transfer_type_enum.PROGRAM_CHANGE,
+          },
+          select: { from_enrollment_id: true },
+        });
+      currentId = previous?.from_enrollment_id;
+    }
+
+    return null;
+  }
+
+  /** Writes the history row, in the same transaction as the change it records. */
+  private async recordTransfer(
+    tx: Prisma.TransactionClient,
+    data: Prisma.enrollment_transfersUncheckedCreateInput,
+  ) {
+    const row = await tx.enrollment_transfers.create({
+      data,
+      select: transferHistorySelect,
+    });
+    return toChangeHistoryEntry(row);
+  }
+
+  /** Every batch and program change of a trainee, newest first. Read-only. */
+  async getTraineeChangeHistory(traineeId: string) {
+    const trainee = await this.prisma.trainee.findUnique({
+      where: { id: traineeId },
+      select: { id: true },
+    });
+    if (!trainee) throw new NotFoundException('Trainee not found.');
+
+    const rows = await this.prisma.enrollment_transfers.findMany({
+      where: { trainee_id: traineeId },
+      orderBy: [{ created_at: 'desc' }, { id: 'desc' }],
+      select: transferHistorySelect,
+    });
+    return rows.map(toChangeHistoryEntry);
   }
 }

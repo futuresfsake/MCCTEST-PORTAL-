@@ -11,11 +11,12 @@ import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../auth/guards/roles.guard';
 import { Roles } from '../../../common/decorators/roles.decorator';
 import { Role } from '../../../common/enums/role.enum';
+import { EnrollmentsService } from '../../../enrollments/enrollments.service';
 import { TraineeListQueryDto } from '../../../trainee-information/dto/trainee-list-query.dto';
 import { TraineeInformationService } from '../../../trainee-information/trainee-information.service';
 
 /**
- * Read-only Trainee Information for registrars (MP-24).
+ * Read-only Trainee Information for registrars.
  * Registered after EnrollmentsController so its GET trainees/search keeps
  * matching before trainees/:id here.
  */
@@ -27,6 +28,7 @@ import { TraineeInformationService } from '../../../trainee-information/trainee-
 export class RegistrarTraineesController {
   constructor(
     private readonly traineeInformationService: TraineeInformationService,
+    private readonly enrollmentsService: EnrollmentsService,
   ) {}
 
   /** GET /api/registrar/trainees */
@@ -45,5 +47,11 @@ export class RegistrarTraineesController {
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.traineeInformationService.getTraineeProfile(id);
+  }
+
+  /** GET /api/registrar/trainees/:traineeId/change-history (read-only) */
+  @Get(':traineeId/change-history')
+  getChangeHistory(@Param('traineeId', ParseUUIDPipe) traineeId: string) {
+    return this.enrollmentsService.getTraineeChangeHistory(traineeId);
   }
 }

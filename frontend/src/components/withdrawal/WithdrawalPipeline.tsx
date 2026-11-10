@@ -1,6 +1,12 @@
 import { Check, Clock, Minus, X } from 'lucide-react'
 import type { WithdrawalDetail } from '../../types/withdrawal.type'
-import { buildPipeline, formatDateTime, type PipelineStage, type StageState } from './withdrawal-pipeline'
+import {
+  buildPipeline,
+  formatDateTime,
+  type PipelineAudience,
+  type PipelineStage,
+  type StageState,
+} from './withdrawal-pipeline'
 
 const DOT: Record<StageState, string> = {
   done: 'border-green-600 bg-green-600 text-white',
@@ -71,14 +77,29 @@ function Stage({ stage, last }: { stage: PipelineStage; last: boolean }) {
             {stage.key === 'request' ? `Reason: ${stage.note}` : `Reason given: ${stage.note}`}
           </p>
         )}
+        {stage.hint && (
+          <p className="mt-2 border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-900">
+            {stage.hint}
+          </p>
+        )}
       </div>
     </li>
   )
 }
 
-/** The four stages of a withdrawal request, in order, with who acted and when. */
-export default function WithdrawalPipeline({ detail }: { detail: WithdrawalDetail }) {
-  const stages = buildPipeline(detail)
+/**
+ * The four stages of a withdrawal request, in order, with who acted and when.
+ * `audience` only changes the wording of the "what happens next" line: the
+ * trainee is told what to do, staff are told what is being waited for.
+ */
+export default function WithdrawalPipeline({
+  detail,
+  audience = 'trainee',
+}: {
+  detail: WithdrawalDetail
+  audience?: PipelineAudience
+}) {
+  const stages = buildPipeline(detail, audience)
   return (
     <ol aria-label="Withdrawal approval progress">
       {stages.map((stage, index) => (

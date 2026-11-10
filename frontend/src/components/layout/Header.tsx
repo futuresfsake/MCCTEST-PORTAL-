@@ -1,11 +1,12 @@
 // frontend\src\components\layout\Header.tsx
 import { useAuth } from '../../context/AuthContext'
+import { Link } from 'react-router-dom'
 import mcctestLogo from '../../assets/mcctest-logo.png'
 import SignOutButton from '../auth/SignOutButton'
 import AnnouncementBell from '../Announcements/AnnouncementBell'
 
 function Header() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm">
@@ -67,6 +68,11 @@ function Header() {
         {isAuthenticated ? (
           <div className="flex items-center gap-3">
             <AnnouncementBell />
+            {user?.role === 'TRAINEE' && (
+              <Link to="/trainee/profile" aria-label="Open your profile" className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-sm font-bold text-blue-900">
+                {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" /> : `${user.firstName[0] ?? ''}${user.lastName[0] ?? ''}`}
+              </Link>
+            )}
             <SignOutButton />
           </div>
         ) : (
