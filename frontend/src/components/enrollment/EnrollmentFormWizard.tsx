@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import type { EnrollmentFormData, TraineeData, RequirementChecklistData, BatchInfo } from '../../types/enrollment.type';
 import { useEnrollmentApi } from '../../context/EnrollmentApiContext';
 import EnrollmentStatusBadge from './EnrollmentStatusBadge';
+import { getUniformAvailability } from '../../api/inventory.api';
 
 interface EnrollmentFormWizardProps {
   onSuccess: (result: any) => void;
@@ -35,7 +36,9 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
   onCancel,
 }) => {
   // API calls for this page's role (registrar or admin routes)
-  const { createEnrollment } = useEnrollmentApi();  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { createEnrollment } = useEnrollmentApi();
+  const [selectedBatchProgramId, setSelectedBatchProgramId] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [successResult, setSuccessResult] = useState<any>(null);
@@ -194,11 +197,9 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
               <i className="fas fa-check text-green-600 text-2xl"></i>
             </div>
           </div>
-
           <h2 className="text-2xl font-bold text-slate-900 mb-2">
             Enrollment Created Successfully!
           </h2>
-
           <p className="text-slate-600 mb-6">
             The enrollment has been successfully processed and committed to the database.
           </p>
@@ -299,7 +300,21 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
 
       <section className="bg-white border border-slate-200 rounded-lg p-5">
         <SectionHeading step="2" title="Training Batch Selection" subtitle="Choose an available batch." tone="indigo" />
-        <Step2BatchSelection traineeId={formData.trainee.id} batchId={formData.batchId} onBatchChange={(batchId) => setFormData((prev) => ({ ...prev, batchId }))} />
+        <Step2BatchSelection
+          traineeId={formData.trainee.id}
+          batchId={formData.batchId}
+          onBatchChange={(batchId, programId) => {
+            setFormData((prev) => ({
+              ...prev,
+              batchId,
+              uniformGiven:
+                programId !== selectedBatchProgramId
+                  ? false
+                  : prev.uniformGiven,
+            }));
+            setSelectedBatchProgramId(programId);
+          }}
+        />
       </section>
 
       <section className="bg-white border border-slate-200 rounded-lg p-5">
@@ -310,10 +325,19 @@ const EnrollmentFormWizard: React.FC<EnrollmentFormWizardProps> = ({
       <section className="bg-white border border-slate-200 rounded-lg p-5">
         <SectionHeading step="4" title="Uniform Size and Distribution" subtitle="The selected size and handover decision are committed with the enrollment." tone="emerald" />
         <Step4UniformId
+          programId={selectedBatchProgramId}
           uniformSize={formData.uniformSize}
           uniformGiven={formData.uniformGiven}
-          onUniformChange={(uniformSize) => setFormData((prev) => ({ ...prev, uniformSize: uniformSize as EnrollmentFormData['uniformSize'] }))}
-          onUniformGivenChange={(uniformGiven) => setFormData((prev) => ({ ...prev, uniformGiven }))}
+          onUniformChange={(uniformSize) =>
+            setFormData((prev) => ({
+              ...prev,
+              uniformSize: uniformSize as EnrollmentFormData['uniformSize'],
+              uniformGiven: false,
+            }))
+          }
+          onUniformGivenChange={(uniformGiven) =>
+            setFormData((prev) => ({ ...prev, uniformGiven }))
+          }
         />
       </section>
 
@@ -372,7 +396,6 @@ const Step1TraineeInfo: React.FC<{
   const { searchTrainees } = useEnrollmentApi();  const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
-
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.length < 2) {
@@ -490,7 +513,6 @@ const Step1TraineeInfo: React.FC<{
           </div>
         </Field>
       </div>
-
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <Field label="Street Address "><input type="text" placeholder="Purok / street name" value={traineeData.streetAddress} onChange={(e) => onTraineeChange({ streetAddress: e.target.value })} className={inputClass} /></Field>
           <Field label="Barangay "><input type="text" placeholder="Barangay" value={traineeData.barangay} onChange={(e) => onTraineeChange({ barangay: e.target.value })} className={fieldClass(missingFields.has('Barangay'))} /></Field>
@@ -515,6 +537,7 @@ const Step1TraineeInfo: React.FC<{
           <SelectField label="Employment Type " value={traineeData.employmentType} invalid={missingFields.has('Employment Type')} onChange={(value) => onTraineeChange({ employmentType: value as TraineeData['employmentType'] })} options={[['FULL_TIME', 'Full Time'], ['PART_TIME', 'Part Time'], ['CASUAL', 'Casual'], ['CONTRACTUAL', 'Contractual'], ['SEASONAL', 'Seasonal'], ['NA', 'N/A']]} />
           <label className="flex h-10 items-center gap-2 self-end text-xs font-medium text-slate-700"><input type="checkbox" checked={traineeData.pwd} onChange={(e) => onTraineeChange({ pwd: e.target.checked })} className="h-4 w-4 rounded border-slate-300" /> PWD (Person with Disability)</label>
         </div>
+
         <div className="mt-4 border-t border-slate-200 pt-4">
           <h3 className="mb-3 text-sm font-semibold text-slate-900">Beneficiary</h3>
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -538,7 +561,6 @@ const fieldClass = (invalid: boolean) => `${inputClass} ${invalid ? 'border-blue
 const formatMissingFields = (fields: string[]) => fields.length === 1
   ? fields[0]
   : `${fields.slice(0, -1).join(', ')}, and ${fields[fields.length - 1]}`;
-
 const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <label className="block text-xs font-semibold text-slate-700">
     <span className="mb-1.5 block">{label}</span>
@@ -567,7 +589,7 @@ const SelectField: React.FC<{
 const Step2BatchSelection: React.FC<{
   traineeId?: string;
   batchId: string;
-  onBatchChange: (batchId: string) => void;
+  onBatchChange: (batchId: string, programId: string) => void;
 }> = ({ traineeId, batchId, onBatchChange }) => {
   // API calls for this page's role (registrar or admin routes)
   const { getAvailableBatches } = useEnrollmentApi();  const [batches, setBatches] = useState<BatchInfo[]>([]);
@@ -591,7 +613,6 @@ const Step2BatchSelection: React.FC<{
       setIsLoading(false);
     }
   }, [getAvailableBatches, traineeId]);
-
   React.useEffect(() => {
     void loadBatches();
   }, [loadBatches]);
@@ -600,10 +621,9 @@ const Step2BatchSelection: React.FC<{
   // Runs only after loading, and stops once the selection has been cleared.
   React.useEffect(() => {
     if (!isLoading && batchId && !batches.some((batch) => batch.id === batchId && batch.eligible)) {
-      onBatchChange('');
+      onBatchChange('', '');
     }
   }, [isLoading, batches, batchId, onBatchChange]);
-
   // One entry per program that has an open batch, built from the batches themselves
   const programSummaries = Array.from(
     batches.reduce((summaries, batch) => {
@@ -669,7 +689,7 @@ const Step2BatchSelection: React.FC<{
           </button>
         </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,2fr)\_minmax(0,3fr)]">
           {/* Program box */}
           <section className="rounded-md border border-slate-200" aria-label="Programs">
             <div className="flex items-center gap-2 border-b border-slate-200 p-3">
@@ -689,7 +709,7 @@ const Step2BatchSelection: React.FC<{
                 <button
                   key={program.id}
                   type="button"
-                  onClick={() => { if (program.id !== selectedProgramId) { setSelectedProgramId(program.id); onBatchChange(''); } }}
+                  onClick={() => { if (program.id !== selectedProgramId) { setSelectedProgramId(program.id); onBatchChange('', ''); } }}
                   aria-pressed={program.id === selectedProgramId}
                   className={`block w-full px-3 py-2.5 text-left transition ${program.id === selectedProgramId ? 'bg-blue-50 ring-1 ring-inset ring-blue-700' : 'hover:bg-slate-50'}`}
                 >
@@ -723,9 +743,10 @@ const Step2BatchSelection: React.FC<{
                       {!batch.eligible && <span className="mt-1 block text-xs font-medium">{batch.blockedReason}</span>}
                     </span>
                   );
+
                   return batch.eligible ? (
                     <label key={batch.id} className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 text-sm transition ${batchId === batch.id ? 'border-blue-700 bg-blue-50 text-blue-900' : 'border-slate-200 text-slate-700 hover:bg-slate-50'}`}>
-                      <input type="radio" name="batch" value={batch.id} checked={batchId === batch.id} onChange={(event) => onBatchChange(event.target.value)} className="mt-1 h-3.5 w-3.5" />
+                      <input type="radio" name="batch" value={batch.id} checked={batchId === batch.id} onChange={() => onBatchChange(batch.id, batch.programId)} className="mt-1 h-3.5 w-3.5" />
                       {details}
                     </label>
                   ) : (
@@ -789,28 +810,116 @@ const Step3DocumentChecklist: React.FC<{
  * Step 4: Uniform & ID
  */
 const Step4UniformId: React.FC<{
+  programId: string;
   uniformSize: string;
   uniformGiven: boolean;
   onUniformChange: (size: string) => void;
   onUniformGivenChange: (given: boolean) => void;
-}> = ({ uniformSize, uniformGiven, onUniformChange, onUniformGivenChange }) => {
+}> = ({
+  programId,
+  uniformSize,
+  uniformGiven,
+  onUniformChange,
+  onUniformGivenChange,
+}) => {
   const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+
+  const [stockState, setStockState] = useState<{
+    programId: string;
+    size: string;
+    status: 'loading' | 'success' | 'error';
+    quantity?: number;
+    message?: string;
+  } | null>(null);
+
+  React.useEffect(() => {
+    if (!programId) {
+      setStockState(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    setStockState({
+      programId,
+      size: uniformSize,
+      status: 'loading',
+    });
+
+    const loadAvailability = async () => {
+      try {
+        const result = await getUniformAvailability(
+          programId,
+          uniformSize,
+          controller.signal,
+        );
+
+        if (controller.signal.aborted) return;
+
+        setStockState({
+          programId,
+          size: uniformSize,
+          status: 'success',
+          quantity: result.available_quantity,
+        });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+
+        setStockState({
+          programId,
+          size: uniformSize,
+          status: 'error',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Failed to check uniform availability.',
+        });
+      }
+    };
+
+    void loadAvailability();
+
+    return () => controller.abort();
+  }, [programId, uniformSize]);
+
+  // Ignore a previous request's result while the current selection is loading.
+  const isCurrentStock =
+    stockState?.programId === programId &&
+    stockState?.size === uniformSize;
+
+  const isLoadingStock =
+    Boolean(programId) &&
+    (!isCurrentStock || stockState?.status === 'loading');
+
+  const availableQuantity =
+    isCurrentStock && stockState?.status === 'success'
+      ? stockState.quantity ?? 0
+      : null;
+
+  const stockError =
+    isCurrentStock && stockState?.status === 'error'
+      ? stockState.message
+      : null;
+
+  const isOutOfStock = availableQuantity === 0;
+  const canDistribute = availableQuantity !== null && availableQuantity > 0;
 
   return (
     <div className="space-y-4">
-
       <div>
-        <p className="mb-2 text-xs font-semibold text-slate-700">Uniform Size *</p>
+        <p className="mb-2 text-xs font-semibold text-slate-700">
+          Uniform Size *
+        </p>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-7">
           {sizes.map((size) => (
             <button
               key={size}
               type="button"
               onClick={() => onUniformChange(size)}
-                className={`h-10 rounded-md font-semibold text-xs transition ${
+              className={`h-10 rounded-md border-2 font-semibold text-xs transition ${
                 uniformSize === size
-                  ? 'bg-blue-900 text-white border-2 border-blue-900'
-                  : 'bg-white border-2 border-slate-300 text-slate-900 hover:border-slate-400'
+                  ? 'bg-blue-900 text-white border-blue-900'
+                  : 'bg-white border-slate-300 text-slate-900 hover:border-slate-400'
               }`}
             >
               {size}
@@ -819,14 +928,88 @@ const Step4UniformId: React.FC<{
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className={`flex items-start gap-3 border rounded-md p-3 cursor-pointer ${uniformGiven ? 'border-emerald-600 bg-emerald-50' : 'border-slate-200'}`}>
-          <input type="radio" name="uniformGiven" checked={uniformGiven} onChange={() => onUniformGivenChange(true)} className="mt-1" />
-          <span><strong className="block text-sm text-slate-900">Distributed now</strong><span className="text-xs text-slate-600">The uniform is in stock and handed to the trainee during enrollment.</span></span>
+      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+        <p className="text-xs font-semibold text-slate-700">
+          Stock Availability
+        </p>
+
+        {!programId ? (
+          <p className="mt-1 text-xs text-slate-500">
+            Select a training batch to check uniform availability.
+          </p>
+        ) : isLoadingStock ? (
+          <p className="mt-1 text-xs text-slate-500">
+            Checking available stock...
+          </p>
+        ) : stockError ? (
+          <p className="mt-1 text-xs text-red-600">
+            Unable to check stock: {stockError}
+          </p>
+        ) : availableQuantity !== null ? (
+          <p
+            className={`mt-1 text-sm font-medium ${
+              isOutOfStock ? 'text-red-600' : 'text-emerald-700'
+            }`}
+          >
+            {isOutOfStock
+              ? `Size ${uniformSize} is out of stock.`
+              : `${availableQuantity} unit(s) available for size ${uniformSize}.`}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <label
+          className={`flex items-start gap-3 rounded-md border p-3 ${
+            uniformGiven
+              ? 'border-emerald-600 bg-emerald-50'
+              : canDistribute
+                ? 'cursor-pointer border-slate-200'
+                : 'cursor-not-allowed border-slate-200 bg-slate-50 opacity-60'
+          }`}
+        >
+          <input
+            type="radio"
+            name="uniformGiven"
+            checked={uniformGiven}
+            disabled={!canDistribute}
+            onChange={() => onUniformGivenChange(true)}
+            className="mt-1"
+          />
+          <span>
+            <strong className="block text-sm text-slate-900">
+              Distributed now
+            </strong>
+            <span className="text-xs text-slate-600">
+              {canDistribute
+                ? 'The uniform is in stock and handed to the trainee during enrollment.'
+                : 'Unavailable until stock is confirmed for the selected size.'}
+            </span>
+          </span>
         </label>
-        <label className={`flex items-start gap-3 border rounded-md p-3 cursor-pointer ${!uniformGiven ? 'border-slate-600 bg-slate-50' : 'border-slate-200'}`}>
-          <input type="radio" name="uniformGiven" checked={!uniformGiven} onChange={() => onUniformGivenChange(false)} className="mt-1" />
-          <span><strong className="block text-sm text-slate-900">Not distributed</strong><span className="text-xs text-slate-600">Keep the requested size on the enrollment for later distribution.</span></span>
+
+        <label
+          className={`flex cursor-pointer items-start gap-3 rounded-md border p-3 ${
+            !uniformGiven
+              ? 'border-slate-600 bg-slate-50'
+              : 'border-slate-200'
+          }`}
+        >
+          <input
+            type="radio"
+            name="uniformGiven"
+            checked={!uniformGiven}
+            onChange={() => onUniformGivenChange(false)}
+            className="mt-1"
+          />
+          <span>
+            <strong className="block text-sm text-slate-900">
+              Not distributed
+            </strong>
+            <span className="text-xs text-slate-600">
+              Keep the requested size on the enrollment for later distribution.
+            </span>
+          </span>
         </label>
       </div>
     </div>
@@ -876,7 +1059,6 @@ const Step5Review: React.FC<{
   formData: EnrollmentFormData;
 }> = ({ formData }) => {
   const traineeFullName = `${formData.trainee.firstName} ${formData.trainee.middleName} ${formData.trainee.lastName}`.trim();
-
   return (
     <div className="space-y-4">
       <div className="space-y-3">
@@ -929,7 +1111,6 @@ const Step5Review: React.FC<{
             })}
           </div>
         </div>
-
         {/* Uniform Size */}
         <div className="border border-slate-200 rounded-md p-3">
           <h4 className="text-xs font-bold uppercase tracking-wide text-slate-600 mb-1">Uniform</h4>
@@ -955,7 +1136,6 @@ const Step5Review: React.FC<{
           </div>
         </div>
       </div>
-
       <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
         <p className="text-xs text-yellow-900 font-medium">
           Please review all information carefully before submitting. Changes cannot be made after submission.
