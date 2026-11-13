@@ -473,6 +473,11 @@ const sidebarConfig: Record<
             path: '/registrar/withdrawal-requests',
             icon: 'fa-solid fa-right-from-bracket',
           },
+          {
+            label: 'Uniform Distribution',
+            path: '/registrar/uniform-distribution',
+            icon: 'fa-solid fa-shirt',
+          },
         ],
       },
     ],
