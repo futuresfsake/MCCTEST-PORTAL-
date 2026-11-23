@@ -45,7 +45,7 @@ backlogs/
     uniform-distribution/acceptance.md           — MP-53: Uniform Distribution page, Registrar only (BUILT on branch, PR #106 open). Audit: registrar/uniform-distribution/audit-dod.md (2026-11-23): 22 PASS, 1 PARTIAL, 1 NOT MET, not ready to merge
     uniform-restock-reminder/acceptance.md       — MP-59: Registrar reminds the Admin to order more uniforms (NOT STARTED)
   trainer/
-    dashboard/acceptance.md                      — MP-65: Trainer Dashboard (placeholder is built, the real dashboard is NOT STARTED). 34 criteria, 14 test cases
+    dashboard/acceptance.md                      — MP-65: Trainer Dashboard (placeholder is built, the real dashboard is NOT STARTED). 40 criteria, 15 test cases
     trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
     notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
     clearance/acceptance.md                      — MP-61: Clearance and Certificate Request, Trainer validates (first step) (NOT STARTED). 24 criteria, 10 test cases
