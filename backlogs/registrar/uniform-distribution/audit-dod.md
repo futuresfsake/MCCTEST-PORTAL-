@@ -12,6 +12,8 @@
 
 ## Verdict
 
+**Update 2026-11-23, same day: three of the four blockers are fixed and re-checked (F-1, F-2, F-4). The unit tests (F-3) were written and run locally but are not committed. See section 13.** The text below is the original audit and is kept as the record.
+
 **Not ready to merge.** The feature works. The distribution logic is correct under every case tried, including two people at once. Four things stop the merge:
 
 1. **The branch edits a migration that is already applied (F-1, High).** It removes two `DROP INDEX` lines from `20261022_inventory_unique_program_size/migration.sql`. That reverses `d78af8f` on `dev`, which restored this file on purpose. The edit is unrelated to uniforms and Prisma will see a changed checksum. Revert the file.
@@ -212,3 +214,45 @@ The shared database holds 5 given uniforms, each with its history row and size, 
 5. Re-run backend lint, build and tests, then update PR #106.
 6. Review and merge into `dev`. Update the backlog statuses and the Jira ticket.
 7. Open a browser check of the page as a Registrar (not done in this audit).
+
+## 13. Re-check after the fixes (2026-11-23)
+
+The branch was updated at the project leader's request: `dev` merged in (`ecc903d`, docs only, no conflicts), then fix commits on top: `1495d65` (F-1) and `bd87dda` (F-2, F-4). The unit tests for F-3 were written and run, but **by the project leader's decision the spec files and the test data are not committed or pushed**.
+
+| Finding | Result | Evidence |
+|---|---|---|
+| F-1 applied migration edited | **Fixed** | `20261022_inventory_unique_program_size/migration.sql` restored from `origin/dev`. `git diff origin/dev -- backend-nestjs/prisma` is empty, so the branch has no migration change |
+| F-2 waiting count with inactive on | **Fixed** | The waiting count always adds `enrollment_status NOT IN (WITHDRAWN, DROPPED, COMPLETED)`. Live, fresh database: default view waiting 1; with `includeInactive=true` 3 inactive rows are listed and waiting is still 1. Before the fix it counted the inactive rows too. The `given` count is unchanged on purpose: a uniform handed to a trainee who later withdrew was still given (it matches the DISTRIBUTED history) |
+| F-3 no unit tests | **Open in the repo** (written locally) | 3 spec files, 62 tests (service 23, DTOs 33, controller 6), fake database and fake data only, all passing and lint clean. **Not committed or pushed**, by decision. The repo still has no unit tests for the new code. The files are kept locally and can be added to the branch later |
+| F-4 backend lint errors | **Fixed** | `eslint` on the whole backend: 0 errors (was 16). The unnecessary `as size_enum` is removed and the files follow the project formatting |
+| F-5 `%` search matches all rows | Open (existing) | Same cause as TECH-06. The end-to-end check 6c still fails as before |
+| F-6 filters not in the URL | Open (Low) | Not changed |
+| F-7, F-8, F-9 docs and scope | F-9 done | Statuses in `acceptance.md` updated (24 of 24 PASS). F-7 and F-8 still open (see D-1 and D-2) |
+| F-10, F-11 existing | Open (existing) | Unchanged |
+
+### Break-it check on the local tests
+
+13 deliberate bugs were put into the service one at a time and the tests run after each (the file was restored after each and confirmed byte for byte): remove the 409 already-given check, allow any enrollment status, skip the row lock, waiting count includes inactive (the F-2 bug), show inactive by default, wrong page offset, change the default page size, skip the 404 for a missing batch, deduct stock with the wrong id, forget `distributed_by` on create, case-sensitive card number search, never mark rows inactive, wrong page count. **13 of 13 caught.** No weak test was found.
+
+### Engineering checks (re-run)
+
+| Check | Result |
+|---|---|
+| Backend `eslint` (whole project, no fix) | PASS, 0 errors |
+| Backend `tsc --noEmit` and `nest build` | PASS |
+| Backend `prisma validate` | PASS |
+| Backend `jest` | PASS locally, 15 suites, 164 tests (102 existing in 12 suites, plus 62 in 3 local spec files that are **not committed**; the committed branch has the 12 existing suites). The audit counted 14 suites and 167 tests because two untracked withdrawal spec files were in the working tree that day. They are not there now and are not part of the repo |
+| Frontend `eslint`, `tsc -b`, `vite build` | PASS (no frontend file changed) |
+| Fresh database | PASS. All 14 migrations applied from nothing (throwaway Postgres 17 in Docker), `prisma migrate diff` shows only the known TECH-03 drift (3 enums, 5 trainer columns) and no index differences |
+| End-to-end run on the fresh database | 35 of 36 checks PASS. The one failure is 6c (literal `%`), the existing F-5 |
+
+### Still open
+
+1. **Unit tests (F-3):** written and verified locally, not committed. Commit them before merge if the project leader agrees, or accept the gap.
+2. Review and merge of PR #106 (the "code reviewed and merged" item stays NOT DONE).
+3. A browser check of the page as a Registrar, still not done.
+4. F-6 (filters in the URL), F-5 (TECH-06), D-1 and D-2 decisions, and the Jira status.
+
+### Where the test data lived and what was removed
+
+The throwaway Postgres container `mp53_pg` (port 55433) held all test data and was removed with its volume (`docker rm -f -v`). Neither the test data nor the spec files were pushed. The test backend ran on port 3100 against that container only (a login of a seeded user that exists only there proved it) and was stopped. The shared Supabase database was not touched. The seed script, test passwords and test scripts stay in the scratchpad, not in the repo. A search of the repository outside `backlogs/` finds none of the seeded names, ids or passwords.
