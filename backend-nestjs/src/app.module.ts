@@ -28,6 +28,7 @@ import { TrainerWithdrawalModule } from './users/trainer/withdrawal/trainer-with
 import { RegistrarWithdrawalModule } from './users/registrar/withdrawal/registrar-withdrawal.module';
 import { AdminWithdrawalModule } from './users/admin/withdrawal/admin-withdrawal.module';
 import { EncoderTraineesModule } from './users/encoder/trainee-information/trainees.module';
+import { TrainerModule } from './users/trainer/trainer.module';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { EncoderTraineesModule } from './users/encoder/trainee-information/train
     RegistrarWithdrawalModule,
     AdminWithdrawalModule,
     EncoderTraineesModule,
+    TrainerModule,
   ],
 
   controllers: [SessionsController, AppController],
