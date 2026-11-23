@@ -46,7 +46,7 @@
 | 1 | Must the Encoder type the control number to release? | **Assumed:** yes, it must match the request. It ties the release to the stub the trainee presents |
 | 2 | Can the release date be changed after processing? | **Assumed:** yes, while `PROCESSED`, with a remark. Each change is logged |
 | 3 | What if the Encoder finds a problem with a request? | **Assumed:** nothing in the system. No reject, no hold, no send-back. The Encoder contacts the Trainer or the Registrar |
-| 4 | Is the certificate file made here? | **Answered 2026-11-23:** no. It is MP-64. **Assumed:** once MP-64 ships, Process also requires every requested certificate (COC, COT) to be generated first (MP-64 CG-24). Until then Process works without it |
+| 4 | Is the certificate file made here? | **Answered 2026-11-23:** no. It is MP-64. Whether Process also requires every requested certificate (COC, COT) to be generated first is **TBA** (MP-64 CG-24). Until it is decided, Process works without it |
 | 5 | Should the release log be exportable to Excel? | **Assumed:** later. A printable record per request for now |
 | 6 | Can someone else claim for the trainee? | **Assumed:** not handled. The request is released against the control number on the stub |
 
@@ -145,7 +145,7 @@
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
 | CE-12 | The encoder can process only a `REGISTRAR_VALIDATED` request. `PENDING_VALIDATION`, `TRAINER_VALIDATED`, `PROCESSED`, `RELEASED`, `REJECTED` and `CANCELLED` return 400 and change nothing. The Trainer and the Registrar cannot be skipped | NOT STARTED | |
-| CE-13 | Process needs a schedule release date that is today or later. A missing, malformed or past date returns 400. Remarks are optional and have a length limit. After MP-64 ships, Process also returns 400 unless every requested certificate has been generated | NOT STARTED | Changed by MP-64 CG-24 |
+| CE-13 | Process needs a schedule release date that is today or later. A missing, malformed or past date returns 400. Remarks are optional and have a length limit. Whether Process also needs the certificate generated first is TBA | NOT STARTED | TBA, see MP-64 CG-24 |
 | CE-14 | Process sets `PROCESSED` and saves `schedule`, `encoder_processed_by` and `encoder_processed_at`. The client cannot set the status, another user as the processor, or the Trainer, Registrar or release fields | NOT STARTED | |
 | CE-15 | After processing, the trainee sees the claim stub with the schedule release date (MP-60 CL-18) | NOT STARTED | |
 | CE-16 | While the request is `PROCESSED` the encoder can change the date to today or later, with a remark. The status stays `PROCESSED`, the trainee's stub shows the new date, and the change is logged. A request in any other status returns 400 | NOT STARTED | Open question 2 |

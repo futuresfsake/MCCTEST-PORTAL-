@@ -6,10 +6,11 @@
 | **Type** | Feature (a certificate module in the backend, and a Certificates section in the Encoder panel) |
 | **Status** | NOT STARTED |
 | **Assignee** | Chelsea Cllj (Jira default, reassign if needed) |
-| **Depends on** | MP-60 (the form and the status values), MP-61 and MP-62 (the Trainer and Registrar validations), MP-63 (the Encoder page, Process and Release). The real template artwork from MCCTEST (open question 1) |
+| **Depends on** | MP-60 (the form and the status values), MP-61 and MP-62 (the Trainer and Registrar validations), MP-63 (the Encoder page, Process and Release). The real template artwork from MCCTEST, **not supplied yet (TBA)**, see open question 1 |
 | **Related** | FUNC-010 (certificate management) and FUNC-017 (public certificate verification, later). The paper, Figure 36 (automated certificate generation) and Figures 26 to 29 (Encoder interfaces) |
 | **Interface** | The Certificates section in the side panel of `/encoder/clearance-requests` (MP-63). No new page |
 | **Added** | 2026-11-23 |
+| **TBA (to be announced)** | Four things are not decided yet: the **real template** (not supplied yet), the **certificate control number format**, the **paper size and orientation**, and **whether Process (MP-63) needs the certificate generated first**. See the Open Questions. The build can start with a placeholder template and settings that can change without touching the code |
 
 ---
 
@@ -53,18 +54,18 @@ The API enforces the same table. The button is only the screen.
 | **Certificate control number** | Made by the system (see below) |
 | Signature lines with the printed names of the signatories | Fixed on the template. The lines are blank for the physical signatures |
 
-**Certificate control number:** the program's `control_number_prefix`, the year and a running sequence from `ctrl_num_seq` (sequence type `CERTIFICATE`), for example `PREFIX-26-0001`. Unique. A gap is allowed (a failed generation may use a number). The exact format is open question 2.
+**Certificate control number:** made by the system from a running sequence in `ctrl_num_seq` (sequence type `CERTIFICATE`). Unique. A gap is allowed (a failed generation may use a number). **The format is TBA** (open question 2). Until it is decided the build uses the program's `control_number_prefix`, the year and the sequence as a placeholder.
 
 ## Open Questions
 
 | # | Question | Assumption until answered |
 |---|----------|---------------------------|
-| 1 | Who provides the template artwork and wording? | **Assumed:** MCCTEST provides the real design (it is made in Canva today). A plain placeholder template is seeded for COC and COT so the feature can be built and tested. The field positions are set with each template |
-| 2 | What is the certificate control number format? | **Assumed:** program prefix, two-digit year and a four-digit sequence. The paper's examples ("MCCTEST-221", "COC 01-2") need MCCTEST's confirmation |
+| 1 | The real template (artwork and wording) | **Not supplied yet (TBA).** MCCTEST makes it in Canva today. Until it is supplied, a plain placeholder template is seeded for COC and COT so the feature can be built and tested. The field positions are set with each template, so swapping in the real one needs no code change (CG-23) |
+| 2 | The certificate control number format | **TBA.** The paper's examples ("MCCTEST-221", "COC 01-2") need MCCTEST's confirmation. The format is kept in one place, so it can change without touching the rest |
 | 3 | Who signs, and is a signature image printed? | **Assumed:** no. The names and titles are printed and the lines are left blank, because the paper says physical signatures are added after printing (Figure 36) |
-| 4 | Paper size and orientation? | **Assumed:** A4 landscape. To confirm with MCCTEST's printer |
+| 4 | Paper size and orientation | **TBA.** To confirm with MCCTEST's printer. The size and orientation are a setting on the template, not fixed in the code |
 | 5 | What about "Other" and the National Certificate? | **Assumed:** not generated. "Other" has no template. A National Certificate (NC) is TESDA's to issue (interview), so the system only tracks it |
-| 6 | Does Process (MP-63) need the certificate generated first? | **Assumed:** yes, once this ships. Process needs every requested COC or COT generated. Until then MP-63 works without it |
+| 6 | Does Process (MP-63) need the certificate generated first? | **TBA.** Until it is decided, Process (MP-63) does not require it, and generating is a separate click |
 | 7 | Is the PDF stored, or made again each time? | **Assumed:** stored in private storage, so a reprint is identical even if the template changes later. Adds a `file_path` column |
 | 8 | Can the trainee download the certificate? | **Assumed:** no. The trainee gets the paper certificate at release. A download comes later |
 | 9 | Can an Admin manage templates? | **Assumed:** later. For now templates are seeded and changed by a developer |
@@ -152,7 +153,7 @@ The API enforces the same table. The button is only the screen.
 | CG-6 | The student's name is filled in automatically from the trainee record, in capitals, as first, middle and last name. Accents, `ñ`, hyphens and apostrophes print correctly | NOT STARTED | |
 | CG-7 | The template also shows the program name, the certificate title, the training dates (batch start and end), the total training hours (only when set), the date issued and the certificate control number, all from the records | NOT STARTED | |
 | CG-8 | A long name or a long program name fits on the template (the text shrinks or wraps within its area). Nothing is cut off or overlaps another field | NOT STARTED | |
-| CG-9 | The certificate control number is made from the program prefix, the year and a sequence (`ctrl_num_seq`). It is unique, also when two certificates are generated at the same moment | NOT STARTED | Open question 2 |
+| CG-9 | The certificate control number is made by the system from a sequence (`ctrl_num_seq`). It is unique, also when two certificates are generated at the same moment. The format is TBA | NOT STARTED | Open question 2 (TBA) |
 | CG-10 | Each certificate saves a `generated_certificate` record: the clearance, the enrollment, the type, the template, the date generated, `release_status = PENDING`, the control number, who generated it and the file path | NOT STARTED | |
 | CG-11 | There is one active certificate per request per type. A second click returns 409 "already generated" and creates no duplicate | NOT STARTED | Partial unique index |
 | CG-12 | A request that asks only for "Other" or a National Certificate has nothing to generate: the button is disabled with "Prepared outside the system". If it asks for COC and Other, only the COC is generated and "Other" shows "Prepared outside the system" | NOT STARTED | Open question 5 |
@@ -165,7 +166,7 @@ The API enforces the same table. The button is only the screen.
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
 | CG-16 | After generating, the panel shows a preview of each certificate with the student's name | NOT STARTED | |
-| CG-17 | **Print** opens the certificate in a print dialog at the right paper size and orientation (A4 landscape), with nothing cropped | NOT STARTED | Open question 4 |
+| CG-17 | **Print** opens the certificate in a print dialog at the template's paper size and orientation, with nothing cropped | NOT STARTED | Paper size TBA, open question 4 |
 | CG-18 | **Export PDF** downloads one PDF named `<certificate control number> - <student name>.pdf`. It is a single page, opens in a normal viewer, has the fonts embedded and the text can be selected | NOT STARTED | |
 | CG-19 | Print and Export give exactly the same file every time, including after the template is changed later, because the PDF is stored | NOT STARTED | Open question 7 |
 | CG-20 | View, Print and Export work for an already generated certificate in `REGISTRAR_VALIDATED`, `PROCESSED` and `RELEASED` | NOT STARTED | |
@@ -175,14 +176,14 @@ The API enforces the same table. The button is only the screen.
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| CG-22 | Templates are rows in `certificates` (type, name, image, `is_active`, `layout`). One active template each for COC and COT is seeded. Generation uses the active one for the type | NOT STARTED | Open question 1 |
+| CG-22 | Templates are rows in `certificates` (type, name, image, `is_active`, `layout`). One active template each for COC and COT is seeded. Generation uses the active one for the type | NOT STARTED | Open question 1 (the real template is not supplied yet) |
 | CG-23 | The positions and sizes of the fields come from the template's `layout`. A new template with a different layout needs no change in the renderer code. The signature lines are left blank for physical signatures | NOT STARTED | Open question 3 |
 
 ### In the Pipeline
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| CG-24 | Once this ticket ships, **Process** (MP-63) returns 400 "Generate the certificate first" unless every requested COC or COT has been generated | NOT STARTED | Open question 6. Changes MP-63 CE-13 |
+| CG-24 | **TBA.** If it is decided that Process (MP-63) needs the certificate, then **Process** returns 400 "Generate the certificate first" unless every requested COC or COT has been generated. Until decided, Process does not require it | NOT STARTED | Open question 6 (TBA). Would change MP-63 CE-13 |
 | CG-25 | When the request is released (MP-63), its `generated_certificate` rows are set to `RELEASED` with `released_by` and `date_released`. A request cancelled or rejected after generation sets them to `CANCELLED` | NOT STARTED | |
 | CG-26 | A generated certificate can be found by its control number in the database, ready for the later public verification (FUNC-017). No public endpoint is added here | NOT STARTED | |
 
@@ -228,7 +229,7 @@ The API enforces the same table. The button is only the screen.
 
 ### TC-06: Print
 - **Steps:** Click Print on a generated certificate.
-- **Expected:** A print dialog opens with the certificate on one A4 landscape page, nothing cropped, no extra header or footer from the app.
+- **Expected:** A print dialog opens with the certificate on one page at the template's paper size (TBA), nothing cropped, no extra header or footer from the app.
 
 ### TC-07: Export PDF
 - **Steps:** Click Export PDF. Open the file. Try to select the name and search for the control number.
@@ -247,7 +248,7 @@ The API enforces the same table. The button is only the screen.
 - **Steps:** Call generate on requests in `PENDING_VALIDATION`, `TRAINER_VALIDATED`, `RELEASED`, `REJECTED` and `CANCELLED`.
 - **Expected:** 400 for every one. No certificate and no history row are created. No control number is used.
 
-### TC-11: Process needs the certificate
+### TC-11: Process needs the certificate (only if decided, TBA)
 - **Precondition:** A `REGISTRAR_VALIDATED` request with no certificate generated.
 - **Steps:** Try to Process it. Generate the certificate, then Process again.
 - **Expected:** The first returns 400 "Generate the certificate first". After generating, Process works and the request is `PROCESSED`.
