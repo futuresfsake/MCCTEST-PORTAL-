@@ -7,7 +7,7 @@
 | **Status** | NOT STARTED |
 | **Assignee** | Chelsea Cllj (Jira default, reassign if needed) |
 | **Depends on** | MP-60 (the form, the status values, `clearance_status_history`, the shared service), MP-61 (the Trainer step that feeds this one), MP-25 and MP-47 (payment history), MP-43 (requirements checklist), MP-53 (uniform distribution, for the info line). The Registrar step of the withdrawal (MP-47) is the pattern to copy |
-| **Related** | The Encoder step (separate ticket, to be created) |
+| **Related** | The Encoder step (MP-63) |
 | **Interface** | Registrar: `/registrar/clearance-requests`. "Clearance" sidebar link |
 | **Overview** | `shared/clearance-request/acceptance.md` (CL-23 to CL-26 there are the short version of this file) |
 | **Added** | 2026-11-23 |

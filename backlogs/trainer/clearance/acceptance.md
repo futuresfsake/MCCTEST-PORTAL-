@@ -7,7 +7,7 @@
 | **Status** | NOT STARTED |
 | **Assignee** | Chelsea Cllj (Jira default, reassign if needed) |
 | **Depends on** | MP-60 (the form, the status values, `clearance_status_history` and the shared service). Build MP-60 first. The Trainer step of the withdrawal (MP-48) is the pattern to copy |
-| **Related** | The Registrar step (MP-62) and the Encoder step (separate ticket, to be created). FUNC-006 and FUNC-007 (attendance and competency, for automatic checks later) |
+| **Related** | The Registrar step (MP-62) and the Encoder step (MP-63). FUNC-006 and FUNC-007 (attendance and competency, for automatic checks later) |
 | **Interface** | Trainer: `/trainer/clearance-requests`. "Clearance" sidebar link under Training |
 | **Overview** | `shared/clearance-request/acceptance.md` (CL-19 to CL-22 there are the short version of this file) |
 | **Added** | 2026-11-23 |

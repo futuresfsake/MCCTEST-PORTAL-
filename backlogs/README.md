@@ -57,6 +57,7 @@ backlogs/
   encoder/
     dashboard/acceptance.md                      — Encoder Dashboard (placeholder, 4 pages planned)
     notifications/acceptance.md                  — MP-57: Notification Bell, Encoder Events (NOT STARTED)
+    clearance/acceptance.md                      — MP-63: Clearance and Certificate Request, Encoder processes, releases and keeps the release log (last step) (NOT STARTED). 24 criteria, 10 test cases
   technical/
     announcements-password-hash-exposure/acceptance.md — SEC-01: password hash exposed by announcements API (FIXED, on dev and staging; main pending)
     multer-dos-advisory/acceptance.md            — SEC-02: multer denial-of-service advisory (LOGGED, not fixed)
@@ -140,6 +141,7 @@ backlogs/
 | MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Same pattern as the withdrawal pipeline. See `shared/clearance-request` |
 | MP-61 | Clearance and Certificate Request, Trainer: validate the trainee's clearance (first step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60. The Trainer confirms four checks. See `trainer/clearance` |
 | MP-62 | Clearance and Certificate Request, Registrar: validate the trainee's clearance (second step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-61. The Registrar confirms ID surrendered, fees settled and documents submitted. See `registrar/clearance` |
+| MP-63 | Clearance and Certificate Request, Encoder: process the request, set the release schedule, release and keep the release log (last step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-62. The Encoder does not reject. See `encoder/clearance` |
 
 ### Technical Debt
 
