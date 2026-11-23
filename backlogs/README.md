@@ -42,7 +42,7 @@ backlogs/
     enrollment-uniform-deduction-bug/acceptance.md — MP-58: Bug, enrollment does not deduct uniform stock (NOT STARTED)
     decisions.md                                 — Registrar decisions and the reasons (MP-42 history, MP-53, MP-43)
     requirements/acceptance.md                   — MP-43: Requirements Tracking, Admin and Registrar (IN REVIEW). Audit: registrar/requirements/audit-dod.md
-    uniform-distribution/acceptance.md           — MP-53: Uniform Distribution page, Registrar only (BUILT on branch, PR #106 open). Audit: registrar/uniform-distribution/audit-dod.md (2026-11-23): 22 PASS, 1 PARTIAL, 1 NOT MET, not ready to merge
+    uniform-distribution/acceptance.md           — MP-53: Uniform Distribution page, Registrar only (MERGED INTO DEV, PR #106, 2026-11-23). Audits: registrar/uniform-distribution/audit-dod.md (before the merge: 22 PASS, 1 PARTIAL, 1 NOT MET, then fixed) and audit-dev.md (on dev: 23 PASS, 1 PARTIAL, no unit tests in the repo)
     uniform-restock-reminder/acceptance.md       — MP-59: Registrar reminds the Admin to order more uniforms (NOT STARTED)
   trainer/
     dashboard/acceptance.md                      — MP-65: Trainer Dashboard (placeholder is built, the real dashboard is NOT STARTED). 40 criteria, 15 test cases
@@ -142,7 +142,7 @@ backlogs/
 | MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Aubrien Fuentes | Merged into `dev` (PR #96, 2026-11-10), migration applied on Supabase | 21 PASS, 1 PARTIAL (Jira AC), re-checked 2026-11-10. Open: missing beneficiary gives 500 (F-15), no unit tests for the new code (F-1), browser check before `main`. See `admin/trainee-edit/audit-dod.md` |
 | MP-43 | Requirements Tracking (Admin and Registrar) | Chelsea Cllj | In Review | Audited 2026-11-06 (re-checked on `staging`): 15 of 23 criteria pass, 4 partial, 4 changed by decision. On `dev` (PR #88), `staging` (PR #89) and `main` (PR #90, 2026-11-06 11:34). Jira description needs updating. See `registrar/requirements/audit-dod.md` |
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
-| MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | Built on `MP-53-uniform-distribution`, PR #106 open, not merged | Audited 2026-11-23, see `registrar/uniform-distribution/audit-dod.md`. Open: applied migration edited, inactive rows counted as waiting, lint errors, no unit tests |
+| MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | On `dev` (PR #106, 2026-11-23), `staging` (PR #111) | Audited before the merge (`audit-dod.md`, fixed: migration restored, waiting count, lint) and on `dev` (`audit-dev.md`). Open: no unit tests in the repo, browser check not done, Jira still In Progress |
 | MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
 | MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Same pattern as the withdrawal pipeline. See `shared/clearance-request` |
 | MP-61 | Clearance and Certificate Request, Trainer: validate the trainee's clearance (first step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60. The Trainer confirms four checks. See `trainer/clearance` |
