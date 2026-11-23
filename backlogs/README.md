@@ -50,6 +50,7 @@ backlogs/
     notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
     clearance/acceptance.md                      — MP-61: Clearance and Certificate Request, Trainer validates (first step) (NOT STARTED). 24 criteria, 10 test cases
     class-management/acceptance.md               — MP-66: Class Management, the trainer confirms the real start date of a batch and marks it started (NOT STARTED). 44 criteria, 16 test cases
+    attendance/acceptance.md                     — MP-67: Attendance Tracking, sessions, hours and attendance per trainee with a correction history (NOT STARTED). 45 criteria, 15 test cases
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
     profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (MERGED INTO DEV). Audit: trainee/profile/audit-dod.md
@@ -147,6 +148,7 @@ backlogs/
 | MP-64 | Certificate Generation, Encoder: generate the certificate from a template with the student's name filled in, then print or export to PDF | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60, MP-62, MP-63 and the real template from MCCTEST. The button turns on after the Trainer and the Registrar validate. See `encoder/certificate-generation` |
 | MP-65 | Trainer Dashboard: batches, trainees, today's classes, attendance, progress and items that need the trainer's action | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Read-only, own batches only. Attendance and progress fill in when FUNC-006 and FUNC-007 are built. See `trainer/dashboard` |
 | MP-66 | Trainer Class Management: confirm the real start date of a batch, mark it started and close it, reflected for trainees, Registrar and Admin | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. One migration (history table, two batch columns). Depends on MP-22 and the enrollment overlap rule. See `trainer/class-management` |
+| MP-67 | Trainer Attendance Tracking: record class sessions, hours and attendance per trainee, with a correction history | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. One migration (hours, unique keys, history). Depends on MP-66. Feeds MP-65, MP-61, MP-30. See `trainer/attendance` |
 
 ### Technical Debt
 
