@@ -27,3 +27,7 @@ It is not an injection: the value is still a bound parameter, and the result onl
 ## Suggested fix
 
 Escape `%`, `_` and the escape character in the term before it reaches `contains`, the way `escapeLike` does in `requirements.service.ts`, or move that helper to a shared file and use it in every search. Add a test that `%` and `_` match only text that really contains them. Check the other services that search with `contains`: announcements, enrollments, inventory, payments, programs and batches.
+
+## Also found in
+
+- MP-53 Uniform Distribution list (`/api/registrar/uniform-distribution?search=%`), audit 2026-11-23. Same cause, fix together.
