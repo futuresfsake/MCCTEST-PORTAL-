@@ -45,7 +45,7 @@ backlogs/
     uniform-distribution/acceptance.md           — MP-53: Uniform Distribution page, Registrar only (BUILT on branch, PR #106 open). Audit: registrar/uniform-distribution/audit-dod.md (2026-11-23): 22 PASS, 1 PARTIAL, 1 NOT MET, not ready to merge
     uniform-restock-reminder/acceptance.md       — MP-59: Registrar reminds the Admin to order more uniforms (NOT STARTED)
   trainer/
-    dashboard/acceptance.md                      — Trainer Dashboard (placeholder, 7 pages planned)
+    dashboard/acceptance.md                      — MP-65: Trainer Dashboard (placeholder is built, the real dashboard is NOT STARTED). 34 criteria, 14 test cases
     trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
     notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
     clearance/acceptance.md                      — MP-61: Clearance and Certificate Request, Trainer validates (first step) (NOT STARTED). 24 criteria, 10 test cases
@@ -144,6 +144,7 @@ backlogs/
 | MP-62 | Clearance and Certificate Request, Registrar: validate the trainee's clearance (second step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-61. The Registrar confirms ID surrendered, fees settled and documents submitted. See `registrar/clearance` |
 | MP-63 | Clearance and Certificate Request, Encoder: process the request, set the release schedule, release and keep the release log (last step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-62. The Encoder does not reject. See `encoder/clearance` |
 | MP-64 | Certificate Generation, Encoder: generate the certificate from a template with the student's name filled in, then print or export to PDF | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60, MP-62, MP-63 and the real template from MCCTEST. The button turns on after the Trainer and the Registrar validate. See `encoder/certificate-generation` |
+| MP-65 | Trainer Dashboard: batches, trainees, today's classes, attendance, progress and items that need the trainer's action | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Read-only, own batches only. Attendance and progress fill in when FUNC-006 and FUNC-007 are built. See `trainer/dashboard` |
 
 ### Technical Debt
 
