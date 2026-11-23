@@ -13,7 +13,8 @@
 | **Feeds** | Trainer Dashboard (MP-65, progress snapshot), Trainee Dashboard (MP-30, already reads these tables), Trainer clearance (MP-61, "assessments are done") |
 | **Closes** | The items "staff can define competencies and learning outcomes" and "a trainer can record an outcome status" in `trainee/dashboard-data-gaps/acceptance.md` (MP-30 follow-up) |
 | **Decided 2026-11-23** | The **trainer** defines the competencies and learning outcomes of the program. Grading is **Competent or Not Yet Competent per learning outcome**, no numeric scores. The trainer records the **assessment method** (written, practical, oral) per result. A Not Yet Competent trainee can be **reassessed any time**, and **every attempt is kept** |
-| **TBA (to be announced)** | Six things are not decided: whether trainers of the same program **share one list**, whether the Admin must **approve** a trainer's setup, an **import** from the TESDA Training Regulations, **printing or exporting** the grade sheet, the exact **on-screen wording**, and whether grades can be **corrected after the batch is closed**. See the Open Questions |
+| **Wording decided 2026-11-23** | The two results are shown as **Competent** and **NYC** (Not Yet Competent) |
+| **TBA (to be announced)** | Five things are not decided: whether trainers of the same program **share one list**, whether the Admin must **approve** a trainer's setup, an **import** from the TESDA Training Regulations, **printing or exporting** the grade sheet, and whether grades can be **corrected after the batch is closed**. See the Open Questions |
 | **Added** | 2026-11-23 |
 
 ---
@@ -69,16 +70,16 @@ Other facts used in the design:
 6. **Progress** per trainee and per batch: outcomes and competencies done out of the total, by category.
 7. **History** of every attempt for a trainee and an outcome: who, when, method, result, remark.
 
-### Words on screen (assumed)
+### Words on screen (decided 2026-11-23)
 
 | Database value | Shown as |
 |---|---|
 | `PASSED` | Competent |
-| `FAILED` | Not Yet Competent |
+| `FAILED` | NYC (Not Yet Competent). The full words show in a tooltip and in exports |
 | no row, or `NOT_YET_ASSESSED` | Not yet assessed |
 | `PENDING` | In progress (the assessment was started, the result is not final) |
 
-The wording is assumed from TESDA practice and is to be confirmed against the Training Regulations (Open Question 5).
+The wording is **Competent** and **NYC**, decided by the project leader (Open Question 5). The short form NYC is used on the matrix and badges. The full words "Not Yet Competent" are used in the tooltip, the history and any text sentence.
 
 ## Rules
 
@@ -145,7 +146,7 @@ The wording is assumed from TESDA practice and is to be confirmed against the Tr
 | 2 | How are trainees graded? | **Answered 2026-11-23:** Competent or Not Yet Competent per learning outcome, no numbers |
 | 3 | Is the assessment method recorded? | **Answered 2026-11-23:** yes, written, practical or oral, chosen per result. **Not chosen:** a rule that an outcome needs all three methods |
 | 4 | What happens on Not Yet Competent? | **Answered 2026-11-23:** reassess any time, every attempt kept in a history |
-| 5 | The wording on screen | **TBA.** Competent and Not Yet Competent are assumed from TESDA practice. Confirm against the Training Regulations of each program |
+| 5 | The wording on screen | **Answered 2026-11-23:** Competent and NYC (Not Yet Competent) |
 | 6 | Can grades be corrected after the batch is closed? | **TBA.** Assumed: no, read-only after `CLOSED` |
 | 7 | Does `competency_code` (10 characters) fit real TESDA unit codes? | **TBA.** Check with real codes. Widen in the migration if not |
 | 8 | Two trainers teach the same program. Do they share one list? | **Assumed:** yes, one list per program (the table is per program). The risk is two trainers editing one list. The protections are no delete after results, retire instead, the setup history, the impact warning and the stale-edit check. **TBA:** a per-batch list would need a different design |
@@ -369,7 +370,7 @@ The Progress page (`/trainer/progress`), numeric grades or scores, an Admin or R
 - [TESDA Training Regulations](https://tesda.gov.ph/Download/Training_Regulations?page=10). Each qualification's regulation lists its units of competency and is the basis for the curriculum and the competency assessment.
 - [Example Training Regulations (Training Methodology Level I)](https://tesda.gov.ph/Downloadables/TR%20Trainers%20Methodology%20Level%20I%20(TrainorAssessor).pdf).
 
-Searched 2026-11-23. The search confirmed the three categories and that the Training Regulations are the basis for competency assessment. It did **not** confirm the exact "Competent / Not Yet Competent" wording or a fixed list of assessment methods. The assessment methods in this file (written, practical, oral) come from the interview with MCCTEST (see the Trainer clearance, MP-61), and the wording is Open Question 5.
+Searched 2026-11-23. The search confirmed the three categories and that the Training Regulations are the basis for competency assessment. It did **not** confirm the exact "Competent / Not Yet Competent" wording or a fixed list of assessment methods. The assessment methods in this file (written, practical, oral) come from the interview with MCCTEST (see the Trainer clearance, MP-61), and the wording was decided by the project leader on 2026-11-23 (Open Question 5).
 
 ---
 
