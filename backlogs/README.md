@@ -54,7 +54,7 @@ backlogs/
   encoder/
     dashboard/acceptance.md                      — Encoder Dashboard (placeholder, 4 pages planned)
     notifications/acceptance.md                  — MP-57: Notification Bell, Encoder Events (NOT STARTED)
-    withdrawal/acceptance.md                     — Encoder step in the withdrawal pipeline and its logs (Jira ticket to be created, NOT STARTED). New order: Registrar, Trainer, Encoder, Admin. 34 criteria. Changes MP-45 to MP-48, see the file
+    withdrawal/acceptance.md                     — Encoder step in the withdrawal pipeline and its logs (Jira ticket to be created, NOT STARTED). New order: Trainer, Registrar, Encoder, Admin. 34 criteria. Changes MP-45, MP-46 and MP-47, see the file
   technical/
     announcements-password-hash-exposure/acceptance.md — SEC-01: password hash exposed by announcements API (FIXED, on dev and staging; main pending)
     multer-dos-advisory/acceptance.md            — SEC-02: multer denial-of-service advisory (LOGGED, not fixed)
