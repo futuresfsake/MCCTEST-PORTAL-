@@ -15,6 +15,7 @@ backlogs/
     authentication/acceptance.md                 — MP-4: Auth & Landing Page
     landing-page/acceptance.md                   — MP-20: Landing Page Chatbot
     notifications/acceptance.md                  — MP-52: Notification Foundation (shared bell, notifications table, live push) (NOT STARTED)
+    clearance-request/acceptance.md              — MP-60: Clearance and Certificate Request, student form and pipeline Trainer, Registrar, Encoder (NOT STARTED). 40 criteria, 14 test cases
   to-be-discussed.md                           — Open decisions and gaps, with a summary table (photo storage, restock reminder, MP-58, MP-41, MP-42)
   open-items.md                                — Everything still open across MP-41, MP-42, MP-47, MP-49 and the loose ends, one checklist (2026-11-10)
   admin/
@@ -134,6 +135,7 @@ backlogs/
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
 | MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | Built on `MP-53-uniform-distribution`, PR #106 open, not merged | Audited 2026-11-23, see `registrar/uniform-distribution/audit-dod.md`. Open: applied migration edited, inactive rows counted as waiting, lint errors, no unit tests |
 | MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
+| MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Same pattern as the withdrawal pipeline. See `shared/clearance-request` |
 
 ### Technical Debt
 
