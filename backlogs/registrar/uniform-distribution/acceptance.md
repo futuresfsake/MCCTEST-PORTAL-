@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-53 |
 | **Type** | Feature (Registrar only, its own page) |
-| **Status** | BUILT on branch `MP-53-uniform-distribution`, PR #106 open, not merged. Audited 2026-11-23: 22 PASS, 1 PARTIAL, 1 NOT MET. **Fixes F-1, F-2 and F-4 done and re-checked the same day: 23 PASS, 1 PARTIAL** (AC 23: the unit tests were written and run locally but are not committed, see `audit-dod.md` section 13). Not reviewed or merged yet. Jira: In Progress |
+| **Status** | MERGED INTO `dev` (PR #106, 2026-11-23 14:17), together with PR #105 (the stock display on the enrollment form). Audited 2026-11-23 before the merge: 22 PASS, 1 PARTIAL, 1 NOT MET. **Fixes F-1, F-2 and F-4 done and re-checked the same day: 23 PASS, 1 PARTIAL** (AC 23: the unit tests were written and run locally but are not committed, see `audit-dod.md` section 13). Audited again on `dev` after the merge (`audit-dev.md`): 23 PASS, 1 PARTIAL. Browser check not done. Jira: In Progress |
 | **Assignee** | Rhoddz Gerunda |
 | **Depends on** | MP-35 (inventory module, `InventoryService.deductAndLog`) |
 | **Related** | MP-35 follow-up F2, MP-16 (enrollment form), MP-59 (restock reminder, split out of this ticket), MP-58 (enrollment bug) |
