@@ -86,7 +86,7 @@ Status key: PASS = verified (see Audit); IMPLEMENTED = built, compiles, not yet 
 | # | Question |
 |---|----------|
 | Q1 | Should a trainer see the full personal profile (address, parents, beneficiary, insurance), or a reduced one? Currently the full profile is shown, same as Admin and Registrar. |
-| Q2 | There is an existing "Trainee Records" sidebar item (`/trainer/records`) that has no page yet. Keep it separate, or merge it with Trainees? |
+| Q2 | There is an existing "Trainee Records" sidebar item (`/trainer/records`) that has no page yet. Keep it separate, or merge it with Trainees? **Answered 2026-11-23:** keep it separate. It becomes the Trainee Records page (MP-68, `trainer/trainee-records`). |
 | Q3 | Should trainees from completed or closed batches stay visible to the trainer? Currently yes (all batches ever assigned). |
 
 ---
