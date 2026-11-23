@@ -14,7 +14,8 @@
 | **Closes** | The items "staff can define competencies and learning outcomes" and "a trainer can record an outcome status" in `trainee/dashboard-data-gaps/acceptance.md` (MP-30 follow-up) |
 | **Decided 2026-11-23** | The **trainer** defines the competencies and learning outcomes of the program. Grading is **Competent or Not Yet Competent per learning outcome**, no numeric scores. The trainer records the **assessment method** (written, practical, oral) per result. A Not Yet Competent trainee can be **reassessed any time**, and **every attempt is kept** |
 | **Wording decided 2026-11-23** | The two results are shown as **Competent** and **NYC** (Not Yet Competent) |
-| **TBA (to be announced)** | Five things are not decided: whether trainers of the same program **share one list**, whether the Admin must **approve** a trainer's setup, an **import** from the TESDA Training Regulations, **printing or exporting** the grade sheet, and whether grades can be **corrected after the batch is closed**. See the Open Questions |
+| **Shared list decided 2026-11-23** | Option 1: **one shared list per program** for all batches and trainers of that program, **with the protections** (no delete after results, retire instead, setup history, impact warning, stale-edit check) |
+| **TBA (to be announced)** | Four things are not decided: whether the Admin must **approve** a trainer's setup, an **import** from the TESDA Training Regulations, **printing or exporting** the grade sheet, and whether grades can be **corrected after the batch is closed**. See the Open Questions |
 | **Added** | 2026-11-23 |
 
 ---
@@ -149,7 +150,7 @@ The wording is **Competent** and **NYC**, decided by the project leader (Open Qu
 | 5 | The wording on screen | **Answered 2026-11-23:** Competent and NYC (Not Yet Competent) |
 | 6 | Can grades be corrected after the batch is closed? | **TBA.** Assumed: no, read-only after `CLOSED` |
 | 7 | Does `competency_code` (10 characters) fit real TESDA unit codes? | **TBA.** Check with real codes. Widen in the migration if not |
-| 8 | Two trainers teach the same program. Do they share one list? | **Assumed:** yes, one list per program (the table is per program). The risk is two trainers editing one list. The protections are no delete after results, retire instead, the setup history, the impact warning and the stale-edit check. **TBA:** a per-batch list would need a different design |
+| 8 | Two trainers teach the same program. Do they share one list? | **Answered 2026-11-23:** yes, option 1: one shared list per program with the protections (no delete after results, retire instead, the setup history, the impact warning and the stale-edit check). Not chosen: a separate list per batch, and a list locked after grading starts |
 | 9 | Must the Admin approve a trainer's setup before it is used? | **Assumed:** no. **TBA** |
 | 10 | Can the structure be imported from the TESDA Training Regulations or a file? | **TBA.** Assumed: manual entry in this ticket |
 | 11 | Can the grade sheet be printed or exported (as in MP-67)? | **TBA.** Not in this ticket |
