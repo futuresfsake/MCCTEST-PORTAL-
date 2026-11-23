@@ -49,7 +49,7 @@ backlogs/
     trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
     notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
     clearance/acceptance.md                      — MP-61: Clearance and Certificate Request, Trainer validates (first step) (NOT STARTED). 24 criteria, 10 test cases
-    class-management/acceptance.md               — MP-66: Class Management, the trainer confirms the real start date of a batch and marks it started (NOT STARTED). 38 criteria, 15 test cases
+    class-management/acceptance.md               — MP-66: Class Management, the trainer confirms the real start date of a batch and marks it started (NOT STARTED). 43 criteria, 16 test cases
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
     profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (MERGED INTO DEV). Audit: trainee/profile/audit-dod.md
@@ -146,7 +146,7 @@ backlogs/
 | MP-63 | Clearance and Certificate Request, Encoder: process the request, set the release schedule, release and keep the release log (last step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-62. The Encoder does not reject. See `encoder/clearance` |
 | MP-64 | Certificate Generation, Encoder: generate the certificate from a template with the student's name filled in, then print or export to PDF | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60, MP-62, MP-63 and the real template from MCCTEST. The button turns on after the Trainer and the Registrar validate. See `encoder/certificate-generation` |
 | MP-65 | Trainer Dashboard: batches, trainees, today's classes, attendance, progress and items that need the trainer's action | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Read-only, own batches only. Attendance and progress fill in when FUNC-006 and FUNC-007 are built. See `trainer/dashboard` |
-| MP-66 | Trainer Class Management: confirm the real start date of a batch and mark it started, reflected for trainees, Registrar and Admin | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. One migration (history table, two batch columns). Depends on MP-22 and the enrollment overlap rule. See `trainer/class-management` |
+| MP-66 | Trainer Class Management: confirm the real start date of a batch, mark it started and close it, reflected for trainees, Registrar and Admin | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. One migration (history table, two batch columns). Depends on MP-22 and the enrollment overlap rule. See `trainer/class-management` |
 
 ### Technical Debt
 
