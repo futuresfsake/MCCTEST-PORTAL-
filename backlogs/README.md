@@ -47,6 +47,7 @@ backlogs/
     dashboard/acceptance.md                      — Trainer Dashboard (placeholder, 7 pages planned)
     trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
     notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
+    clearance/acceptance.md                      — MP-61: Clearance and Certificate Request, Trainer validates (first step) (NOT STARTED). 24 criteria, 10 test cases
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
     profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (MERGED INTO DEV). Audit: trainee/profile/audit-dod.md
@@ -136,6 +137,7 @@ backlogs/
 | MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | Built on `MP-53-uniform-distribution`, PR #106 open, not merged | Audited 2026-11-23, see `registrar/uniform-distribution/audit-dod.md`. Open: applied migration edited, inactive rows counted as waiting, lint errors, no unit tests |
 | MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
 | MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Same pattern as the withdrawal pipeline. See `shared/clearance-request` |
+| MP-61 | Clearance and Certificate Request, Trainer: validate the trainee's clearance (first step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60. The Trainer confirms four checks. See `trainer/clearance` |
 
 ### Technical Debt
 

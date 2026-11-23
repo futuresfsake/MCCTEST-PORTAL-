@@ -7,7 +7,7 @@
 | **Status** | NOT STARTED |
 | **Assignee** | Chelsea Cllj (Jira default, reassign if needed) |
 | **Depends on** | MP-24 (trainee scope), MP-25 (payments, for the fee check). The pattern to copy is the withdrawal pipeline (MP-45 to MP-49, `shared/withdrawal/acceptance.md`) |
-| **Related** | MP-52 (notifications, not needed), FUNC-010 (certificate generation) and FUNC-017 (public certificate verification), both later |
+| **Related** | **MP-61 (Trainer step, detail in `trainer/clearance/acceptance.md`).** The Registrar and Encoder steps are separate tickets, to be created. MP-52 (notifications, not needed), FUNC-010 (certificate generation) and FUNC-017 (public certificate verification), both later |
 | **Interface** | Trainee: `/trainee/clearance-requests`. Trainer: `/trainer/clearance-requests`. Registrar: `/registrar/clearance-requests`. Encoder: `/encoder/clearance-requests`. A "Clearance" sidebar link on each. No Admin page |
 | **Source** | The paper "Clearance and Certificate Request Form" (capstone paper, Appendix D, Figure 4) |
 | **Added** | 2026-11-23 |
@@ -73,11 +73,22 @@ Any other status returns 400 for the step that tries to act. The Encoder has no 
 | 1 | Who can submit, and when? | **Assumed:** a trainee, for their own enrollment that is `ENROLLED` or `COMPLETED`. The rule that training hours must be finished waits for attendance (FUNC-006), so it is not checked yet |
 | 2 | One certificate type, or several in one request? | **Assumed:** one or more, like the checkboxes on the paper. Stored in `clearance_certificate`. `request_form.certificate_type_id` (required by the schema) holds the first one |
 | 3 | What is the control number format? | **Assumed:** system-generated, unique, following the printed pattern `MCCTEST00` and a running number. The exact digits are to be confirmed |
-| 4 | What does the Trainer confirm? | **Assumed:** one confirmation that the trainee finished the training requirements and returned the tools and equipment. Required to validate. Remarks optional on validate, required on reject |
+| 4 | What does the Trainer confirm? | **Assumed:** four checks, all required to validate: training hours and attendance complete, the written, practical and oral assessments done, the portfolio and required outputs submitted, tools and equipment returned. Remarks optional on validate, required on reject. Detail and test cases in `trainer/clearance/acceptance.md` (MP-61) |
 | 5 | What does the Registrar check? | **Assumed:** the same three checks as the withdrawal (MP-47): ID surrendered, fees settled, documents submitted. All three are required to validate. Otherwise the Registrar rejects with a reason |
 | 6 | What does "processes" mean for the Encoder? | **Assumed:** the Encoder sets the schedule release date (not in the past; the paper says processing takes 3 to 5 business days) and the request becomes `PROCESSED`. Later the Encoder marks it `RELEASED` with who and when. The certificate file itself comes with FUNC-010 |
 | 7 | After a rejection, can the trainee send a new request? | **Assumed:** yes. A rejected, cancelled or released request is no longer open |
 | 8 | Does the Admin see these requests? | **Assumed:** no page for now |
+
+## Tickets
+
+| Step | Ticket | Backlog |
+|------|--------|---------|
+| Trainee form, progress, claim stub, and the shared module and schema | MP-60 | This file |
+| Trainer validates | MP-61 | `trainer/clearance/acceptance.md` (24 criteria, 10 test cases) |
+| Registrar validates | To be created | Section C below for now |
+| Encoder processes and releases | To be created | Section D below for now |
+
+The criteria in this file for the Trainer (CL-19 to CL-22) are the short version of MP-61. If they differ, MP-61 wins.
 
 ## Scope
 
@@ -92,7 +103,7 @@ Any other status returns 400 for the step that tries to act. The Encoder has no 
 ### B. Trainer (`/trainer/clearance-requests`)
 
 - Requests from trainees in the trainer's own batches. Default view "Waiting for me" (`PENDING_VALIDATION`). Status filter, name or system ID search, paged, in the URL.
-- Side panel: the form, the confirmation box, **Validate** and **Reject** (reason required), the history. A **Request history** table below the list for the requests this trainer already decided.
+- Side panel: the form, the four checks, **Validate** and **Reject** (reason required), the history. A **Request history** table below the list for the requests this trainer already decided. **Tracked in MP-61.**
 
 ### C. Registrar (`/registrar/clearance-requests`)
 
@@ -135,7 +146,7 @@ Any other status returns 400 for the step that tries to act. The Encoder has no 
 
 - New enum `clearance_request_status_enum`: `PENDING_VALIDATION`, `TRAINER_VALIDATED`, `REGISTRAR_VALIDATED`, `PROCESSED`, `RELEASED`, `REJECTED`, `CANCELLED`.
 - `request_form`: add `control_number` (unique) and the pipeline status. Add the trainee's certification fields (`certified`, `certified_at`).
-- `clearance`: add Trainer columns (`trainer_validated_by`, `trainer_validated_at`, `trainer_remarks`, `trainer_requirements_checked`), Registrar columns (`registrar_validated_by`, `registrar_validated_at`, `registrar_remarks`, `finances_cleared`, `documents_submitted`; `surrendered_id` already exists) and `encoder_processed_by`, `encoder_processed_at`. The columns `schedule`, `released_by` and `date_released` already exist.
+- `clearance`: add Trainer columns (`trainer_validated_by`, `trainer_validated_at`, `trainer_remarks`, the four Trainer checks `trainer_hours_complete`, `trainer_assessments_complete`, `trainer_portfolio_submitted` and `trainer_tools_returned`), Registrar columns (`registrar_validated_by`, `registrar_validated_at`, `registrar_remarks`, `finances_cleared`, `documents_submitted`; `surrendered_id` already exists) and `encoder_processed_by`, `encoder_processed_at`. The columns `schedule`, `released_by` and `date_released` already exist.
 - New table `clearance_status_history` (`request_form_id`, `old_status`, `new_status`, `changed_by`, `changed_at`, `remarks`), indexed by request and time, like `withdrawal_status_history`.
 - Control numbers come from `ctrl_num_seq` (a new `sequence_type`, safe under concurrency).
 
@@ -199,7 +210,7 @@ Any other status returns 400 for the step that tries to act. The Encoder has no 
 |---|---------|--------|-------|
 | CL-19 | The Trainer's list defaults to "Waiting for me" (`PENDING_VALIDATION`) with a status filter, a name or system ID search (every word must match) and paging, all in the URL | NOT STARTED | |
 | CL-20 | The Trainer can validate or reject only when the status is `PENDING_VALIDATION` (400 otherwise). Remarks optional on validate, **required on reject** | NOT STARTED | Same rule as MP-48 TR-3 |
-| CL-21 | Validate needs the Trainer's confirmation that the training requirements are finished and the tools and equipment returned. Without it the request returns 400 | NOT STARTED | Open question 4 |
+| CL-21 | Validate needs the Trainer's four confirmations (hours and attendance, assessments, portfolio, tools and equipment). Without all four the request returns 400 | NOT STARTED | Open question 4. Detail: MP-61 |
 | CL-22 | Validate sets `TRAINER_VALIDATED` and saves who, when and the remark. Reject sets `REJECTED` and the clearance status `NOT_CLEARED`. The client cannot set the status or another user as the validator | NOT STARTED | |
 
 ### Registrar Step
