@@ -13,8 +13,7 @@ import {
 
 export const UNIFORM_STATUS_FILTERS = ['ALL', 'NOT_GIVEN', 'GIVEN'] as const;
 
-export type UniformStatusFilter =
-  (typeof UNIFORM_STATUS_FILTERS)[number];
+export type UniformStatusFilter = (typeof UNIFORM_STATUS_FILTERS)[number];
 
 export class UniformDistributionQueryDto {
   @IsOptional()

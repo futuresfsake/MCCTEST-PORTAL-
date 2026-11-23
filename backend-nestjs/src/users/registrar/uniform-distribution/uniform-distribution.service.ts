@@ -7,7 +7,6 @@ import {
 import {
   enrollment_status_enum,
   Prisma,
-  size_enum,
 } from '../../../generated/prisma/client';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { InventoryService } from '../../../inventory/inventory.service';
@@ -35,10 +34,7 @@ export class UniformDistributionService {
     const limit = query.limit ?? 20;
     const skip = (page - 1) * limit;
 
-    const searchTerms = query.search
-      ?.trim()
-      .split(/\s+/)
-      .filter(Boolean) ?? [];
+    const searchTerms = query.search?.trim().split(/\s+/).filter(Boolean) ?? [];
 
     const baseWhere: Prisma.enrollmentsWhereInput = {
       ...(query.includeInactive
@@ -60,8 +56,8 @@ export class UniformDistributionService {
       ...(query.batchId ? { batch_id: query.batchId } : {}),
     };
 
-    const searchConditions: Prisma.enrollmentsWhereInput[] =
-      searchTerms.map((term) => ({
+    const searchConditions: Prisma.enrollmentsWhereInput[] = searchTerms.map(
+      (term) => ({
         OR: [
           {
             id_card_number: {
@@ -100,27 +96,21 @@ export class UniformDistributionService {
             },
           },
         ],
-      }));
+      }),
+    );
 
     const filteredBaseWhere: Prisma.enrollmentsWhereInput = {
       ...baseWhere,
-      ...(searchConditions.length > 0
-        ? { AND: searchConditions }
-        : {}),
+      ...(searchConditions.length > 0 ? { AND: searchConditions } : {}),
     };
 
-    const statusWhere = this.getUniformStatusWhere(
-      query.status ?? 'ALL',
-    );
+    const statusWhere = this.getUniformStatusWhere(query.status ?? 'ALL');
 
     const where: Prisma.enrollmentsWhereInput = {
       ...filteredBaseWhere,
       ...(Object.keys(statusWhere).length > 0
         ? {
-            AND: [
-              ...searchConditions,
-              statusWhere,
-            ],
+            AND: [...searchConditions, statusWhere],
           }
         : {}),
     };
@@ -184,6 +174,11 @@ export class UniformDistributionService {
       this.prisma.enrollments.count({
         where: {
           ...filteredBaseWhere,
+          // Inactive enrollments are never waiting for a uniform, even when
+          // the list is showing them (include inactive).
+          enrollment_status: {
+            notIn: INACTIVE_STATUSES,
+          },
           OR: [
             {
               distribution_checklist: {
@@ -212,11 +207,7 @@ export class UniformDistributionService {
           enrollmentId: enrollment.id,
           traineeId: enrollment.trainee_id,
           traineeName: user
-            ? [
-                user.first_name,
-                user.middle_name,
-                user.last_name,
-              ]
+            ? [user.first_name, user.middle_name, user.last_name]
                 .filter(Boolean)
                 .join(' ')
             : 'Unknown Trainee',
@@ -235,9 +226,7 @@ export class UniformDistributionService {
             ? `${distributor.first_name} ${distributor.last_name}`
             : null,
           inventoryId: checklist?.inventory_id ?? null,
-          isInactive: INACTIVE_STATUSES.includes(
-            enrollment.enrollment_status,
-          ),
+          isInactive: INACTIVE_STATUSES.includes(enrollment.enrollment_status),
         };
       }),
       pagination: {
@@ -280,21 +269,17 @@ export class UniformDistributionService {
         throw new NotFoundException('Enrollment not found.');
       }
 
-      if (
-        enrollment.enrollment_status !==
-        enrollment_status_enum.ENROLLED
-      ) {
+      if (enrollment.enrollment_status !== enrollment_status_enum.ENROLLED) {
         throw new BadRequestException(
           'Uniforms can only be distributed to enrolled trainees.',
         );
       }
 
-      const existingChecklist =
-        await tx.distribution_checklist.findUnique({
-          where: {
-            enrollment_id: enrollmentId,
-          },
-        });
+      const existingChecklist = await tx.distribution_checklist.findUnique({
+        where: {
+          enrollment_id: enrollmentId,
+        },
+      });
 
       if (existingChecklist?.uniform_given) {
         throw new ConflictException(
@@ -320,7 +305,7 @@ export class UniformDistributionService {
       const inventoryId = await this.inventoryService.deductAndLog(
         tx,
         batch.program_id,
-        dto.size as size_enum,
+        dto.size,
         enrollmentId,
         userId,
       );
