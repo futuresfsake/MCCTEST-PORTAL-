@@ -11,8 +11,8 @@
 | **Requirement** | FUNC-006 (attendance), REQ-4.6 in the capstone paper |
 | **Depends on** | Class Management (MP-66): the batch must be `ONGOING` and its start date is the first date that can be recorded |
 | **Feeds** | Trainer Dashboard (MP-65: hours progress, behind pace, today's classes), Trainer clearance (MP-61: hours check), Trainee Dashboard (MP-30: attendance counts) |
-| **Decided 2026-11-23** | One session per class day, hours default from the program class time and the trainer can adjust. Any date from the batch start up to today, never the future. Corrections allowed while the batch is `ONGOING`, every change logged. Status and an optional remark per trainee, no time in or out |
-| **TBA (to be announced)** | Three things are not decided: how **LATE and EXCUSED** count toward hours, whether hours **carry over on a transfer** to another batch, and whether the sheet can be **printed or exported to Excel**. See the Open Questions |
+| **Decided 2026-11-23** | One session per class day, hours default from the program class time and the trainer can adjust. Any date from the batch start up to today, never the future. Corrections allowed while the batch is `ONGOING`, every change logged. Status and an optional remark per trainee, no time in or out. **The attendance sheet can be printed and exported** (answered 2026-11-23) |
+| **TBA (to be announced)** | Three things are not decided: how **LATE and EXCUSED** count toward hours, whether hours **carry over on a transfer** to another batch, and the **export file format and layout** (assumed Excel, see Open Question 3). See the Open Questions |
 | **Added** | 2026-11-23 |
 
 ---
@@ -53,6 +53,8 @@ The page works on the trainer's own batches that are `ONGOING`.
 5. **Correct a saved session.** Open the date again and change statuses, remarks or hours. Every change is logged. A reason is required for a session dated before today.
 6. **Session list.** The sessions of the batch: date, hours, the four counts, and who last changed it. Scheduled class days with no session yet are highlighted as **Missing**.
 7. **Trainee summary.** Per trainee: hours completed, percentage of the program's total hours, the counts of each status.
+8. **Print a session sheet.** A print layout of one session (one date): batch, program, date, hours, the roster with each status and remark, the four counts, and a line for the trainer's signature. Uses the browser print, no server file.
+9. **Export the attendance grid.** An Excel file for a batch and a date range (the whole batch by default): one row per trainee, one column per session date with a letter for the status, and totals per trainee (the four counts, hours completed, percentage). This mirrors the paper and Excel sheets used today.
 
 ## Rules
 
@@ -68,6 +70,9 @@ The page works on the trainer's own batches that are `ONGOING`.
 - **Stale save.** The save carries the version of the session the trainer loaded. If it changed, the API returns 409 and changes nothing. Two saves at the same moment give one winner.
 - **All or nothing.** The session, the attendance rows and the history rows are saved in one transaction.
 - **History.** Append-only. The application has no update or delete for it.
+- **Print.** Done in the browser from the saved data on screen. Shows the saved session, not unsaved edits (a warning shows when there are unsaved changes).
+- **Export.** Only the trainer's own batches. Allowed for `ONGOING` and `CLOSED` batches (read-only data). Built on the server from the saved data and sent as a download, not stored. The file has names and system IDs, statuses, remarks and hours, **no contact number, address or other personal data**.
+- **Spreadsheet safety.** A remark or name that starts with `=`, `+`, `-` or `@` is written as plain text so it cannot run as a formula.
 
 ## Schema Proposal (one migration)
 
@@ -89,6 +94,7 @@ The page works on the trainer's own batches that are `ONGOING`.
 | `GET /api/trainer/attendance/batches/:batchId/sessions` | The session list with counts, and the missing scheduled days |
 | `GET /api/trainer/attendance/batches/:batchId/summary` | Per trainee hours completed, percentage and counts |
 | `GET /api/trainer/attendance/sessions/:date/history?batchId=` | The history timeline of a session |
+| `GET /api/trainer/attendance/batches/:batchId/export.xlsx?from=&to=` | The attendance grid of the batch for a date range (whole batch by default) as an Excel file |
 
 ## Open Questions (TBA unless answered)
 
@@ -96,7 +102,7 @@ The page works on the trainer's own batches that are `ONGOING`.
 |---|---|---|
 | 1 | How do **LATE** and **EXCUSED** count toward hours? Must EXCUSED hours be made up? | **TBA, MCCTEST to decide** (the same open decision as MP-65). Assumed until then: LATE counts in full, EXCUSED and ABSENT count 0. The rule is one function so it can change |
 | 2 | Do hours **carry over** when a trainee is transferred to another batch? | **TBA.** A transfer makes a new enrollment, so today the new enrollment starts at zero hours. The old rows stay with the old enrollment |
-| 3 | Can the attendance sheet be **printed or exported** to Excel? | **TBA.** Out of this ticket. Paper and Excel sheets are used today |
+| 3 | Can the attendance sheet be printed or exported? | **Answered 2026-11-23:** yes, it can be printed and exported. **Assumed:** print is the browser print of one session, and the export is an Excel grid of the batch. **TBA:** the exact file format (Excel, PDF or both) and the column layout MCCTEST wants. A PDF could reuse the PDF builder of MP-68 |
 | 4 | One session per day or two? | **Answered 2026-11-23:** one session per class day |
 | 5 | Hours: default or typed? | **Answered 2026-11-23:** default from the program class time, the trainer can adjust |
 | 6 | Which dates can be recorded? | **Answered 2026-11-23:** from the batch start date up to today, never the future |
@@ -109,13 +115,13 @@ The page works on the trainer's own batches that are `ONGOING`.
 
 ## Scope
 
-- **Backend:** a trainer attendance module (controller, service, DTOs) under `/api/trainer/attendance`; a shared hours function (hours completed, percentage) that MP-65, MP-61 and the Trainee Dashboard call; one migration.
-- **Frontend:** the Attendance page (batch and date picker, roster, counts, hours, save, session list with Missing days, trainee summary, history timeline), kept in the URL.
+- **Backend:** a trainer attendance module (controller, service, DTOs) under `/api/trainer/attendance`; a shared hours function (hours completed, percentage) that MP-65, MP-61 and the Trainee Dashboard call; the Excel export (a spreadsheet library is a new dependency, none is installed today); one migration.
+- **Frontend:** the Attendance page (batch and date picker, roster, counts, hours, save, session list with Missing days, trainee summary, history timeline, Print and Export buttons), kept in the URL.
 - **Tests:** unit tests for the service (every unhappy path), the DTOs, the controller (role, guards, the logged-in user passed on) and the shared hours function.
 
 ## Out of Scope
 
-Time in and out, notifications to trainees about absences, an Admin or Registrar attendance view, automatic warnings, printing or Excel export (Open Question 3), the My Batches and Class Records pages, and competency results (FUNC-007).
+Time in and out, notifications to trainees about absences, an Admin or Registrar attendance view, automatic warnings, a PDF of the grid (Open Question 3), the My Batches and Class Records pages, and competency results (FUNC-007).
 
 ---
 
@@ -190,6 +196,18 @@ Time in and out, notifications to trainees about absences, an Admin or Registrar
 | AT-38 | The session, the attendance rows and the history rows are saved together or not at all. A failure in the middle leaves nothing behind | NOT STARTED | One transaction |
 | AT-39 | The sheet, the session list and the summary run a fixed number of queries whatever the number of trainees or sessions. Saving 25 trainees runs a fixed number of statements, not one per trainee | NOT STARTED | Statement logging. Local timing is not Supabase timing |
 | AT-40 | The migration applies on a fresh database, `prisma migrate diff` shows no drift for the new objects, and it runs on the empty shared tables | NOT STARTED | TECH-02, TECH-03 known |
+
+### Print and export
+
+| # | Criteria | Status | Notes |
+|---|---------|--------|-------|
+| AT-46 | Print on a session opens the browser print with a clean layout: batch, program, date, hours, the roster with status and remark, the four counts, and a trainer signature line. No menus, buttons or sidebar are printed | NOT STARTED | Print stylesheet |
+| AT-47 | The printed sheet shows the saved session. With unsaved changes the page warns and prints the saved version | NOT STARTED | |
+| AT-48 | Export downloads an Excel file for the batch and a date range (whole batch by default). One row per trainee, one column per session date with a status letter, and totals per trainee: the four counts, hours completed and percentage | NOT STARTED | Format TBA, Open question 3 |
+| AT-49 | The file header shows MCCTEST, program, batch, trainer, the date range and the date generated (Asia/Manila). The hours of each session are shown above its column | NOT STARTED | |
+| AT-50 | The export has no contact number, address, email, birth date or other personal data, only name, system ID, statuses, remarks and hours | NOT STARTED | |
+| AT-51 | A name or remark starting with `=`, `+`, `-` or `@` is written as plain text and does not run as a formula | NOT STARTED | Spreadsheet injection |
+| AT-52 | Export works for `ONGOING` and `CLOSED` batches of the trainer. Another trainer's batch returns 404, a batch with no session returns 409, and a range with `from` after `to` returns 400. Nothing is stored on the server | NOT STARTED | |
 
 ### Frontend
 
@@ -294,7 +312,20 @@ Time in and out, notifications to trainees about absences, an Admin or Registrar
 - **Steps:** Statement logging on. Load the sheet and save for 5 trainees, then for 25. Load the session list for a batch with 10 and with 60 sessions.
 - **Expected:** The same number of queries and statements in both cases. Record the timing and say it is local.
 
-### TC-15: Screen behaviour
+### TC-15: Print the session sheet
+- **AC:** AT-46, AT-47
+- **Priority:** Medium
+- **Steps:** Open a saved session and print preview. Change a status without saving and print again.
+- **Expected:** A clean sheet with the batch, program, date, hours, roster, counts and a signature line, and no menus or buttons. With unsaved changes a warning shows and the printed sheet has the saved values.
+
+### TC-16: Export the attendance grid
+- **AC:** AT-48 to AT-52
+- **Priority:** High
+- **Precondition:** A batch with 10 sessions and 12 trainees, one trainee named `=HYPERLINK("x")` and one remark `+1+1`.
+- **Steps:** Export the whole batch, then a range of 3 sessions. Try another trainer's batch, a batch with no session, and `from` after `to`. Open the file in Excel.
+- **Expected:** One row per trainee, one column per date with status letters, totals match the on-screen summary, the header and session hours are correct. No contact data. The formula-looking text shows as text. 404, 409 and 400 for the three refused cases. No file stored on the server.
+
+### TC-17: Screen behaviour
 - **AC:** AT-41 to AT-44
 - **Priority:** Medium
 - **Steps:** Pick a batch and date, then refresh. Edit and try to leave. Stop the API and save. Open with no `ONGOING` batch. Tab through the roster. Open at 375 px wide.
@@ -302,4 +333,4 @@ Time in and out, notifications to trainees about absences, an Admin or Registrar
 
 ---
 
-## Summary: 0 PASS, 45 NOT STARTED (45 criteria), 15 test cases
+## Summary: 0 PASS, 52 NOT STARTED (52 criteria), 17 test cases
