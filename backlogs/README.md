@@ -52,7 +52,7 @@ backlogs/
     class-management/acceptance.md               — MP-66: Class Management, the trainer confirms the real start date of a batch and marks it started (NOT STARTED). 44 criteria, 16 test cases
     attendance/acceptance.md                     — MP-67: Attendance Tracking, sessions, hours and attendance per trainee with a correction history (NOT STARTED). 52 criteria, 17 test cases
     trainee-records/acceptance.md                — MP-68: Trainee Records, programs and batches covered, roster search and PDF export per batch or program (NOT STARTED). 38 criteria, 15 test cases
-    grades-competencies/acceptance.md            — MP-69: Grades and Competencies, the trainer defines competencies per program and grades Competent or Not Yet Competent with method and attempt history (NOT STARTED). 50 criteria, 17 test cases
+    grades-competencies/acceptance.md            — MP-69: Grades and Competencies, the trainer defines competencies per program and grades Competent or Not Yet Competent with method and attempt history (NOT STARTED). 52 criteria, 17 test cases
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
     profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (MERGED INTO DEV). Audit: trainee/profile/audit-dod.md

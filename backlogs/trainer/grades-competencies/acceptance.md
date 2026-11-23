@@ -15,7 +15,8 @@
 | **Decided 2026-11-23** | The **trainer** defines the competencies and learning outcomes of the program. Grading is **Competent or Not Yet Competent per learning outcome**, no numeric scores. The trainer records the **assessment method** (written, practical, oral) per result. A Not Yet Competent trainee can be **reassessed any time**, and **every attempt is kept** |
 | **Wording decided 2026-11-23** | The two results are shown as **Competent** and **NYC** (Not Yet Competent) |
 | **Shared list decided 2026-11-23** | Option 1: **one shared list per program** for all batches and trainers of that program, **with the protections** (no delete after results, retire instead, setup history, impact warning, stale-edit check) |
-| **TBA (to be announced)** | Four things are not decided: whether the Admin must **approve** a trainer's setup, an **import** from the TESDA Training Regulations, **printing or exporting** the grade sheet, and whether grades can be **corrected after the batch is closed**. See the Open Questions |
+| **Data entry decided 2026-11-23** | **The trainer types the competencies and outcomes by hand**, at their own pace. Every entry is logged in the setup history so it can feed **future suggestions and a spreadsheet import**. No import and no AI retrieval in this ticket |
+| **TBA (to be announced)** | Four things are not decided: whether the Admin must **approve** a trainer's setup, **printing or exporting** the grade sheet, whether grades can be **corrected after the batch is closed**, and whether `competency_code` (10 characters) fits real TESDA unit codes. The spreadsheet import and suggestions are a **later ticket** (see Open Question 10) |
 | **Added** | 2026-11-23 |
 
 ---
@@ -109,6 +110,7 @@ The wording is **Competent** and **NYC**, decided by the project leader (Open Qu
 - New enum `competency_change_enum`: `CREATED`, `EDITED`, `RETIRED`, `REACTIVATED`, `REORDERED`, `DELETED`.
 - New table `competency_setup_history`: `id`, `program_id` (FK), `entity_type` (`COMPETENCY` or `OUTCOME`), `entity_id`, `change_type`, `old_values` (jsonb), `new_values` (jsonb), `changed_by` (FK to users), `changed_at`. Index on (`program_id`, `changed_at` desc). Append-only.
 - If real TESDA unit codes are longer than 10 characters, widen `competency_code` (Open Question 7).
+- `competency`: also add an optional `source_reference` (text, for example the Training Regulations name and version or date the trainer copied from), so a later revision can be traced. Assumed, not yet confirmed.
 - All tables are empty, so the migration is safe. Test it on a fresh database. Known issues: the `0_init` byte-order mark (TECH-02) and the drift (TECH-03).
 
 ## Endpoints (all `TRAINER` only, `JwtAuthGuard` and `RolesGuard`)
@@ -152,10 +154,21 @@ The wording is **Competent** and **NYC**, decided by the project leader (Open Qu
 | 7 | Does `competency_code` (10 characters) fit real TESDA unit codes? | **TBA.** Check with real codes. Widen in the migration if not |
 | 8 | Two trainers teach the same program. Do they share one list? | **Answered 2026-11-23:** yes, option 1: one shared list per program with the protections (no delete after results, retire instead, the setup history, the impact warning and the stale-edit check). Not chosen: a separate list per batch, and a list locked after grading starts |
 | 9 | Must the Admin approve a trainer's setup before it is used? | **Assumed:** no. **TBA** |
-| 10 | Can the structure be imported from the TESDA Training Regulations or a file? | **TBA.** Assumed: manual entry in this ticket |
+| 10 | Who puts the TESDA Training Regulations content into the system, and can it be imported? | **Answered 2026-11-23:** the trainer types it by hand, at their own pace. **Later ticket (not decided):** a spreadsheet import and suggestions built from what trainers typed (the setup history). **Not chosen for now:** retrieval with AI (RAG) or reading the regulation PDFs automatically. See "Later: suggestions and import" |
 | 11 | Can the grade sheet be printed or exported (as in MP-67)? | **TBA.** Not in this ticket |
 | 12 | Does the Admin or Registrar see the structure or the grades? | **Assumed:** no, not in this ticket. The trainee sees their own on the Trainee Dashboard |
 | 13 | What does `PENDING` mean? | **Assumed:** the assessment was started and the result is not final. Shown as In progress |
+
+## Later: Suggestions and Import (not in this ticket)
+
+The trainers type the lists by hand first. The setup history (`competency_setup_history`) and the live tables keep everything that was typed, so a later ticket can use it. Ideas, in the order of least risk:
+
+1. **Suggestions while typing.** Autocomplete for a competency title or code from what other programs already have (plain text search, the database already has `pg_trgm`).
+2. **Copy from another program.** Start a new program's list from an existing one, then edit.
+3. **Spreadsheet import.** A template with category, code, title and outcomes, a preview, and an all-or-nothing save. Only for a program with no results.
+4. **Reading a Training Regulation PDF** to propose a list, always shown to the trainer to review before saving. Only if 1 to 3 are not enough. This is extraction, not retrieval, and it can make mistakes, so nothing is saved without a human check.
+
+Retrieval with AI (RAG) is not a good fit for building the list itself: the list is structured data with exact codes, and a wrong or invented unit would affect real grades. It could help a **chatbot answer questions** about a regulation, which is a separate idea.
 
 ## Scope
 
@@ -165,7 +178,7 @@ The wording is **Competent** and **NYC**, decided by the project leader (Open Qu
 
 ## Out of Scope
 
-The Progress page (`/trainer/progress`), numeric grades or scores, an Admin or Registrar screen for competencies, the Graduating List, certificates (MP-64), printing or exporting the grade sheet (Open Question 11), a rule that an outcome needs all three methods, and filling the MP-61 clearance checks automatically.
+The spreadsheet import, suggestions and PDF reading (see "Later"), the Progress page (`/trainer/progress`), numeric grades or scores, an Admin or Registrar screen for competencies, the Graduating List, certificates (MP-64), printing or exporting the grade sheet (Open Question 11), a rule that an outcome needs all three methods, and filling the MP-61 clearance checks automatically.
 
 ---
 
@@ -250,6 +263,8 @@ The Progress page (`/trainer/progress`), numeric grades or scores, an Admin or R
 | GC-48 | The page warns before leaving with unsaved changes | NOT STARTED | |
 | GC-49 | Results do not rely on color alone (labels or icons as well), the matrix is usable by keyboard, a wide matrix scrolls inside its own area with the trainee names fixed, and the page works at phone width | NOT STARTED | |
 | GC-50 | Constants (method list, status labels, reason length, code and title limits) are in one place on each side, and the status and method lists match the database enums | NOT STARTED | Config duplication check |
+| GC-51 | A competency has an optional source note (for example the Training Regulations name and version or date). It is saved, shown in the setup and written to the setup history. A note over the length limit returns 400 | NOT STARTED | Assumed, see Schema Proposal |
+| GC-52 | Everything typed is kept. The setup history is never purged, so a later import or suggestion feature can read it. Typing is manual: there is no import, no file upload and no AI call in this ticket | NOT STARTED | Open question 10 |
 
 ---
 
@@ -375,4 +390,4 @@ Searched 2026-11-23. The search confirmed the three categories and that the Trai
 
 ---
 
-## Summary: 0 PASS, 50 NOT STARTED (50 criteria), 17 test cases
+## Summary: 0 PASS, 52 NOT STARTED (52 criteria), 17 test cases
