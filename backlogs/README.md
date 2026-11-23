@@ -49,7 +49,7 @@ backlogs/
     trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
     notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
     clearance/acceptance.md                      — MP-61: Clearance and Certificate Request, Trainer validates (first step) (NOT STARTED). 24 criteria, 10 test cases
-    class-management/acceptance.md               — MP-66: Class Management, the trainer confirms the real start date of a batch and marks it started (NOT STARTED). 43 criteria, 16 test cases
+    class-management/acceptance.md               — MP-66: Class Management, the trainer confirms the real start date of a batch and marks it started (NOT STARTED). 44 criteria, 16 test cases
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
     profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (MERGED INTO DEV). Audit: trainee/profile/audit-dod.md

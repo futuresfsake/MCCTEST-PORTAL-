@@ -10,8 +10,8 @@
 | **Backend** | `/api/trainer/classes` (new) |
 | **Depends on** | Batches (MP-22 Admin, Registrar batches), the enrollment overlap rule (`enrollments.service`), announcements, the Trainer Dashboard (MP-65) |
 | **Related** | Notifications (MP-52 trainee, MP-56 trainer). Attendance (FUNC-006) records sessions, which this ticket must not contradict |
-| **Decided 2026-11-23** | The trainer's availability always decides the dates: **no Admin or Registrar override**. The start date **can be set in the past**. **No minimum** of trainees to start, and a **maximum** batch size of 25 to 30. **The trainer closes the batch** |
-| **TBA (to be announced)** | Three things are not decided: the **exact maximum batch size** (25 or 30, the code says 25 today), **how far the end date may be extended**, and **what closing does to the trainees' enrollments**. See the Open Questions |
+| **Decided 2026-11-23** | The trainer's availability always decides the dates: **no Admin or Registrar override**. The start date **can be set in the past**. **No minimum** of trainees to start. The **maximum batch size is dynamic**: the Registrar configures it per batch, there is no fixed number. **Only the trainer starts and closes a batch**, the Admin and the Registrar cannot. **No limit** on how far the end date can be extended |
+| **TBA (to be announced)** | One thing is not decided: **what closing does to the trainees' enrollments** (for example setting ENROLLED to COMPLETED). See the Open Questions |
 | **Added** | 2026-11-23 |
 
 ---
@@ -29,7 +29,7 @@
 - The dates are used in many places, so a wrong date does harm: the trainee dashboard shows the batch dates, enrollment checks that a batch has not ended and orders batches by start date, and enrollment refuses a trainee whose two active programs overlap in dates and schedule (`enrollments.service`).
 - There is **one** `start_date` and **one** `end_date` on `batch`. The trainer changes these same columns, so the new date shows everywhere with nothing to keep in sync. What is new is a flag that says the trainer confirmed it, and a history of every change.
 - The batch status today is changed by hand by the Admin or the Registrar (`OPEN`, `ONGOING`, `CLOSED`, `CANCELLED`). This ticket lets the trainer take a batch from `OPEN` to `ONGOING` when classes really start, and from `ONGOING` to `CLOSED` when the training ends.
-- **Decided by the project leader (2026-11-23):** the dates always follow the trainer's availability, so nobody overrides them. A start date in the past is allowed (a class may have begun before it was recorded). There is no minimum number of trainees, and the maximum is 25 to 30.
+- **Decided by the project leader (2026-11-23):** the dates always follow the trainer's availability, so nobody overrides them. A start date in the past is allowed (a class may have begun before it was recorded). There is no minimum number of trainees, and the maximum is dynamic (set per batch by the Registrar). Only the trainer starts and closes a batch. There is no limit on extending the end date.
 
 ## What the Trainer Can Do
 
@@ -64,9 +64,9 @@ The page lists the trainer's own batches. From a batch the trainer can:
 - **Conflict with a trainee's other enrollment.** A new date is refused (409) if it would put an enrolled trainee of this batch in conflict with that trainee's other active enrollment, using the **same rule as enrollment** (shared helper, not copied). The trainer sees how many trainees are affected and which.
 - **Recorded sessions.** A new start date that is after the date of a recorded session (`training_session`) of the batch is refused (400).
 - **Mark as started.** Needs status `OPEN` and a start date of today or earlier. **No minimum** of trainees (decided): a batch can start with any number, even none.
-- **Maximum batch size.** A batch never has more enrolled trainees than its capacity. The capacity limit is 25 to 30 (decided). The code limits capacity to 25 today in the Registrar create and update DTOs. The exact number is TBA (Open Question 3), and it must be one constant used by the Admin, the Registrar and this page.
-- **Change end date (ONGOING).** The new end date must be today or later and after the start date. How far it may be extended is TBA (Open Question 4).
-- **Close (ONGOING).** Only the trainer of the batch, only when the batch is `ONGOING`. A remark is required. If the end date is still in the future it is set to today, so the trainees' schedules are free for new enrollments (the overlap rule uses the end date). What closing does to the enrollments is TBA (Open Question 5). Closing cannot be undone by the trainer.
+- **Maximum batch size is dynamic** (decided). The limit is the `capacity` the Registrar sets on each batch. This page has no fixed maximum and never hard-codes 25 or 30. A batch never has more enrolled trainees than its own capacity. **Note for the Registrar batch ticket:** the Registrar create and update DTOs cap `capacity` at 25 today (`@Max(25)`). That fixed cap does not match "dynamic" and is a follow-up outside this ticket (remove it or move it to a setting).
+- **Change end date (ONGOING).** The new end date must be today or later and after the start date. There is **no limit** on how far it may be extended (decided).
+- **Only the trainer starts and closes** (decided). The Admin and the Registrar cannot move a batch to `ONGOING` or `CLOSED`. They keep the other status changes they have today, such as cancelling (assumed). **Close (ONGOING):** only the trainer of the batch, only when the batch is `ONGOING`. A remark is required. If the end date is still in the future it is set to today, so the trainees' schedules are free for new enrollments (the overlap rule uses the end date). What closing does to the enrollments is TBA (Open Question 5). Closing cannot be undone by the trainer.
 - **Reason.** Required, 5 to 500 characters, for every change.
 - **Stale save.** The request carries the dates and status the trainer saw. If the batch changed in the meantime the API returns 409 and changes nothing. Two trainers cannot both win, and neither can a trainer and a Registrar.
 - **All or nothing.** The batch change, the history row and the optional announcement are saved in one transaction.
@@ -98,10 +98,10 @@ The page lists the trainer's own batches. From a batch the trainer can:
 |---|---|---|
 | 1 | After the trainer confirmed the start date, can the Admin or the Registrar change the dates? | **Answered 2026-11-23:** no, and there is no override. The dates always follow the trainer's availability |
 | 2 | Can the start date be set in the past? | **Answered 2026-11-23:** yes |
-| 3 | Is there a minimum or a maximum number of trainees? | **Answered 2026-11-23:** no minimum, maximum 25 to 30. **TBA:** the exact maximum (25 or 30). The Registrar DTOs allow 25 today |
-| 4 | How far can the end date be extended? | **TBA.** Until decided, no limit except that the end is after the start |
+| 3 | Is there a minimum or a maximum number of trainees? | **Answered 2026-11-23:** no minimum. The maximum is **dynamic**: the Registrar configures `capacity` per batch, so there is no fixed number in this ticket. The fixed `@Max(25)` in the Registrar DTOs is a follow-up |
+| 4 | How far can the end date be extended? | **Answered 2026-11-23:** no limit, except that the end is after the start |
 | 5 | What does closing do to the trainees' enrollments (for example set `ENROLLED` to `COMPLETED`)? | **TBA.** Until decided, closing changes only the batch (status and history). Completion stays with clearance and graduation |
-| 6 | Who closes a batch? | **Answered 2026-11-23:** the trainer. The Admin and the Registrar keep their existing status edit for cancelling. **TBA:** whether they should still be able to close |
+| 6 | Who starts and closes a batch? | **Answered 2026-11-23:** only the trainer. The Admin and the Registrar cannot start or close. **Assumed:** they keep cancelling a batch |
 | 7 | What is the page called, and what happens to My Batches (`/trainer/batches`)? | **Assumed:** Class Management at `/trainer/classes`. My Batches stays a separate, later page |
 | 8 | Is the announcement to the trainees on by default? | **Assumed:** yes, and the trainer can untick it |
 | 9 | Does the end date move with the start date? | **Assumed:** yes by the same number of days, and the trainer can edit it |
@@ -163,7 +163,7 @@ Creating and cancelling batches (Admin, Registrar), attendance and sessions (FUN
 | CM-22 | Mark as started moves an `OPEN` batch to `ONGOING` and writes a `STARTED` history row. The batch must have a start date of today or earlier, otherwise 400 | NOT STARTED | |
 | CM-23 | Mark as started on a batch that is not `OPEN` returns 409 and changes nothing | NOT STARTED | |
 | CM-24 | There is no minimum number of trainees. A batch with any number of enrolled trainees, even none, can be started. The enrolled number never goes above the capacity | NOT STARTED | Decided: no minimum |
-| CM-25 | The trainer can change the end date of an `ONGOING` batch with a reason. It must be today or later and after the start date | NOT STARTED | Open question 4 (TBA) |
+| CM-25 | The trainer can change the end date of an `ONGOING` batch with a reason. It must be today or later and after the start date. There is no limit on how far it is extended | NOT STARTED | Decided: no limit |
 | CM-26 | The same trainee-conflict rule applies to an end date extension (CM-19) | NOT STARTED | |
 
 ### Close the batch
@@ -174,7 +174,8 @@ Creating and cancelling batches (Admin, Registrar), attendance and sessions (FUN
 | CM-40 | Closing a batch that is not `ONGOING` returns 409 and changes nothing. Another trainer's batch returns 404 | NOT STARTED | |
 | CM-41 | If the end date is in the future when the batch is closed, it is set to today in the same save, and the history row shows the old and new end date. A closed batch no longer blocks the trainees' schedules for new enrollments | NOT STARTED | Enrollment overlap rule reads `end_date` |
 | CM-42 | Closing changes only the batch. It does not change any enrollment status (what closing does to enrollments is TBA) | NOT STARTED | Open question 5 (TBA) |
-| CM-43 | The maximum batch size is one constant shared by the Admin, the Registrar and this page. Enrolling beyond the capacity still fails as today | NOT STARTED | Open question 3 (TBA, 25 or 30). Config duplication check |
+| CM-43 | This page and API use each batch's own `capacity` and no fixed maximum (no 25 or 30 in the code). Enrolling beyond the capacity still fails as today | NOT STARTED | Decided: dynamic. The `@Max(25)` in the Registrar DTOs is a separate follow-up |
+| CM-44 | The Admin and the Registrar cannot move a batch to `ONGOING` or `CLOSED`. The existing batch status endpoints return 409 with "Only the trainer can start or close a batch". Cancelling still works for them | NOT STARTED | Decided: up to the trainer. Cancelling kept is an assumption |
 
 ### Reflection
 
@@ -250,8 +251,8 @@ Creating and cancelling batches (Admin, Registrar), attendance and sessions (FUN
 ### TC-08: Extend the end date
 - **AC:** CM-25, CM-26
 - **Priority:** Medium
-- **Steps:** On an `ONGOING` batch, extend the end date by 14 days with a reason. Try an end date before today.
-- **Expected:** Saved with an `END_DATE_CHANGED` row. The past date returns 400.
+- **Steps:** On an `ONGOING` batch, extend the end date by 14 days with a reason, then by another 200 days. Try an end date before today.
+- **Expected:** Both extensions save, each with an `END_DATE_CHANGED` row (no limit). The past date returns 400.
 
 ### TC-16: Close the batch
 - **AC:** CM-39 to CM-43
@@ -268,10 +269,10 @@ Creating and cancelling batches (Admin, Registrar), attendance and sessions (FUN
 - **Expected:** Every place shows the new dates and the Confirmed by trainer label. The trainee sees the announcement.
 
 ### TC-10: Registrar and Admin after confirmation (no override)
-- **AC:** CM-29, CM-30
+- **AC:** CM-29, CM-30, CM-44
 - **Priority:** High
-- **Steps:** As Registrar, change the dates of a batch the trainer confirmed, and of an unconfirmed one. Repeat as Admin. Change the capacity of the confirmed batch.
-- **Expected:** The confirmed batch returns 409 with the message to ask the trainer. The unconfirmed one saves and a `DATES_EDITED_BY_STAFF` row is written. The capacity change follows the old rules.
+- **Steps:** As Registrar, change the dates of a batch the trainer confirmed, and of an unconfirmed one. Repeat as Admin. Change the capacity of the confirmed batch. Try to set a batch to `ONGOING` and to `CLOSED`, then to `CANCELLED`.
+- **Expected:** The confirmed batch returns 409 with the message to ask the trainer. The unconfirmed one saves and a `DATES_EDITED_BY_STAFF` row is written. The capacity change follows the old rules. `ONGOING` and `CLOSED` return 409 (only the trainer). `CANCELLED` works.
 
 ### TC-11: Stale save and two at once
 - **AC:** CM-32, CM-33
@@ -305,4 +306,4 @@ Creating and cancelling batches (Admin, Registrar), attendance and sessions (FUN
 
 ---
 
-## Summary: 0 PASS, 43 NOT STARTED (43 criteria), 16 test cases
+## Summary: 0 PASS, 44 NOT STARTED (44 criteria), 16 test cases
