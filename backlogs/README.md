@@ -38,6 +38,7 @@ backlogs/
     announcements/acceptance.md                  — MP-31: Registrar Announcements
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
     notifications/acceptance.md                  — MP-55: Notification Bell, Registrar Events (NOT STARTED)
+    clearance/acceptance.md                      — MP-62: Clearance and Certificate Request, Registrar validates (second step) (NOT STARTED). 24 criteria, 10 test cases
     enrollment-uniform-deduction-bug/acceptance.md — MP-58: Bug, enrollment does not deduct uniform stock (NOT STARTED)
     decisions.md                                 — Registrar decisions and the reasons (MP-42 history, MP-53, MP-43)
     requirements/acceptance.md                   — MP-43: Requirements Tracking, Admin and Registrar (IN REVIEW). Audit: registrar/requirements/audit-dod.md
@@ -138,6 +139,7 @@ backlogs/
 | MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
 | MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Same pattern as the withdrawal pipeline. See `shared/clearance-request` |
 | MP-61 | Clearance and Certificate Request, Trainer: validate the trainee's clearance (first step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60. The Trainer confirms four checks. See `trainer/clearance` |
+| MP-62 | Clearance and Certificate Request, Registrar: validate the trainee's clearance (second step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-61. The Registrar confirms ID surrendered, fees settled and documents submitted. See `registrar/clearance` |
 
 ### Technical Debt
 

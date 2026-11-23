@@ -7,7 +7,7 @@
 | **Status** | NOT STARTED |
 | **Assignee** | Chelsea Cllj (Jira default, reassign if needed) |
 | **Depends on** | MP-24 (trainee scope), MP-25 (payments, for the fee check). The pattern to copy is the withdrawal pipeline (MP-45 to MP-49, `shared/withdrawal/acceptance.md`) |
-| **Related** | **MP-61 (Trainer step, detail in `trainer/clearance/acceptance.md`).** The Registrar and Encoder steps are separate tickets, to be created. MP-52 (notifications, not needed), FUNC-010 (certificate generation) and FUNC-017 (public certificate verification), both later |
+| **Related** | **MP-61 (Trainer step, detail in `trainer/clearance/acceptance.md`) and MP-62 (Registrar step, detail in `registrar/clearance/acceptance.md`).** The Encoder step is a separate ticket, to be created. MP-52 (notifications, not needed), FUNC-010 (certificate generation) and FUNC-017 (public certificate verification), both later |
 | **Interface** | Trainee: `/trainee/clearance-requests`. Trainer: `/trainer/clearance-requests`. Registrar: `/registrar/clearance-requests`. Encoder: `/encoder/clearance-requests`. A "Clearance" sidebar link on each. No Admin page |
 | **Source** | The paper "Clearance and Certificate Request Form" (capstone paper, Appendix D, Figure 4) |
 | **Added** | 2026-11-23 |
@@ -74,7 +74,7 @@ Any other status returns 400 for the step that tries to act. The Encoder has no 
 | 2 | One certificate type, or several in one request? | **Assumed:** one or more, like the checkboxes on the paper. Stored in `clearance_certificate`. `request_form.certificate_type_id` (required by the schema) holds the first one |
 | 3 | What is the control number format? | **Assumed:** system-generated, unique, following the printed pattern `MCCTEST00` and a running number. The exact digits are to be confirmed |
 | 4 | What does the Trainer confirm? | **Assumed:** four checks, all required to validate: training hours and attendance complete, the written, practical and oral assessments done, the portfolio and required outputs submitted, tools and equipment returned. Remarks optional on validate, required on reject. Detail and test cases in `trainer/clearance/acceptance.md` (MP-61) |
-| 5 | What does the Registrar check? | **Assumed:** the same three checks as the withdrawal (MP-47): ID surrendered, fees settled, documents submitted. All three are required to validate. Otherwise the Registrar rejects with a reason |
+| 5 | What does the Registrar check? | **Assumed:** the same three checks as the withdrawal (MP-47): ID surrendered, fees settled, documents submitted. All three are required to validate. Otherwise the Registrar rejects with a reason. Detail and test cases in `registrar/clearance/acceptance.md` (MP-62) |
 | 6 | What does "processes" mean for the Encoder? | **Assumed:** the Encoder sets the schedule release date (not in the past; the paper says processing takes 3 to 5 business days) and the request becomes `PROCESSED`. Later the Encoder marks it `RELEASED` with who and when. The certificate file itself comes with FUNC-010 |
 | 7 | After a rejection, can the trainee send a new request? | **Assumed:** yes. A rejected, cancelled or released request is no longer open |
 | 8 | Does the Admin see these requests? | **Assumed:** no page for now |
@@ -85,10 +85,10 @@ Any other status returns 400 for the step that tries to act. The Encoder has no 
 |------|--------|---------|
 | Trainee form, progress, claim stub, and the shared module and schema | MP-60 | This file |
 | Trainer validates | MP-61 | `trainer/clearance/acceptance.md` (24 criteria, 10 test cases) |
-| Registrar validates | To be created | Section C below for now |
+| Registrar validates | MP-62 | `registrar/clearance/acceptance.md` (24 criteria, 10 test cases) |
 | Encoder processes and releases | To be created | Section D below for now |
 
-The criteria in this file for the Trainer (CL-19 to CL-22) are the short version of MP-61. If they differ, MP-61 wins.
+The criteria in this file for the Trainer (CL-19 to CL-22) and the Registrar (CL-23 to CL-26) are the short version of MP-61 and MP-62. If they differ, the ticket's own file wins.
 
 ## Scope
 
