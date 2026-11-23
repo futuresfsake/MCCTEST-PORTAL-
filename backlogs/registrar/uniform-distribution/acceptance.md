@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-53 |
 | **Type** | Feature (Registrar only, its own page) |
-| **Status** | NOT STARTED |
+| **Status** | BUILT on branch `MP-53-uniform-distribution`, PR #106 open, not merged. Audited 2026-11-23: 22 PASS, 1 PARTIAL, 1 NOT MET, see `audit-dod.md`. Jira: In Progress |
 | **Assignee** | Rhoddz Gerunda |
 | **Depends on** | MP-35 (inventory module, `InventoryService.deductAndLog`) |
 | **Related** | MP-35 follow-up F2, MP-16 (enrollment form), MP-59 (restock reminder, split out of this ticket), MP-58 (enrollment bug) |
@@ -104,45 +104,45 @@ Everything for this feature sits under the Registrar. There is no shared `Distri
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 1 | The Registrar can open `/registrar/uniform-distribution`. The Registrar sidebar has the link | NOT STARTED | |
-| 2 | Admin, trainer, trainee and encoder get 403 from every endpoint and cannot open the page | NOT STARTED | Open question 1 |
-| 3 | Every endpoint returns 401 without a token | NOT STARTED | |
+| 1 | The Registrar can open `/registrar/uniform-distribution`. The Registrar sidebar has the link | PASS | |
+| 2 | Admin, trainer, trainee and encoder get 403 from every endpoint and cannot open the page | PASS | Open question 1 |
+| 3 | Every endpoint returns 401 without a token | PASS | |
 
 ### The Page
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 4 | The list shows each enrollment with trainee name, ID card number, program, batch, size, status and uniform status (Not given, or Given with size, date and who handed it out) | NOT STARTED | |
-| 5 | The summary shows the count given and the count waiting | NOT STARTED | |
-| 6 | The list filters by uniform status, program and batch, searches by name or ID card number, and is paged | NOT STARTED | |
-| 7 | Withdrawn, dropped and completed enrollments are shown **greyed out with an Inactive badge** and have no "Mark as given" action | NOT STARTED | Open question 3 |
-| 7a | The list shows Active enrollments by default. A filter includes Inactive rows. Inactive rows are not counted as waiting | NOT STARTED | |
+| 4 | The list shows each enrollment with trainee name, ID card number, program, batch, size, status and uniform status (Not given, or Given with size, date and who handed it out) | PASS | |
+| 5 | The summary shows the count given and the count waiting | PASS | |
+| 6 | The list filters by uniform status, program and batch, searches by name or ID card number, and is paged | PASS | |
+| 7 | Withdrawn, dropped and completed enrollments are shown **greyed out with an Inactive badge** and have no "Mark as given" action | PASS | Open question 3 |
+| 7a | The list shows Active enrollments by default. A filter includes Inactive rows. Inactive rows are not counted as waiting | PARTIAL | Audit 2026-11-23: with Include inactive on, the waiting count includes inactive rows (audit F-2) |
 
 ### Distribution and Deduction
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 8 | **Given** an enrolled trainee with the uniform not given and Program A size M at 5, **when** the registrar marks it as given, **then** stock becomes 4 | NOT STARTED | |
-| 9 | The distribution record is updated: `uniform_given = true`, `size_issued`, `date_distributed`, `distributed_by` (the logged-in registrar) and `inventory_id` | NOT STARTED | |
-| 10 | A `DISTRIBUTED` history entry is saved: -1, quantity after 4, linked to the enrollment, performed by the logged-in registrar | NOT STARTED | |
-| 11 | The registrar must click a size before confirming. The confirm button stays disabled until a size is picked. Stock is deducted directly from the picked size, even if it differs from the enrollment's size, and `size_issued` records it | NOT STARTED | Open question 2 |
-| 12 | The stock change, the history row and the distribution record are saved in one transaction. If any step fails, none is saved | NOT STARTED | |
-| 13 | Stock is 0 for that program and size: the request is rejected with an out-of-stock message and nothing is saved | NOT STARTED | Same message as enrollment |
-| 14 | The uniform is already marked as given: the request is rejected (409) and stock is not deducted again | NOT STARTED | |
-| 15 | Two requests for the same enrollment at the same moment deduct stock only once | NOT STARTED | Conditional update on `uniform_given = false` |
-| 16 | Two enrollments handed the last shirt at the same moment: only one succeeds, stock never goes below 0 | NOT STARTED | Row lock in `deductAndLog` |
-| 17 | Only `ENROLLED` enrollments can be marked. Others are rejected (400) | NOT STARTED | |
-| 18 | An unknown enrollment id returns 404 and a malformed id returns 400 | NOT STARTED | `ParseUUIDPipe` |
-| 19 | The dialog shows the available quantity for the chosen size before confirming. The button is disabled while saving, so it cannot be double-submitted | NOT STARTED | Needs MP-35 F1 |
-| 20 | After saving, the row shows Given without a refresh, and an error message shows on failure | NOT STARTED | |
-| 21 | The item's History and the Stock Log show the movement with the trainee's name and ID card number | NOT STARTED | Already supported by the MP-35 history query |
-| 22 | The deduction uses `InventoryService.deductAndLog`. The logic is not copied | NOT STARTED | Also satisfies MP-35 criteria 12 and 23 |
+| 8 | **Given** an enrolled trainee with the uniform not given and Program A size M at 5, **when** the registrar marks it as given, **then** stock becomes 4 | PASS | |
+| 9 | The distribution record is updated: `uniform_given = true`, `size_issued`, `date_distributed`, `distributed_by` (the logged-in registrar) and `inventory_id` | PASS | |
+| 10 | A `DISTRIBUTED` history entry is saved: -1, quantity after 4, linked to the enrollment, performed by the logged-in registrar | PASS | |
+| 11 | The registrar must click a size before confirming. The confirm button stays disabled until a size is picked. Stock is deducted directly from the picked size, even if it differs from the enrollment's size, and `size_issued` records it | PASS | Open question 2 |
+| 12 | The stock change, the history row and the distribution record are saved in one transaction. If any step fails, none is saved | PASS | |
+| 13 | Stock is 0 for that program and size: the request is rejected with an out-of-stock message and nothing is saved | PASS | Same message as enrollment |
+| 14 | The uniform is already marked as given: the request is rejected (409) and stock is not deducted again | PASS | |
+| 15 | Two requests for the same enrollment at the same moment deduct stock only once | PASS | Conditional update on `uniform_given = false` |
+| 16 | Two enrollments handed the last shirt at the same moment: only one succeeds, stock never goes below 0 | PASS | Row lock in `deductAndLog` |
+| 17 | Only `ENROLLED` enrollments can be marked. Others are rejected (400) | PASS | |
+| 18 | An unknown enrollment id returns 404 and a malformed id returns 400 | PASS | `ParseUUIDPipe` |
+| 19 | The dialog shows the available quantity for the chosen size before confirming. The button is disabled while saving, so it cannot be double-submitted | PASS | Needs MP-35 F1 |
+| 20 | After saving, the row shows Given without a refresh, and an error message shows on failure | PASS | |
+| 21 | The item's History and the Stock Log show the movement with the trainee's name and ID card number | PASS | Already supported by the MP-35 history query |
+| 22 | The deduction uses `InventoryService.deductAndLog`. The logic is not copied | PASS | Also satisfies MP-35 criteria 12 and 23 |
 
 ### Quality
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 23 | Backend and frontend lint and build pass. Tests cover success, out of stock, already given, wrong status and concurrency | NOT STARTED | |
+| 23 | Backend and frontend lint and build pass. Tests cover success, out of stock, already given, wrong status and concurrency | NOT MET | Audit 2026-11-23: backend lint has 16 errors and the new code has no unit tests (audit F-3, F-4) |
 
 ---
 
