@@ -28,7 +28,7 @@ ALTER TABLE "attendance"
 
 CREATE TABLE "attendance_history" (
   "id" UUID NOT NULL DEFAULT gen_random_uuid(),
-  "session_id" UUID NOT NULL,
+  "session_id" UUID,
   "attendance_id" UUID,
   "enrollment_id" UUID,
   "event_type" VARCHAR(30) NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE "attendance_history" (
 
 ALTER TABLE "attendance_history"
   ADD CONSTRAINT "attendance_history_session_id_fkey"
-  FOREIGN KEY ("session_id") REFERENCES "training_session"("session_id") ON DELETE CASCADE ON UPDATE NO ACTION,
+  FOREIGN KEY ("session_id") REFERENCES "training_session"("session_id") ON DELETE SET NULL ON UPDATE NO ACTION,
   ADD CONSTRAINT "attendance_history_changed_by_fkey"
   FOREIGN KEY ("changed_by") REFERENCES "users"("id") ON DELETE NO ACTION ON UPDATE NO ACTION;
 

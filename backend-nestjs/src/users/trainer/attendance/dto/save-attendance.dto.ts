@@ -8,7 +8,9 @@ import {
   IsString,
   IsUUID,
   Max,
+  MaxLength,
   Min,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -24,6 +26,7 @@ export class AttendanceEntryDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
+  @MaxLength(500)
   remark?: string;
 }
 
@@ -44,9 +47,16 @@ export class SaveAttendanceDto {
   @IsOptional()
   @IsString()
   @IsNotEmpty()
+  @MinLength(5)
+  @MaxLength(500)
   reason?: string;
 
   @IsOptional()
   @IsDateString()
   expectedUpdatedAt?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  topics?: string;
 }

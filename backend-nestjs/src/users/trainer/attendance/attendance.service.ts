@@ -68,7 +68,11 @@ export class AttendanceService {
         },
       },
     });
-    const enrollments = await this.roster(batchId, session?.session_id);
+    const enrollments = await this.roster(
+      batchId,
+      session?.session_id,
+      sessionDate,
+    );
     const byEnrollment = new Map(
       (session?.attendance ?? []).map((row) => [row.enrollment_id, row]),
     );
@@ -168,6 +172,9 @@ export class AttendanceService {
     const batch = await this.findBatch(trainerId, batchId);
     const sessionDate = this.parseDate(dto.sessionDate);
     this.assertDateRange(batch, sessionDate);
+    if ((dto.hours * 4) % 1 !== 0) {
+      throw new BadRequestException('Hours must be in 0.25-hour steps');
+    }
     if (sessionDate < this.today()) {
       if (!dto.reason?.trim()) {
         throw new BadRequestException(
@@ -182,7 +189,11 @@ export class AttendanceService {
       },
       select: { session_id: true },
     });
-    const roster = await this.roster(batchId, existingSession?.session_id);
+    const roster = await this.roster(
+      batchId,
+      existingSession?.session_id,
+      sessionDate,
+    );
     const expectedIds = new Set(roster.map((item) => item.id));
     const editableIds = new Set(
       roster
@@ -233,20 +244,29 @@ export class AttendanceService {
             'This session already exists. Reload before saving.',
           );
         }
+        const hoursChanged =
+          existing !== null && Number(existing.hours) !== dto.hours;
+        const topicsChanged =
+          existing !== null &&
+          (existing.topics_covered ?? '') !== (dto.topics?.trim() ?? '');
         const session = existing
-          ? await tx.training_session.update({
-              where: { session_id: existing.session_id },
-              data: {
-                hours: dto.hours,
-                updated_at: new Date(),
-                updated_by: trainerId,
-              },
-            })
+          ? hoursChanged || topicsChanged
+            ? await tx.training_session.update({
+                where: { session_id: existing.session_id },
+                data: {
+                  hours: dto.hours,
+                  topics_covered: dto.topics?.trim() || null,
+                  updated_at: new Date(),
+                  updated_by: trainerId,
+                },
+              })
+            : existing
           : await tx.training_session.create({
               data: {
                 batch_id: batchId,
                 session_date: sessionDate,
                 hours: dto.hours,
+                topics_covered: dto.topics?.trim() || null,
                 created_by: trainerId,
                 updated_by: trainerId,
               },
@@ -315,7 +335,7 @@ export class AttendanceService {
             });
           }
         }
-        if (existing && Number(existing.hours) !== dto.hours) {
+        if (existing && hoursChanged) {
           await tx.attendance_history.create({
             data: {
               session_id: session.session_id,
@@ -353,6 +373,13 @@ export class AttendanceService {
     to?: string,
   ) {
     const batch = await this.findBatch(trainerId, batchId, true);
+    const fromDate = from ? this.parseDate(from) : null;
+    const toDate = to ? this.parseDate(to) : null;
+    if (fromDate && toDate && fromDate > toDate) {
+      throw new BadRequestException(
+        'Export from date must be on or before export to date',
+      );
+    }
     const sessions = await this.prisma.training_session.findMany({
       where: {
         batch_id: batch.id,
@@ -368,13 +395,21 @@ export class AttendanceService {
       include: { attendance: true },
       orderBy: { session_date: 'asc' },
     });
+    if (sessions.length === 0) {
+      throw new ConflictException('The batch has no saved sessions to export');
+    }
     const enrollments = await this.prisma.enrollments.findMany({
       where: { batch_id: batch.id },
       include: {
         trainee: {
           include: {
             users: {
-              select: { first_name: true, middle_name: true, last_name: true },
+              select: {
+                system_id: true,
+                first_name: true,
+                middle_name: true,
+                last_name: true,
+              },
             },
           },
         },
@@ -386,6 +421,7 @@ export class AttendanceService {
     );
     const header = [
       'Trainee',
+      'System ID',
       ...dates,
       'Present',
       'Absent',
@@ -421,7 +457,8 @@ export class AttendanceService {
         : '';
       return [
         this.traineeName(enrollment.trainee.users),
-        ...statuses.map((status) => this.csvCell(status)),
+        enrollment.trainee.users?.system_id ?? '',
+        ...statuses.map((status) => this.statusLetter(status)),
         counts.PRESENT,
         counts.ABSENT,
         counts.LATE,
@@ -433,6 +470,69 @@ export class AttendanceService {
     return [header, ...rows]
       .map((row) => row.map((value) => this.csvCell(value)).join(','))
       .join('\r\n');
+  }
+
+  async deleteSession(trainerId: string, batchId: string, date: string) {
+    const batch = await this.findBatch(trainerId, batchId);
+    const sessionDate = this.parseDate(date);
+    this.assertDateRange(batch, sessionDate);
+    return this.prisma.$transaction(async (tx) => {
+      const session = await tx.training_session.findUnique({
+        where: {
+          batch_id_session_date: {
+            batch_id: batchId,
+            session_date: sessionDate,
+          },
+        },
+        include: { attendance: true },
+      });
+      if (!session) {
+        throw new NotFoundException('Session not found');
+      }
+      if (session.attendance.length > 0) {
+        throw new ConflictException(
+          'A session with attendance rows cannot be deleted',
+        );
+      }
+      await tx.attendance_history.create({
+        data: {
+          session_id: session.session_id,
+          event_type: 'SESSION_DELETED',
+          changed_by: trainerId,
+        },
+      });
+      await tx.training_session.delete({
+        where: { session_id: session.session_id },
+      });
+      return { deleted: true };
+    });
+  }
+
+  async history(trainerId: string, batchId: string, date: string) {
+    const batch = await this.findBatch(trainerId, batchId);
+    const sessionDate = this.parseDate(date);
+    this.assertDateRange(batch, sessionDate);
+    const session = await this.prisma.training_session.findUnique({
+      where: {
+        batch_id_session_date: {
+          batch_id: batchId,
+          session_date: sessionDate,
+        },
+      },
+      select: { session_id: true },
+    });
+    if (!session) {
+      throw new NotFoundException('Session not found');
+    }
+    return this.prisma.attendance_history.findMany({
+      where: { session_id: session.session_id },
+      include: {
+        users: {
+          select: { first_name: true, middle_name: true, last_name: true },
+        },
+      },
+      orderBy: { changed_at: 'desc' },
+    });
   }
 
   private async findBatch(
@@ -465,12 +565,19 @@ export class AttendanceService {
     return batch;
   }
 
-  private async roster(batchId: string, sessionId?: string) {
+  private async roster(
+    batchId: string,
+    sessionId?: string,
+    sessionDate?: Date,
+  ) {
     return this.prisma.enrollments.findMany({
       where: {
         batch_id: batchId,
         OR: [
-          { enrollment_status: enrollment_status_enum.ENROLLED },
+          {
+            enrollment_status: enrollment_status_enum.ENROLLED,
+            ...(sessionDate ? { enrolled_at: { lte: sessionDate } } : {}),
+          },
           ...(sessionId
             ? [{ attendance: { some: { session_id: sessionId } } }]
             : []),
@@ -497,12 +604,17 @@ export class AttendanceService {
   }
 
   private parseDate(value: string) {
-    const match = /^\d{4}-\d{2}-\d{2}$/.test(value)
-      ? value
-      : value.slice(0, 10);
-    const date = new Date(`${match}T00:00:00.000Z`);
-    if (Number.isNaN(date.getTime()))
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
       throw new BadRequestException('Invalid session date');
+    }
+    const [year, month, day] = value.split('-').map(Number);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    if (
+      Number.isNaN(date.getTime()) ||
+      date.toISOString().slice(0, 10) !== value
+    ) {
+      throw new BadRequestException('Invalid session date');
+    }
     return date;
   }
 
@@ -592,5 +704,13 @@ export class AttendanceService {
           : JSON.stringify(value);
     const safe = /^[=+\-@]/.test(text) ? `'${text}` : text;
     return `"${safe.replaceAll('"', '""')}"`;
+  }
+
+  private statusLetter(status: attendance_status_enum | '') {
+    if (status === 'PRESENT') return 'P';
+    if (status === 'ABSENT') return 'A';
+    if (status === 'LATE') return 'L';
+    if (status === 'EXCUSED') return 'E';
+    return '';
   }
 }

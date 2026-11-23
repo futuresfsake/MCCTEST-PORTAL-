@@ -10,7 +10,12 @@ import {
 } from "../../../../api/users/trainer.api";
 
 const statuses: AttendanceStatus[] = ["PRESENT", "ABSENT", "LATE", "EXCUSED"];
-const today = new Date().toISOString().slice(0, 10);
+const today = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Manila",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+}).format(new Date());
 
 export default function TrainerAttendancePage() {
   const [batches, setBatches] = useState<
@@ -38,6 +43,10 @@ export default function TrainerAttendancePage() {
   const loadSession = useCallback(
     async (id = batchId, selectedDate = date) => {
       if (!id) return;
+      const params = new URLSearchParams(window.location.search);
+      params.set("batch", id);
+      params.set("date", selectedDate);
+      window.history.replaceState(null, "", `?${params.toString()}`);
       setLoading(true);
       setError(null);
       try {
@@ -66,13 +75,23 @@ export default function TrainerAttendancePage() {
   );
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const requestedBatch = params.get("batch");
+    const requestedDate = params.get("date");
     trainerApi
       .attendanceBatches()
       .then((items) => {
         setBatches(items);
-        if (items[0]) {
-          setBatchId(items[0].id);
-          void loadSession(items[0].id, today);
+        const selected =
+          items.find((item) => item.id === requestedBatch) ?? items[0];
+        if (selected) {
+          const selectedDate =
+            requestedDate && /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
+              ? requestedDate
+              : today;
+          setBatchId(selected.id);
+          setDate(selectedDate);
+          void loadSession(selected.id, selectedDate);
         } else {
           setLoading(false);
         }
@@ -100,6 +119,29 @@ export default function TrainerAttendancePage() {
       ),
     [entries],
   );
+
+  const isDirty = useMemo(() => {
+    if (!detail) return false;
+    if (hours !== (detail.session?.hours ?? detail.suggestedHours)) return true;
+    return entries.some((entry) => {
+      const saved = detail.entries.find(
+        (savedEntry) => savedEntry.enrollmentId === entry.enrollmentId,
+      );
+      return (
+        entry.status !== (saved?.status ?? null) ||
+        entry.remark !== (saved?.remark ?? "")
+      );
+    });
+  }, [detail, entries, hours]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const warn = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isDirty]);
 
   const setAllPresent = () =>
     setEntries((current) =>
@@ -179,7 +221,46 @@ export default function TrainerAttendancePage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white text-slate-900">
-      <style>{`@media print { header, aside, footer, button, input, select { display: none !important; } main { width: 100% !important; background: white !important; } section { break-inside: avoid; box-shadow: none !important; } }`}</style>
+      <style>{`@media print { .attendance-interactive { display: none !important; } #attendance-print-sheet { display: block !important; } } #attendance-print-sheet { display: none; }`}</style>
+      {detail && (
+        <div id="attendance-print-sheet" className="p-8 text-slate-950">
+          {isDirty && (
+            <p className="mb-4 border border-amber-400 p-2 text-sm">
+              Unsaved changes are not included in this print; showing the saved
+              session.
+            </p>
+          )}
+          <h1 className="text-2xl font-bold">MCCTEST Attendance Sheet</h1>
+          <p>{detail.batch.programName} · {detail.batch.name}</p>
+          <p>{detail.date} · {detail.session?.hours ?? detail.suggestedHours} hours</p>
+          <p className="mt-3">
+            Present {detail.counts.PRESENT} · Absent {detail.counts.ABSENT} · Late{" "}
+            {detail.counts.LATE} · Excused {detail.counts.EXCUSED}
+          </p>
+          <table className="mt-5 w-full border-collapse text-sm">
+            <thead>
+              <tr>
+                <th className="border px-2 py-2 text-left">Trainee</th>
+                <th className="border px-2 py-2 text-left">Status</th>
+                <th className="border px-2 py-2 text-left">Remark</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detail.entries.map((entry) => (
+                <tr key={entry.enrollmentId}>
+                  <td className="border px-2 py-2">{entry.traineeName}</td>
+                  <td className="border px-2 py-2">{entry.status ?? ""}</td>
+                  <td className="border px-2 py-2">{entry.remark}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p className="mt-12 border-t border-slate-700 pt-2">
+            Trainer signature
+          </p>
+        </div>
+      )}
+      <div className="attendance-interactive flex min-h-screen flex-col">
       <Header />
       <div className="relative flex min-h-0 flex-1">
         <Sidebar variant="trainer" />
@@ -511,6 +592,7 @@ export default function TrainerAttendancePage() {
         </main>
       </div>
       <Footer />
+      </div>
     </div>
   );
 }

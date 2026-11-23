@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseUUIDPipe,
@@ -81,5 +82,23 @@ export class AttendanceController {
     @Body() dto: SaveAttendanceDto,
   ) {
     return this.service.save(req.user.id, batchId, dto);
+  }
+
+  @Delete('batches/:batchId/sessions/:date')
+  deleteSession(
+    @Req() req: { user: AuthenticatedUser },
+    @Param('batchId', ParseUUIDPipe) batchId: string,
+    @Param('date') date: string,
+  ) {
+    return this.service.deleteSession(req.user.id, batchId, date);
+  }
+
+  @Get('sessions/:date/history')
+  history(
+    @Req() req: { user: AuthenticatedUser },
+    @Param('date') date: string,
+    @Query('batchId') batchId: string,
+  ) {
+    return this.service.history(req.user.id, batchId, date);
   }
 }
