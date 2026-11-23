@@ -7,7 +7,7 @@
 | **Status** | NOT STARTED |
 | **Assignee** | Chelsea Cllj (Jira default, reassign if needed) |
 | **Depends on** | MP-60 (the form, the status values, `clearance_status_history`, the shared service), MP-62 (the Registrar step that feeds this one), MP-61 (the Trainer step). The Encoder pages of MP-51 (Trainee Information) are in the same portal |
-| **Related** | FUNC-010 (generating the certificate file) and FUNC-017 (public certificate verification), both later |
+| **Related** | **MP-64 (generating the certificate: template, print and PDF export).** FUNC-017 (public certificate verification), later |
 | **Interface** | Encoder: `/encoder/clearance-requests`. "Clearance" sidebar link |
 | **Overview** | `shared/clearance-request/acceptance.md` (CL-27 to CL-30 there are the short version of this file) |
 | **Source** | Paper, Figure 4 (claim stub), Figures 25 to 29 (Encoder interfaces: approval queue, release and monitoring log) and Figure 3 (the Encoder's tracking spreadsheet and physical logbook) |
@@ -28,7 +28,7 @@
 - The Encoder acts only on `REGISTRAR_VALIDATED` (process) and `PROCESSED` (release). The Encoder sees **all** requests.
 - The Encoder **does not reject**, and nothing is sent back. The Trainer and the Registrar decide whether the trainee is cleared. If the Encoder finds a problem, the Encoder contacts them directly.
 - The claim stub on the form says: present it when claiming, the document is released only on the scheduled date, and processing takes 3 to 5 business days. The control number on the stub is how the Encoder finds and checks the request.
-- Generating the certificate file (PDF or PNG with a control number) is **not** part of this ticket (FUNC-010). Until then the document is prepared outside the system and this step records the processing and the release.
+- Generating the certificate file is **not** part of this ticket. It is **MP-64** (`encoder/certificate-generation/acceptance.md`): once the Trainer and the Registrar have validated, the Encoder clicks Generate certificate and prints or exports it. Until MP-64 ships the document is prepared outside the system and this step records the processing and the release.
 - Table mapping: `clearance.schedule` is the "Schedule release date", `clearance.released_by` is "Released by", `clearance.date_released` is "Date released". `clearance.release_date` is not used.
 
 ## What the Encoder Does
@@ -46,7 +46,7 @@
 | 1 | Must the Encoder type the control number to release? | **Assumed:** yes, it must match the request. It ties the release to the stub the trainee presents |
 | 2 | Can the release date be changed after processing? | **Assumed:** yes, while `PROCESSED`, with a remark. Each change is logged |
 | 3 | What if the Encoder finds a problem with a request? | **Assumed:** nothing in the system. No reject, no hold, no send-back. The Encoder contacts the Trainer or the Registrar |
-| 4 | Is the certificate file made here? | **Assumed:** no (FUNC-010). The Encoder processes the record |
+| 4 | Is the certificate file made here? | **Answered 2026-11-23:** no. It is MP-64. **Assumed:** once MP-64 ships, Process also requires every requested certificate (COC, COT) to be generated first (MP-64 CG-24). Until then Process works without it |
 | 5 | Should the release log be exportable to Excel? | **Assumed:** later. A printable record per request for now |
 | 6 | Can someone else claim for the trainee? | **Assumed:** not handled. The request is released against the control number on the stub |
 
@@ -104,7 +104,7 @@
 ## Out of Scope
 
 - The trainee form and the shared module (MP-60), the Trainer and Registrar steps (MP-61, MP-62).
-- Generating the certificate file (FUNC-010) and the public verification page (FUNC-017).
+- Generating the certificate file (MP-64) and the public verification page (FUNC-017).
 - Rejecting, holding or sending back a request.
 - Exporting the log to Excel.
 - Notifications (MP-52). An Admin page for clearance.
@@ -145,7 +145,7 @@
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
 | CE-12 | The encoder can process only a `REGISTRAR_VALIDATED` request. `PENDING_VALIDATION`, `TRAINER_VALIDATED`, `PROCESSED`, `RELEASED`, `REJECTED` and `CANCELLED` return 400 and change nothing. The Trainer and the Registrar cannot be skipped | NOT STARTED | |
-| CE-13 | Process needs a schedule release date that is today or later. A missing, malformed or past date returns 400. Remarks are optional and have a length limit | NOT STARTED | |
+| CE-13 | Process needs a schedule release date that is today or later. A missing, malformed or past date returns 400. Remarks are optional and have a length limit. After MP-64 ships, Process also returns 400 unless every requested certificate has been generated | NOT STARTED | Changed by MP-64 CG-24 |
 | CE-14 | Process sets `PROCESSED` and saves `schedule`, `encoder_processed_by` and `encoder_processed_at`. The client cannot set the status, another user as the processor, or the Trainer, Registrar or release fields | NOT STARTED | |
 | CE-15 | After processing, the trainee sees the claim stub with the schedule release date (MP-60 CL-18) | NOT STARTED | |
 | CE-16 | While the request is `PROCESSED` the encoder can change the date to today or later, with a remark. The status stays `PROCESSED`, the trainee's stub shows the new date, and the change is logged. A request in any other status returns 400 | NOT STARTED | Open question 2 |

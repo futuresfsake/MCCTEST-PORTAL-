@@ -58,6 +58,7 @@ backlogs/
     dashboard/acceptance.md                      — Encoder Dashboard (placeholder, 4 pages planned)
     notifications/acceptance.md                  — MP-57: Notification Bell, Encoder Events (NOT STARTED)
     clearance/acceptance.md                      — MP-63: Clearance and Certificate Request, Encoder processes, releases and keeps the release log (last step) (NOT STARTED). 24 criteria, 10 test cases
+    certificate-generation/acceptance.md         — MP-64: Certificate Generation, the Encoder generates the certificate from a template, prints or exports it to PDF (NOT STARTED). 34 criteria, 14 test cases
   technical/
     announcements-password-hash-exposure/acceptance.md — SEC-01: password hash exposed by announcements API (FIXED, on dev and staging; main pending)
     multer-dos-advisory/acceptance.md            — SEC-02: multer denial-of-service advisory (LOGGED, not fixed)
@@ -142,6 +143,7 @@ backlogs/
 | MP-61 | Clearance and Certificate Request, Trainer: validate the trainee's clearance (first step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60. The Trainer confirms four checks. See `trainer/clearance` |
 | MP-62 | Clearance and Certificate Request, Registrar: validate the trainee's clearance (second step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-61. The Registrar confirms ID surrendered, fees settled and documents submitted. See `registrar/clearance` |
 | MP-63 | Clearance and Certificate Request, Encoder: process the request, set the release schedule, release and keep the release log (last step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-62. The Encoder does not reject. See `encoder/clearance` |
+| MP-64 | Certificate Generation, Encoder: generate the certificate from a template with the student's name filled in, then print or export to PDF | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60, MP-62, MP-63 and the real template from MCCTEST. The button turns on after the Trainer and the Registrar validate. See `encoder/certificate-generation` |
 
 ### Technical Debt
 
