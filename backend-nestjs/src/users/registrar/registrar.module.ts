@@ -6,9 +6,15 @@ import { RegistrarTraineesController } from './trainees/trainees.controller';
 import { EnrollmentsModule } from '../../enrollments/enrollments.module';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { TraineeInformationModule } from '../../trainee-information/trainee-information.module';
+import { UniformDistributionModule } from './uniform-distribution/uniform-distribution.module';
 
 @Module({
-  imports: [PrismaModule, EnrollmentsModule, TraineeInformationModule],
+  imports: [
+    PrismaModule,
+    EnrollmentsModule,
+    TraineeInformationModule,
+    UniformDistributionModule,
+  ],
   // RegistrarTraineesController stays after EnrollmentsController so
   // GET trainees/search is matched before GET trainees/:id.
   controllers: [
