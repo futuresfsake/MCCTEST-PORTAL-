@@ -196,3 +196,15 @@ Every `acceptance.md` follows this structure:
 
 ## Summary: X PASS, Y PARTIAL, Z FAIL
 ```
+
+---
+
+## Migration safety (Sprint 5, strict)
+
+Any ticket that adds or changes a migration (MP-60 to MP-64, MP-66, MP-67, MP-68, MP-69) is developed and tested **only on a Docker or throwaway PostgreSQL database**, never on the shared Supabase database.
+
+- Never run `prisma migrate deploy`, `prisma migrate reset`, `prisma db push` or any write against Supabase. Only read-only checks are allowed there.
+- Start a throwaway container, point `DATABASE_URL` at it only (check the URL before every command), apply all migrations (strip the byte-order mark of `0_init` in memory, TECH-02), run `prisma migrate diff` (TECH-03 drift on old objects is known), seed test data there only, then `docker rm -f -v` the container.
+- Applying a migration to the shared database is not part of developing the ticket. Ask the project leader first.
+- The same note is posted as a comment on each of these Jira tickets. Tickets MP-60 to MP-70 are in MP Sprint 5.
+
