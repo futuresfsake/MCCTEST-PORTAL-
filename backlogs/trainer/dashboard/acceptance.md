@@ -78,7 +78,7 @@ All of it is for **my own batches** only. It is read-only. No button on it chang
 | 2 | Must **EXCUSED** hours be made up? | **TBA.** Until decided, the dashboard only counts the hours, it does not track make-up sessions |
 | 3 | The **behind-pace margin**, and the **minimum hours** a trainee needs for clearance (100 percent, or lower for a competency-based pass) | **TBA.** Placeholder margin is 10 percentage points. The clearance check (MP-61) stays ticked by hand until decided. TESDA's own rules give a nominal duration per qualification, not an absence limit, so the limit is MCCTEST's policy |
 | 4 | Is **hours completed** shown? | **Answered 2026-11-23:** yes, as hours progress per program from `programs.total_training_hours`. Sessions must store hours (FUNC-006) |
-| 5 | Does the **graduating list** show here? | **TBA.** The page is not built. Left out |
+| 5 | Does the **graduating list** show here? | **Update 2026-11-23:** the Graduating List is now MP-70 (trainees cleared by the Trainer and the Registrar). **TBA:** whether a count card with a link shows on this dashboard. Left out of this ticket |
 | 6 | How far ahead is "Coming up"? | **Assumed:** 14 days. A constant in one place |
 | 7 | Does a trainer with batches in different programs see one list? | **Assumed:** yes, one list, grouped by batch, sorted by status then start date |
 

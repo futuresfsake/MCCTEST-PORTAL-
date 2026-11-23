@@ -53,6 +53,7 @@ backlogs/
     attendance/acceptance.md                     — MP-67: Attendance Tracking, sessions, hours and attendance per trainee with a correction history (NOT STARTED). 52 criteria, 17 test cases
     trainee-records/acceptance.md                — MP-68: Trainee Records, programs and batches covered, roster search and PDF export per batch or program (NOT STARTED). 38 criteria, 15 test cases
     grades-competencies/acceptance.md            — MP-69: Grades and Competencies, the trainer defines competencies per program and grades Competent or Not Yet Competent with method and attempt history (NOT STARTED). 52 criteria, 17 test cases
+    graduating-list/acceptance.md                — MP-70: Graduating List, trainees cleared by the Trainer and the Registrar, per batch, with the clearance stage and PDF (NOT STARTED). 32 criteria, 11 test cases
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
     profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (MERGED INTO DEV). Audit: trainee/profile/audit-dod.md
@@ -153,6 +154,7 @@ backlogs/
 | MP-67 | Trainer Attendance Tracking: record class sessions, hours and attendance per trainee, with a correction history | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. One migration (hours, unique keys, history). Depends on MP-66. Feeds MP-65, MP-61, MP-30. See `trainer/attendance` |
 | MP-68 | Trainer Trainee Records: programs and batches covered, trainee search and info, and PDF roster export per batch or program | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. New PDF library (PDFKit) and a small export log table. Depends on MP-50, MP-66, MP-67. See `trainer/trainee-records` |
 | MP-69 | Trainer Grades and Competencies: define competencies per program and grade trainees (Competent or Not Yet Competent) with assessment method and attempt history | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. One migration (unique keys, method, two history tables). Competency tables are empty today. Feeds MP-65, MP-30, MP-61. See `trainer/grades-competencies` |
+| MP-70 | Trainer Graduating List: trainees cleared by the Trainer and the Registrar, per batch, with the clearance stage of each trainee, print and PDF | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Read-only, no migration. Depends on MP-60 to MP-63 and the PDF builder of MP-68. See `trainer/graduating-list` |
 
 ### Technical Debt
 
