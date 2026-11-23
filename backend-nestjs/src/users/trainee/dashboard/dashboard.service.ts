@@ -20,6 +20,7 @@ import type {
   DashboardSession,
   TraineeDashboardPayload,
 } from './dashboard.types';
+import { completedAttendanceHours } from '../../../common/attendance/attendance-hours';
 
 /** Statuses that tie the trainee to a batch's live schedule. */
 const ACTIVE_STATUSES: enrollment_status_enum[] = [
@@ -151,7 +152,10 @@ export class DashboardService {
   ): Promise<DashboardEnrollmentDetail> {
     const isActive = ACTIVE_STATUSES.includes(enrollment.enrollment_status);
     const [attendance, competencies, upcomingSessions] = await Promise.all([
-      this.getAttendance(enrollment.id),
+      this.getAttendance(
+        enrollment.id,
+        enrollment.batch.programs.total_training_hours,
+      ),
       this.getCompetencies(enrollment),
       isActive ? this.getUpcomingSessions(enrollment.batch_id) : [],
     ]);
@@ -197,12 +201,13 @@ export class DashboardService {
 
   private async getAttendance(
     enrollmentId: string,
+    totalTrainingHours: Prisma.Decimal | null,
   ): Promise<DashboardAttendance> {
     const counts = Object.fromEntries(
       Object.values(attendance_status_enum).map((status) => [status, 0]),
     ) as Record<attendance_status_enum, number>;
 
-    const [grouped, recent] = await Promise.all([
+    const [grouped, records] = await Promise.all([
       this.prisma.attendance.groupBy({
         by: ['status'],
         where: { enrollment_id: enrollmentId },
@@ -212,11 +217,10 @@ export class DashboardService {
         where: { enrollment_id: enrollmentId },
         include: {
           training_session: {
-            select: { session_date: true, topics_covered: true },
+            select: { session_date: true, topics_covered: true, hours: true },
           },
         },
         orderBy: { training_session: { session_date: 'desc' } },
-        take: RECENT_ATTENDANCE_LIMIT,
       }),
     ]);
 
@@ -225,13 +229,22 @@ export class DashboardService {
       (sum, row) => sum + row._count._all,
       0,
     );
+    const hoursCompleted = completedAttendanceHours(
+      records.map((record) => ({
+        status: record.status,
+        hours: Number(record.training_session.hours),
+      })),
+    );
+    const recent = records.slice(0, RECENT_ATTENDANCE_LIMIT);
 
     return {
       counts,
       totalSessions,
+      hoursCompleted,
       attendancePercentage:
-        totalSessions > 0
-          ? Math.round((counts.PRESENT / totalSessions) * 10000) / 100
+        totalTrainingHours && Number(totalTrainingHours) > 0
+          ? Math.round((hoursCompleted / Number(totalTrainingHours)) * 10000) /
+            100
           : null,
       recent: recent.map((record) => ({
         id: record.id,

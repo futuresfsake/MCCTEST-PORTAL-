@@ -20,6 +20,7 @@ import AdminImportDataPage from '../pages/users/admin/import-data/AdminImportDat
 import TrainerDashboard from '../pages/users/trainer/TrainerDashboard'
 import TrainerAnnouncementsPage from '../pages/users/trainer/announcements/TrainerAnnouncementsPage'
 import TrainerWithdrawalPage from '../pages/users/trainer/withdrawal/TrainerWithdrawalPage'
+import TrainerAttendancePage from '../pages/users/trainer/attendance/TrainerAttendancePage'
 
 import TraineeDashboard from '../pages/users/trainee/dashboard/TraineeDashboard'
 import TraineeAnnouncementsPage from '../pages/users/trainee/announcements/TraineeAnnouncementsPage'
@@ -336,6 +337,15 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['TRAINER']}>
         <TrainerAnnouncementsPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/trainer/attendance"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINER']}>
+        <TrainerAttendancePage />
       </ProtectedRoute>
     }
   />

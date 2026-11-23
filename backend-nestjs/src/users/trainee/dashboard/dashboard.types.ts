@@ -47,6 +47,7 @@ export interface DashboardAttendanceRecord {
 export interface DashboardAttendance {
   counts: Record<attendance_status_enum, number>;
   totalSessions: number;
+  hoursCompleted: number;
   attendancePercentage: number | null;
   recent: DashboardAttendanceRecord[];
 }

@@ -35,17 +35,21 @@ model announcements {
 }
 
 model attendance {
-  id               String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  session_id       String                 @db.Uuid
-  enrollment_id    String                 @db.Uuid
-  status           attendance_status_enum
-  recorded_by      String                 @db.Uuid
-  remarks          String?
-  created_at       DateTime               @default(now()) @db.Timestamptz(6)
-  enrollments      enrollments            @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users            users                  @relation(fields: [recorded_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  training_session training_session       @relation(fields: [session_id], references: [session_id], onDelete: Cascade, onUpdate: NoAction)
+  id                          String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id                  String                 @db.Uuid
+  enrollment_id               String                 @db.Uuid
+  status                      attendance_status_enum
+  recorded_by                 String                 @db.Uuid
+  remarks                     String?
+  created_at                  DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at                  DateTime               @default(now()) @db.Timestamptz(6)
+  updated_by                  String?                @db.Uuid
+  enrollments                 enrollments            @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                       users                  @relation(fields: [recorded_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  training_session            training_session       @relation(fields: [session_id], references: [session_id], onDelete: Cascade, onUpdate: NoAction)
+  users_attendance_updated_by users?                 @relation("attendance_updated_by", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
+  @@unique([session_id, enrollment_id])
   @@index([enrollment_id], map: "idx_attendance_enrollment")
   @@index([session_id], map: "idx_attendance_session")
 }
@@ -561,16 +565,44 @@ model trainer {
 }
 
 model training_session {
-  session_id     String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  batch_id       String       @db.Uuid
-  session_date   DateTime     @db.Date
-  topics_covered String?
-  created_by     String       @db.Uuid
-  attendance     attendance[]
-  batch          batch        @relation(fields: [batch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users          users        @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  session_id                String               @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  batch_id                  String               @db.Uuid
+  session_date              DateTime             @db.Date
+  hours                     Decimal              @db.Decimal(5, 2)
+  topics_covered            String?
+  created_by                String               @db.Uuid
+  updated_at                DateTime             @default(now()) @db.Timestamptz(6)
+  updated_by                String?              @db.Uuid
+  attendance                attendance[]
+  batch                     batch                @relation(fields: [batch_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                     users                @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users_training_updated_by users?               @relation("training_session_updated_by", fields: [updated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  attendance_history        attendance_history[]
 
+  @@unique([batch_id, session_date])
   @@index([batch_id], map: "idx_training_session_batch")
+}
+
+model attendance_history {
+  id               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  session_id       String                  @db.Uuid
+  attendance_id    String?                 @db.Uuid
+  enrollment_id    String?                 @db.Uuid
+  event_type       String                  @db.VarChar(30)
+  old_status       attendance_status_enum?
+  new_status       attendance_status_enum?
+  old_remarks      String?
+  new_remarks      String?
+  old_hours        Decimal?                @db.Decimal(5, 2)
+  new_hours        Decimal?                @db.Decimal(5, 2)
+  changed_by       String                  @db.Uuid
+  changed_at       DateTime                @default(now()) @db.Timestamptz(6)
+  reason           String?
+  training_session training_session        @relation(fields: [session_id], references: [session_id], onDelete: Cascade, onUpdate: NoAction)
+  users            users                   @relation(fields: [changed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([session_id, changed_at(sort: Desc)], map: "idx_attendance_history_session")
+  @@index([enrollment_id, changed_at(sort: Desc)], map: "idx_attendance_history_enrollment")
 }
 
 model user_role {
@@ -597,6 +629,8 @@ model users {
   email                               String?                         @unique
   announcements                       announcements[]
   attendance                          attendance[]
+  attendance_updated_by               attendance[]                    @relation("attendance_updated_by")
+  attendance_history                  attendance_history[]
   batch                               batch[]
   clearance                           clearance[]
   clearance_approval                  clearance_approval[]
@@ -616,6 +650,7 @@ model users {
   trainee_outcome_status              trainee_outcome_status[]
   trainer                             trainer?
   training_session                    training_session[]
+  training_session_updated_by         training_session[]              @relation("training_session_updated_by")
   user_role                           user_role[]
   withdrawal_request                  withdrawal_request[]
   withdrawal_registrar_validations    withdrawal_request[]            @relation("withdrawal_registrar_validated_by")
