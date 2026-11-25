@@ -53,7 +53,7 @@ upcoming sessions".
 - The database seed does not create any of them.
 - The trainer pages that would record this are **not started**: Attendance, Progress, and
   Grades & Competencies (listed in the trainer sidebar, no page behind them).
-- There is no admin screen to define competencies and learning outcomes for a program.
+- There is no admin screen to define competencies and learning outcomes for a program. **Update 2026-11-23:** the trainer, not the Admin, will define them, and grade, in MP-69 (`trainer/grades-competencies`). Attendance is MP-67 (`trainer/attendance`).
 
 ### Why Upcoming Sessions is empty even though schedules exist
 

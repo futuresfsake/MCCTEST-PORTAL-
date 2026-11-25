@@ -39,6 +39,7 @@ const AdminRequirementsPage = lazy(() => import('../pages/users/admin/requiremen
 const RegistrarRequirementsPage = lazy(() => import('../pages/users/registrar/requirements/RegistrarRequirementsPage'))
 const RegistrarWithdrawalPage = lazy(() => import('../pages/users/registrar/withdrawal/RegistrarWithdrawalPage'))
 const AdminWithdrawalPage = lazy(() => import('../pages/users/admin/withdrawal/AdminWithdrawalPage'))
+const RegistrarUniformDistributionPage = lazy(() => import('../pages/users/registrar/uniform-distribution/RegistrarUniformDistributionPage'),)
 
 import ProtectedRoute from '../components/auth/ProtectedRoute'
 import PublicOnlyRoute from '../components/auth/PublicOnlyRoute'
@@ -281,6 +282,23 @@ return ( <Routes>
       <ProtectedRoute allowedRoles={['REGISTRAR']}>
         <Suspense fallback={<div className="p-6 text-sm text-slate-500">Loading withdrawal requests...</div>}>
           <RegistrarWithdrawalPage />
+        </Suspense>
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/registrar/uniform-distribution"
+    element={
+      <ProtectedRoute allowedRoles={['REGISTRAR']}>
+        <Suspense
+          fallback={
+            <div className="p-6 text-sm text-slate-500">
+              Loading uniform distribution...
+            </div>
+          }
+        >
+          <RegistrarUniformDistributionPage />
         </Suspense>
       </ProtectedRoute>
     }

@@ -15,6 +15,7 @@ backlogs/
     authentication/acceptance.md                 — MP-4: Auth & Landing Page
     landing-page/acceptance.md                   — MP-20: Landing Page Chatbot
     notifications/acceptance.md                  — MP-52: Notification Foundation (shared bell, notifications table, live push) (NOT STARTED)
+    clearance-request/acceptance.md              — MP-60: Clearance and Certificate Request, student form and pipeline Trainer, Registrar, Encoder (NOT STARTED). 40 criteria, 14 test cases
   to-be-discussed.md                           — Open decisions and gaps, with a summary table (photo storage, restock reminder, MP-58, MP-41, MP-42)
   open-items.md                                — Everything still open across MP-41, MP-42, MP-47, MP-49 and the loose ends, one checklist (2026-11-10)
   admin/
@@ -37,15 +38,22 @@ backlogs/
     announcements/acceptance.md                  — MP-31: Registrar Announcements
     trainee-information/acceptance.md            — MP-24: Trainee Information (shared, view-only)
     notifications/acceptance.md                  — MP-55: Notification Bell, Registrar Events (NOT STARTED)
+    clearance/acceptance.md                      — MP-62: Clearance and Certificate Request, Registrar validates (second step) (NOT STARTED). 24 criteria, 10 test cases
     enrollment-uniform-deduction-bug/acceptance.md — MP-58: Bug, enrollment does not deduct uniform stock (NOT STARTED)
     decisions.md                                 — Registrar decisions and the reasons (MP-42 history, MP-53, MP-43)
     requirements/acceptance.md                   — MP-43: Requirements Tracking, Admin and Registrar (IN REVIEW). Audit: registrar/requirements/audit-dod.md
-    uniform-distribution/acceptance.md           — MP-53: Uniform Distribution page, Registrar only (NOT STARTED)
+    uniform-distribution/acceptance.md           — MP-53: Uniform Distribution page, Registrar only (MERGED INTO DEV, PR #106, 2026-11-23). Audits: registrar/uniform-distribution/audit-dod.md (before the merge: 22 PASS, 1 PARTIAL, 1 NOT MET, then fixed) and audit-dev.md (on dev: 23 PASS, 1 PARTIAL, no unit tests in the repo)
     uniform-restock-reminder/acceptance.md       — MP-59: Registrar reminds the Admin to order more uniforms (NOT STARTED)
   trainer/
-    dashboard/acceptance.md                      — Trainer Dashboard (placeholder, 7 pages planned)
+    dashboard/acceptance.md                      — MP-65: Trainer Dashboard (placeholder is built, the real dashboard is NOT STARTED). 40 criteria, 15 test cases
     trainee-information/acceptance.md            - Trainee Information (own batches only, view-only)
     notifications/acceptance.md                  — MP-56: Notification Bell, Trainer Events (NOT STARTED)
+    clearance/acceptance.md                      — MP-61: Clearance and Certificate Request, Trainer validates (first step) (NOT STARTED). 24 criteria, 10 test cases
+    class-management/acceptance.md               — MP-66: Class Management, the trainer confirms the real start date of a batch and marks it started (NOT STARTED). 44 criteria, 16 test cases
+    attendance/acceptance.md                     — MP-67: Attendance Tracking, sessions, hours and attendance per trainee with a correction history (NOT STARTED). 52 criteria, 17 test cases
+    trainee-records/acceptance.md                — MP-68: Trainee Records, programs and batches covered, roster search and PDF export per batch or program (NOT STARTED). 38 criteria, 15 test cases
+    grades-competencies/acceptance.md            — MP-69: Grades and Competencies, the trainer defines competencies per program and grades Competent or Not Yet Competent with method and attempt history (NOT STARTED). 52 criteria, 17 test cases
+    graduating-list/acceptance.md                — MP-70: Graduating List, trainees cleared by the Trainer and the Registrar, per batch, with the clearance stage and PDF (NOT STARTED). 32 criteria, 11 test cases
   trainee/
     dashboard/acceptance.md                      — Trainee Dashboard (placeholder, 7 pages planned)
     profile/acceptance.md                        — MP-41: Trainee Profile Page, view and edit, photo upload (MERGED INTO DEV). Audit: trainee/profile/audit-dod.md
@@ -54,6 +62,8 @@ backlogs/
   encoder/
     dashboard/acceptance.md                      — Encoder Dashboard (placeholder, 4 pages planned)
     notifications/acceptance.md                  — MP-57: Notification Bell, Encoder Events (NOT STARTED)
+    clearance/acceptance.md                      — MP-63: Clearance and Certificate Request, Encoder processes, releases and keeps the release log (last step) (NOT STARTED). 24 criteria, 10 test cases
+    certificate-generation/acceptance.md         — MP-64: Certificate Generation, the Encoder generates the certificate from a template, prints or exports it to PDF (NOT STARTED). 34 criteria, 14 test cases
   technical/
     announcements-password-hash-exposure/acceptance.md — SEC-01: password hash exposed by announcements API (FIXED, on dev and staging; main pending)
     multer-dos-advisory/acceptance.md            — SEC-02: multer denial-of-service advisory (LOGGED, not fixed)
@@ -86,7 +96,7 @@ backlogs/
 | MP Sprint 1 | 2026-08-23 → 2026-08-30 | MP-4, MP-8 | All Done |
 | MP Sprint 2 | 2026-09-02 → 2026-10-12 | MP-13, MP-14, MP-15, MP-16, MP-20, MP-21, MP-22, MP-23, MP-26, MP-31 | All Done |
 | MP Sprint 3 | 2026-10-12 → 2026-10-18 | MP-24, MP-25, MP-33, MP-35, MP-50, MP-51 | MP-24 Done, MP-25 30/30 PASS, MP-33 In Progress, MP-50/51 merged, browser check pending, MP-35 on dev and staging (browser check pending) |
-| MP Sprint 4 | 2026-11-03 → 2026-11-09 | MP-53, MP-58 | Not started |
+| MP Sprint 4 | 2026-11-03 → 2026-11-09 | MP-53, MP-58 | MP-53 built on a branch (PR #106 open, audited 2026-11-23, not ready to merge). MP-58 not started |
 
 ---
 
@@ -132,8 +142,19 @@ backlogs/
 | MP-42 | Admin Edit Trainee: info, batch and program changes, change history | Aubrien Fuentes | Merged into `dev` (PR #96, 2026-11-10), migration applied on Supabase | 21 PASS, 1 PARTIAL (Jira AC), re-checked 2026-11-10. Open: missing beneficiary gives 500 (F-15), no unit tests for the new code (F-1), browser check before `main`. See `admin/trainee-edit/audit-dod.md` |
 | MP-43 | Requirements Tracking (Admin and Registrar) | Chelsea Cllj | In Review | Audited 2026-11-06 (re-checked on `staging`): 15 of 23 criteria pass, 4 partial, 4 changed by decision. On `dev` (PR #88), `staging` (PR #89) and `main` (PR #90, 2026-11-06 11:34). Jira description needs updating. See `registrar/requirements/audit-dod.md` |
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
-| MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | Not Started | See `registrar/uniform-distribution` |
+| MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | On `dev` (PR #106, 2026-11-23), `staging` (PR #111) | Audited before the merge (`audit-dod.md`, fixed: migration restored, waiting count, lint) and on `dev` (`audit-dev.md`). Open: no unit tests in the repo, browser check not done, Jira still In Progress |
 | MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
+| MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Same pattern as the withdrawal pipeline. See `shared/clearance-request` |
+| MP-61 | Clearance and Certificate Request, Trainer: validate the trainee's clearance (first step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60. The Trainer confirms four checks. See `trainer/clearance` |
+| MP-62 | Clearance and Certificate Request, Registrar: validate the trainee's clearance (second step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-61. The Registrar confirms ID surrendered, fees settled and documents submitted. See `registrar/clearance` |
+| MP-63 | Clearance and Certificate Request, Encoder: process the request, set the release schedule, release and keep the release log (last step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-62. The Encoder does not reject. See `encoder/clearance` |
+| MP-64 | Certificate Generation, Encoder: generate the certificate from a template with the student's name filled in, then print or export to PDF | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60, MP-62, MP-63 and the real template from MCCTEST. The button turns on after the Trainer and the Registrar validate. See `encoder/certificate-generation` |
+| MP-65 | Trainer Dashboard: batches, trainees, today's classes, attendance, progress and items that need the trainer's action | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Read-only, own batches only. Attendance and progress fill in when FUNC-006 and FUNC-007 are built. See `trainer/dashboard` |
+| MP-66 | Trainer Class Management: confirm the real start date of a batch, mark it started and close it, reflected for trainees, Registrar and Admin | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. One migration (history table, two batch columns). Depends on MP-22 and the enrollment overlap rule. See `trainer/class-management` |
+| MP-67 | Trainer Attendance Tracking: record class sessions, hours and attendance per trainee, with a correction history | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. One migration (hours, unique keys, history). Depends on MP-66. Feeds MP-65, MP-61, MP-30. See `trainer/attendance` |
+| MP-68 | Trainer Trainee Records: programs and batches covered, trainee search and info, and PDF roster export per batch or program | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. New PDF library (PDFKit) and a small export log table. Depends on MP-50, MP-66, MP-67. See `trainer/trainee-records` |
+| MP-69 | Trainer Grades and Competencies: define competencies per program and grade trainees (Competent or Not Yet Competent) with assessment method and attempt history | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. One migration (unique keys, method, two history tables). Competency tables are empty today. Feeds MP-65, MP-30, MP-61. See `trainer/grades-competencies` |
+| MP-70 | Trainer Graduating List: trainees cleared by the Trainer and the Registrar, per batch, with the clearance stage of each trainee, print and PDF | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Read-only, no migration. Depends on MP-60 to MP-63 and the PDF builder of MP-68. See `trainer/graduating-list` |
 
 ### Technical Debt
 
@@ -144,7 +165,7 @@ backlogs/
 | TECH-04 | Enrollment base fee is 500 without insurance coverage, should always be 450 | Medium | Logged, not fixed | 7 of 9 receipts on Supabase carry 500. The chatbot already says 450. See `technical/enrollment-base-fee-500` |
 | TECH-03 | Migration history disagrees with `schema.prisma` and Supabase | Medium | Logged, not fixed | 3 enums and 5 trainer columns. Supabase already matches the schema. See `technical/migration-schema-drift` |
 | TECH-05 | An ID card number clash returns a server error | Low | Logged, not fixed | `generateIdCardNumber` never checks the number is free, so a clash on `id_card_number` is a 500. Found in the MP-42 audit. See `technical/id-card-sequence-collision` |
-| TECH-06 | A search for `%` or `_` matches every row in the withdrawal lists | Low | Logged, not fixed | Prisma `contains` does not escape the wildcards. Found in the audit of `dev` before staging (`shared/withdrawal/audit-dev-pre-staging-mp49.md`). See `technical/search-wildcards/acceptance.md` |
+| TECH-06 | A search for `%` or `_` matches every row in the withdrawal lists | Low | Logged, not fixed | Prisma `contains` does not escape the wildcards. Found in the audit of `dev` before staging (`shared/withdrawal/audit-dev-pre-staging-mp49.md`). See `technical/search-wildcards/acceptance.md`. Also found in the MP-53 Uniform Distribution list search (audit 2026-11-23) |
 | SEC-01  | Announcements API exposed the poster's password hash | High | Fixed, on dev and staging. Main pending | `include: { users: true }` returned the whole user row to every role. See `technical/announcements-password-hash-exposure` |
 | SEC-02  | `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs` | High | Logged, not fixed | Deferred by choice. `npm audit fix` is available. See `technical/multer-dos-advisory` |
 
@@ -175,3 +196,15 @@ Every `acceptance.md` follows this structure:
 
 ## Summary: X PASS, Y PARTIAL, Z FAIL
 ```
+
+---
+
+## Migration safety (Sprint 5, strict)
+
+Any ticket that adds or changes a migration (MP-60 to MP-64, MP-66, MP-67, MP-68, MP-69) is developed and tested **only on a Docker or throwaway PostgreSQL database**, never on the shared Supabase database.
+
+- Never run `prisma migrate deploy`, `prisma migrate reset`, `prisma db push` or any write against Supabase. Only read-only checks are allowed there.
+- Start a throwaway container, point `DATABASE_URL` at it only (check the URL before every command), apply all migrations (strip the byte-order mark of `0_init` in memory, TECH-02), run `prisma migrate diff` (TECH-03 drift on old objects is known), seed test data there only, then `docker rm -f -v` the container.
+- Applying a migration to the shared database is not part of developing the ticket. Ask the project leader first.
+- The same note is posted as a comment on each of these Jira tickets. Tickets MP-60 to MP-70 are in MP Sprint 5.
+
