@@ -1,12 +1,18 @@
 import { Module } from '@nestjs/common';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { TraineeWithdrawalModule } from './withdrawal/trainee-withdrawal.module';
+import { TraineeClearanceModule } from './clearance/trainee-clearance.module';
 import { ProfileController } from './profile/profile.controller';
 import { ProfileService } from './profile/profile.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
-  imports: [PrismaModule, DashboardModule, TraineeWithdrawalModule],
+  imports: [
+    PrismaModule,
+    DashboardModule,
+    TraineeWithdrawalModule,
+    TraineeClearanceModule,
+  ],
   controllers: [ProfileController],
   providers: [ProfileService],
 })
