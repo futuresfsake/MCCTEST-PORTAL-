@@ -310,6 +310,27 @@ Items that need a team decision before they become a ticket or a backlog.
 
 ---
 
+## 18. MP-60: an open clearance request whose enrollment is withdrawn or dropped
+
+A program change, an approved withdrawal or a dropped enrollment leaves the clearance request open. The trainee can cancel only while it is `PENDING_VALIDATION`, and nothing stops the later steps (audit MP-60, F-2). **Decide before MP-61.**
+
+| Option | Effect |
+|--------|--------|
+| A | Cancel the open request automatically and write a history row |
+| B | Block the withdrawal or program change while a request is open |
+| C | Let it continue and warn the validators |
+
+## 19. MP-60: should a submitted clearance form keep a copy of the trainee information
+
+The form reads the name, address, contact number, batch and trainer live. After a batch change or a profile edit, a submitted or released request and its claim stub show the new values (audit MP-60, F-3).
+
+| Option | Effect |
+|--------|--------|
+| A | Save a copy at submit (needs new columns and a migration) |
+| B | Keep reading it live |
+
+---
+
 ## Gap Summary (all open gaps on 2026-11-09)
 
 | Gap | Ticket | Where logged |
@@ -337,3 +358,5 @@ Items that need a team decision before they become a ticket or a backlog.
 | Must the admin give a reason to reject | MP-49 | item 15 |
 | Copy the trainee's reason into `exit_reason` on approval | MP-49 | item 16 |
 | MP-42 program change while a withdrawal request is open | MP-42, MP-49 | item 17 |
+| Open clearance request after the enrollment is withdrawn or dropped | MP-60, MP-61 | item 18 |
+| Keep a copy of the trainee information on a submitted clearance form | MP-60 | item 19 |
