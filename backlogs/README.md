@@ -17,7 +17,7 @@ backlogs/
     authentication/acceptance.md                 — MP-4: Auth & Landing Page
     landing-page/acceptance.md                   — MP-20: Landing Page Chatbot
     notifications/acceptance.md                  — MP-52: Notification Foundation (shared bell, notifications table, live push) (NOT STARTED)
-    clearance-request/acceptance.md              — MP-60: Clearance and Certificate Request, student form and pipeline Trainer, Registrar, Encoder (MP-60 part built on a branch, 2026-11-27: 17 PASS, 10 PARTIAL, 13 NOT STARTED). 40 criteria, 14 test cases
+    clearance-request/acceptance.md              — MP-60: Clearance and Certificate Request, student form and pipeline Trainer, Registrar, Encoder (MP-60 part built on a branch, 2026-11-27: 15 PASS, 12 PARTIAL, 13 NOT STARTED). 40 criteria, 14 test cases. Audit: shared/clearance-request/audit-dod.md
   to-be-discussed.md                           — Open decisions and gaps, with a summary table (photo storage, restock reminder, MP-58, MP-41, MP-42)
   open-items.md                                — Everything still open across MP-41, MP-42, MP-47, MP-49 and the loose ends, one checklist (2026-11-10)
   admin/
@@ -75,6 +75,7 @@ backlogs/
     migration-schema-drift/acceptance.md         — TECH-03: migration history disagrees with schema.prisma and Supabase (3 enums, 5 trainer columns) (LOGGED, not fixed)
     id-card-sequence-collision/acceptance.md     — TECH-05: an ID card number clash returns a server error (LOGGED, not fixed)
     search-wildcards/acceptance.md               — TECH-06: a search for % or _ matches every row in the withdrawal lists (LOGGED, not fixed)
+    nul-character-server-error/acceptance.md     — TECH-07: a NUL character in a text field gives a server error (LOGGED, not fixed)
 ```
 
 ---
@@ -146,7 +147,7 @@ backlogs/
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
 | MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | On `dev` (PR #106, 2026-11-23), `staging` (PR #111) | Audited before the merge (`audit-dod.md`, fixed: migration restored, waiting count, lint) and on `dev` (`audit-dev.md`). Open: no unit tests in the repo, browser check not done, Jira still In Progress |
 | MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
-| MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | In Progress | Trainee form, progress, claim stub, module and migration built on `feature/MP-60` (2026-11-27), not merged. Migration not applied to Supabase. See `shared/clearance-request` |
+| MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | In Progress | Trainee form, progress, claim stub, module and migration built on `feature/MP-60` (2026-11-27), not merged. Audited 2026-11-27 (`shared/clearance-request/audit-dod.md`): ready for review into `dev`, not for `main`. Migration not applied to Supabase. See `shared/clearance-request` |
 | MP-61 | Clearance and Certificate Request, Trainer: validate the trainee's clearance (first step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60. The Trainer confirms four checks. See `trainer/clearance` |
 | MP-62 | Clearance and Certificate Request, Registrar: validate the trainee's clearance (second step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-61. The Registrar confirms ID surrendered, fees settled and documents submitted. See `registrar/clearance` |
 | MP-63 | Clearance and Certificate Request, Encoder: process the request, set the release schedule, release and keep the release log (last step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-62. The Encoder does not reject. See `encoder/clearance` |
@@ -168,6 +169,7 @@ backlogs/
 | TECH-03 | Migration history disagrees with `schema.prisma` and Supabase | Medium | Logged, not fixed | 3 enums and 5 trainer columns. Supabase already matches the schema. See `technical/migration-schema-drift` |
 | TECH-05 | An ID card number clash returns a server error | Low | Logged, not fixed | `generateIdCardNumber` never checks the number is free, so a clash on `id_card_number` is a 500. Found in the MP-42 audit. See `technical/id-card-sequence-collision` |
 | TECH-06 | A search for `%` or `_` matches every row in the withdrawal lists | Low | Logged, not fixed | Prisma `contains` does not escape the wildcards. Found in the audit of `dev` before staging (`shared/withdrawal/audit-dev-pre-staging-mp49.md`). See `technical/search-wildcards/acceptance.md`. Also found in the MP-53 Uniform Distribution list search (audit 2026-11-23) |
+| TECH-07 | A NUL character in a text field gives a server error | Low | Logged, not fixed | Seen on the clearance and withdrawal submits (MP-60 audit, 2026-11-27). See `technical/nul-character-server-error/acceptance.md` |
 | SEC-01  | Announcements API exposed the poster's password hash | High | Fixed, on dev and staging. Main pending | `include: { users: true }` returned the whole user row to every role. See `technical/announcements-password-hash-exposure` |
 | SEC-02  | `multer` denial-of-service advisory (GHSA-q7qp-rjg7-q26m) in `backend-nestjs` | High | Logged, not fixed | Deferred by choice. `npm audit fix` is available. See `technical/multer-dos-advisory` |
 
