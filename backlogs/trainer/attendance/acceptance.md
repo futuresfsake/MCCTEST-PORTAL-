@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-67 |
 | **Type** | Feature (new Trainer page, new endpoints, one migration) |
-| **Status** | IMPLEMENTED - REVIEW/PRE-DEPLOYMENT |
+| **Status** | NOT READY - audited 2026-11-27, see `audit-dod.md` |
 | **Assignee** | Vince Jon Gonzalez (Jira default, reassign if needed) |
 | **Route** | `/trainer/attendance` (implemented and route-protected) |
 | **Backend** | `/api/trainer/attendance` (new) |
@@ -133,68 +133,68 @@ Time in and out, notifications to trainees about absences, an Admin or Registrar
 |---|---------|--------|-------|
 | AT-1 | Only `TRAINER` can open `/trainer/attendance`. Other roles go to `/403` | PASS | `ProtectedRoute` with `TRAINER` role |
 | AT-2 | Every endpoint needs a login (401) and the `TRAINER` role (403 for Admin, Registrar, Encoder, Trainee) | PASS | JWT and role guards |
-| AT-3 | A trainer reads and changes only batches where they are the batch trainer. Another trainer's batch returns 404 on every call | PASS | Ownership lookup in `findBatch` |
+| AT-3 | A trainer reads and changes only batches where they are the batch trainer. Another trainer's batch returns 404 on every call | NOT MET | Owner also gets 404 (audit F-1) |
 | AT-4 | The trainer comes from the login. No query, body or path value picks a trainer. The `recorded_by` and `updated_by` values come from the login, never from the body | PASS | Trainer ID comes from `req.user.id` |
 | AT-5 | Responses have no password hash, email, contact number, address or birth date. Trainees appear by name and system ID only | PASS | Typed/select responses |
-| AT-6 | Input is validated: bad ids and dates, a status outside the four values, hours out of range, a remark or reason too long, rows for enrollments not in the batch, and extra fields are rejected or dropped | PASS | DTO validation and global whitelist |
+| AT-6 | Input is validated: bad ids and dates, a status outside the four values, hours out of range, a remark or reason too long, rows for enrollments not in the batch, and extra fields are rejected or dropped | PARTIAL | History returns 500 for a bad batchId |
 
 ### Taking attendance
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| AT-7 | The page lists my `ONGOING` batches. Choosing a batch and a date shows the roster of enrolled trainees with a status control and a remark for each | PASS | |
-| AT-8 | The date defaults to today. Scheduled class days are suggested and other days are marked Extra day | PASS | Default Manila date; scheduled/extra label |
-| AT-9 | **Mark all present** sets every trainee to present and the trainer can change the exceptions. A running count shows present, absent, late and excused | PASS | |
-| AT-10 | Saving needs a status for every trainee on the roster. A missing status returns 400 and the page shows which trainee | PASS | Frontend and API validation |
-| AT-11 | Saving creates the session and all attendance rows in one call, with `recorded_by` set to the trainer. A second save of the same date updates the same session and does not create another | PASS | |
-| AT-12 | The default hours are the length of the class time for that weekday in the program schedule. The trainer can change them. For an extra day with no scheduled time, hours must be entered | PASS | |
+| AT-7 | The page lists my `ONGOING` batches. Choosing a batch and a date shows the roster of enrolled trainees with a status control and a remark for each | NOT MET | Real trainer gets an empty list (F-1) |
+| AT-8 | The date defaults to today. Scheduled class days are suggested and other days are marked Extra day | PARTIAL | Class days are not suggested |
+| AT-9 | **Mark all present** sets every trainee to present and the trainer can change the exceptions. A running count shows present, absent, late and excused | PASS |  |
+| AT-10 | Saving needs a status for every trainee on the roster. A missing status returns 400 and the page shows which trainee | PARTIAL | Trainee is not named |
+| AT-11 | Saving creates the session and all attendance rows in one call, with `recorded_by` set to the trainer. A second save of the same date updates the same session and does not create another | PASS |  |
+| AT-12 | The default hours are the length of the class time for that weekday in the program schedule. The trainer can change them. For an extra day with no scheduled time, hours must be entered | PASS |  |
 | AT-13 | Hours must be greater than 0 and at most 24, in steps of 0.25 on the screen. Anything else returns 400 | PASS | Screen step and backend 0.25 validation |
-| AT-14 | A date before the batch start date, or after today (Asia/Manila), returns 400 and names the limit | PASS | |
-| AT-15 | A batch that is not `ONGOING` (`OPEN`, `CLOSED`, `CANCELLED`) cannot be recorded or changed. The API returns 409 | PARTIAL | Recording is blocked, but the implementation returns 404 instead of the specified 409 |
-| AT-16 | The roster has only trainees with status `ENROLLED` whose enrollment date is on or before the session date. A row for any other enrollment returns 400 | PASS | |
-| AT-17 | A trainee who withdrew or dropped keeps the rows already recorded, shown read-only, and does not appear on new sessions | PASS | |
-| AT-18 | Optional topics covered (existing column) can be saved with the session, with a length limit | PASS | API `topics` field and 500-character limit |
+| AT-14 | A date before the batch start date, or after today (Asia/Manila), returns 400 and names the limit | PASS |  |
+| AT-15 | A batch that is not `ONGOING` (`OPEN`, `CLOSED`, `CANCELLED`) cannot be recorded or changed. The API returns 409 | PARTIAL | Blocked with 404, not 409 |
+| AT-16 | The roster has only trainees with status `ENROLLED` whose enrollment date is on or before the session date. A row for any other enrollment returns 400 | NOT MET | Same-day enrollee left off the roster (F-4) |
+| AT-17 | A trainee who withdrew or dropped keeps the rows already recorded, shown read-only, and does not appear on new sessions | PASS |  |
+| AT-18 | Optional topics covered (existing column) can be saved with the session, with a length limit | PARTIAL | No page field; page save clears topics |
 
 ### Corrections and history
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| AT-19 | A saved session can be reopened and changed while the batch is `ONGOING`. A closed batch is read-only | PASS | |
-| AT-20 | Every first save writes `RECORDED` history rows. Every later change of a status, a remark or the hours writes a row with the old and new value, who and when | PASS | |
-| AT-21 | Changing a session dated before today needs a reason of 5 to 500 characters. Without it the API returns 400. The same day needs no reason | PASS | |
-| AT-22 | A save that changes nothing writes no history and no new `updated_at` | PASS | |
-| AT-23 | The history timeline of a session shows each change newest first with who, when, old and new value and the reason | PASS | Backend endpoint implemented |
-| AT-24 | History cannot be changed or deleted through the application. There is no update or delete route for it | PASS | |
-| AT-25 | An empty session can be deleted and writes a `SESSION_DELETED` row. A session with attendance rows returns 409 on delete | PASS | |
+| AT-19 | A saved session can be reopened and changed while the batch is `ONGOING`. A closed batch is read-only | PARTIAL | Closed batch cannot be viewed |
+| AT-20 | Every first save writes `RECORDED` history rows. Every later change of a status, a remark or the hours writes a row with the old and new value, who and when | PASS |  |
+| AT-21 | Changing a session dated before today needs a reason of 5 to 500 characters. Without it the API returns 400. The same day needs no reason | PASS |  |
+| AT-22 | A save that changes nothing writes no history and no new `updated_at` | PASS |  |
+| AT-23 | The history timeline of a session shows each change newest first with who, when, old and new value and the reason | PARTIAL | API only, no screen |
+| AT-24 | History cannot be changed or deleted through the application. There is no update or delete route for it | PASS |  |
+| AT-25 | An empty session can be deleted and writes a `SESSION_DELETED` row. A session with attendance rows returns 409 on delete | PARTIAL | Delete history loses session and date; no button |
 
 ### Session list and summary
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| AT-26 | The session list shows date, hours, the four counts and who last changed each session | PARTIAL | Date, hours and counts pass; last editor is not shown |
-| AT-27 | Scheduled class days between the batch start date and today that have no session are shown as Missing | NOT IMPLEMENTED | |
-| AT-28 | The trainee summary shows, per trainee, hours completed, the percentage of the program's `total_training_hours` (never above 100), and the four counts | PASS | |
-| AT-29 | A program with no `total_training_hours` shows the hours and counts but no percentage ("Program hours not set") and no error | PASS | |
-| AT-30 | Hours completed use the one shared function (PRESENT in full, LATE in full, EXCUSED and ABSENT 0, until decided) and nowhere else is the rule written | PASS | |
+| AT-26 | The session list shows date, hours, the four counts and who last changed each session | PARTIAL | Last editor not shown |
+| AT-27 | Scheduled class days between the batch start date and today that have no session are shown as Missing | NOT MET | Not built |
+| AT-28 | The trainee summary shows, per trainee, hours completed, the percentage of the program's `total_training_hours` (never above 100), and the four counts | PASS |  |
+| AT-29 | A program with no `total_training_hours` shows the hours and counts but no percentage ("Program hours not set") and no error | PARTIAL | Page shows no "Program hours not set" |
+| AT-30 | Hours completed use the one shared function (PRESENT in full, LATE in full, EXCUSED and ABSENT 0, until decided) and nowhere else is the rule written | PASS |  |
 
 ### Integration with the other tickets
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| AT-31 | The Trainee Dashboard (MP-30) shows the counts and percentage from the new rows without a change to its endpoint. A trainee sees only their own attendance | PASS | Shared helper integrated; runtime regression remains |
-| AT-32 | The Trainer Dashboard (MP-65) uses the shared function for hours progress, behind pace and "Attendance recorded" for today | NOT IMPLEMENTED | |
-| AT-33 | The Trainer clearance check "hours complete" (MP-61) can read hours completed from the shared function. It stays ticked by hand until MCCTEST decides the minimum | NOT IMPLEMENTED | |
-| AT-34 | Changing a batch start date (MP-66) to a date after a recorded session is refused. Recording a session before the batch start date is refused. The two rules agree | PARTIAL | Recording-side rule passes; MP-66 cross-ticket guard needs separate implementation/testing |
+| AT-31 | The Trainee Dashboard (MP-30) shows the counts and percentage from the new rows without a change to its endpoint. A trainee sees only their own attendance | PARTIAL | Percentage meaning changed, not capped, label wrong |
+| AT-32 | The Trainer Dashboard (MP-65) uses the shared function for hours progress, behind pace and "Attendance recorded" for today | NOT MET | Not built |
+| AT-33 | The Trainer clearance check "hours complete" (MP-61) can read hours completed from the shared function. It stays ticked by hand until MCCTEST decides the minimum | NOT MET | Not built |
+| AT-34 | Changing a batch start date (MP-66) to a date after a recorded session is refused. Recording a session before the batch start date is refused. The two rules agree | PARTIAL | No guard in Class Management |
 
 ### Integrity, concurrency and performance
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| AT-35 | A stale save (the session changed since it was loaded) returns 409 and changes nothing | PASS | |
-| AT-36 | Two saves of the same batch and date at the same moment give one winner and one session. The database unique key (`batch_id`, `session_date`) holds | PASS | Unique key plus P2002 mapping |
-| AT-37 | The same trainee cannot get two rows for one session. The database unique key (`session_id`, `enrollment_id`) holds | PASS | |
+| AT-35 | A stale save (the session changed since it was loaded) returns 409 and changes nothing | NOT MET | Stale status save accepted (F-2) |
+| AT-36 | Two saves of the same batch and date at the same moment give one winner and one session. The database unique key (`batch_id`, `session_date`) holds | NOT MET | Two winners on an existing session (F-3) |
+| AT-37 | The same trainee cannot get two rows for one session. The database unique key (`session_id`, `enrollment_id`) holds | PASS |  |
 | AT-38 | The session, the attendance rows and the history rows are saved together or not at all. A failure in the middle leaves nothing behind | PASS | `$transaction` |
-| AT-39 | The sheet, the session list and the summary run a fixed number of queries whatever the number of trainees or sessions. Saving 25 trainees runs a fixed number of statements, not one per trainee | NOT VERIFIED | Statement logging required |
+| AT-39 | The sheet, the session list and the summary run a fixed number of queries whatever the number of trainees or sessions. Saving 25 trainees runs a fixed number of statements, not one per trainee | NOT MET | Save statements grow per trainee (F-8) |
 | AT-40 | The migration applies on a fresh database, `prisma migrate diff` shows no drift for the new objects, and it runs on the empty shared tables | PASS | Throwaway PostgreSQL passed; known old-object drift only |
 
 ### Print and export
@@ -202,22 +202,22 @@ Time in and out, notifications to trainees about absences, an Admin or Registrar
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
 | AT-46 | Print on a session opens the browser print with a clean layout: batch, program, date, hours, the roster with status and remark, the four counts, and a trainer signature line. No menus, buttons or sidebar are printed | PASS | Browser preview still needs manual verification |
-| AT-47 | The printed sheet shows the saved session. With unsaved changes the page warns and prints the saved version | PASS | Print block uses `detail.entries` and dirty warning |
-| AT-48 | Export downloads an Excel file for the batch and a date range (whole batch by default). One row per trainee, one column per session date with a status letter, and totals per trainee: the four counts, hours completed and percentage | PARTIAL | CSV works; native `.xlsx` not implemented |
-| AT-49 | The file header shows MCCTEST, program, batch, trainer, the date range and the date generated (Asia/Manila). The hours of each session are shown above its column | NOT IMPLEMENTED | |
+| AT-47 | The printed sheet shows the saved session. With unsaved changes the page warns and prints the saved version | PARTIAL | Warning only on the printout |
+| AT-48 | Export downloads an Excel file for the batch and a date range (whole batch by default). One row per trainee, one column per session date with a status letter, and totals per trainee: the four counts, hours completed and percentage | PARTIAL | CSV, not .xlsx; percentage not capped |
+| AT-49 | The file header shows MCCTEST, program, batch, trainer, the date range and the date generated (Asia/Manila). The hours of each session are shown above its column | NOT MET | Not built |
 | AT-50 | The export has no contact number, address, email, birth date or other personal data, only name, system ID, statuses, remarks and hours | PASS | Export does not include remarks and includes no sensitive fields |
 | AT-51 | A name or remark starting with `=`, `+`, `-` or `@` is written as plain text and does not run as a formula | PASS | CSV cell escaping |
-| AT-52 | Export works for `ONGOING` and `CLOSED` batches of the trainer. Another trainer's batch returns 404, a batch with no session returns 409, and a range with `from` after `to` returns 400. Nothing is stored on the server | PASS | Runtime browser/API verification remains |
+| AT-52 | Export works for `ONGOING` and `CLOSED` batches of the trainer. Another trainer's batch returns 404, a batch with no session returns 409, and a range with `from` after `to` returns 400. Nothing is stored on the server | PARTIAL | Page cannot select a closed batch |
 
 ### Frontend
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| AT-41 | The batch, the date and the tab are kept in the URL and survive a refresh | PASS | |
-| AT-42 | Empty, loading and error states exist: no ONGOING batch, no trainees on the roster, a failed save with the typed values kept | PARTIAL | Loading/empty/error states exist; no-roster state needs browser verification |
-| AT-43 | The page warns before leaving with unsaved changes | PASS | Before-unload warning |
-| AT-44 | Status colors are not the only signal (labels or icons as well), the roster is usable by keyboard, and the page works at phone width without sideways scroll | PARTIAL | Labels and keyboard controls exist; 375px verification pending |
-| AT-45 | Constants (status list, hours step and limit, reason length) are in one place on each side, and the status list matches the database enum | PARTIAL | Status enum comes from Prisma and frontend has a local status list; constants are not fully centralized |
+| AT-41 | The batch, the date and the tab are kept in the URL and survive a refresh | PARTIAL | No tabs; refresh not seen in a browser |
+| AT-42 | Empty, loading and error states exist: no ONGOING batch, no trainees on the roster, a failed save with the typed values kept | PARTIAL | No empty-roster state |
+| AT-43 | The page warns before leaving with unsaved changes | PARTIAL | Browser close and refresh only |
+| AT-44 | Status colors are not the only signal (labels or icons as well), the roster is usable by keyboard, and the page works at phone width without sideways scroll | PARTIAL | Missing labels; table scrolls sideways |
+| AT-45 | Constants (status list, hours step and limit, reason length) are in one place on each side, and the status list matches the database enum | PARTIAL | Constants repeated |
 
 ---
 
@@ -333,52 +333,13 @@ Time in and out, notifications to trainees about absences, an Admin or Registrar
 
 ---
 
-## Implementation Audit: 2026-11-23
+## Audit: 2026-11-27
 
-This audit replaces the earlier blanket "ready/done" statement. It is based on
-code and build/migration evidence. Automated checks are not a substitute for
-manual acceptance testing.
+Full report: `audit-dod.md`. **Not ready to merge.** A real trainer cannot use the page (F-1), stale saves overwrite data, and same-day enrollees are left off the roster. Statuses above show what works once F-1 is fixed.
 
-| Area | Result | Evidence / remaining verification |
-|---|---|---|
-| Access and ownership | PASS, implementation complete | Trainer guard, role guard, trainer-ID ownership, and 404 batch lookup are implemented. Browser 401/403 behavior still needs manual testing. |
-| Attendance save and corrections | PASS, implementation complete | Transactional save, 0.25-hour validation, draft status, stale version check, read-only withdrawn rows, and no-op timestamp protection are implemented. |
-| Date and roster rules | PASS, implementation complete | Manila today check, batch-start check, strict date parsing, and enrollment-date filtering are implemented. |
-| History | IMPLEMENTED, needs runtime test | Append-only history rows, newest-first endpoint, and no update/delete application route are implemented. |
-| Delete empty session | IMPLEMENTED, needs runtime test | API deletes only sessions with no attendance. Attendance-bearing sessions return 409. |
-| Session list | PARTIAL | Saved sessions and counts are implemented. Missing scheduled class days and last-editor details are not implemented. |
-| Trainee summary | PASS, implementation complete | Completed hours, percentage cap, and four status counts are implemented. Program-without-hours is handled. |
-| Trainer and clearance integration | NOT IMPLEMENTED | The trainer dashboard and MP-61 clearance are still placeholders or do not consume this ticket's shared function. |
-| Shared hours policy | PASS | `PRESENT` and `LATE` count in full; `ABSENT` and `EXCUSED` count zero. The trainee dashboard consumes the shared helper. |
-| Concurrency and database | PASS, migration tested | Throwaway PostgreSQL migration passed; unique keys and hours check are present. Concurrent runtime behavior needs manual testing. |
-| Print | IMPLEMENTED, needs browser verification | A saved-session-only print block with roster, counts, hours, and signature line is implemented. Unsaved changes are warned and excluded. |
-| Export | CSV IMPLEMENTED, not native XLSX | Authenticated CSV export has status letters, trainee/system ID, date range, totals, formula protection, and no personal contact fields. It does not meet an exact native `.xlsx` format requirement. |
-| Export restrictions | IMPLEMENTED, needs runtime test | Own CLOSED/ONGOING batches, from-after-to 400, no-session 409, and formula protection are implemented. |
-| Frontend URL and leave behavior | IMPLEMENTED, needs browser verification | Batch/date URL state and before-unload unsaved warning are implemented. |
-| Mobile and accessibility | PARTIAL | Responsive Tailwind layout exists, keyboard controls exist, but phone-width and accessibility acceptance testing is still required. |
-
-## Deployment and publishing conclusion
-
-**Not publish-ready to production, but ready for a code-review/dev PR.**
-
-The code compiles and lints, the schema/migration passes throwaway PostgreSQL
-testing, and no migration was applied to Supabase. Before claiming task
-acceptance, run the 17 manual test cases against seeded deployed data. MP-65,
-MP-61 and missing scheduled-session details remain separate/unfinished surfaces
-and must not be claimed as complete within this ticket unless their acceptance
-code is delivered and tested.
-
-## Summary: 40 PASS, 7 PARTIAL, 4 NOT IMPLEMENTED, 1 NOT VERIFIED
+## Summary: 22 PASS, 20 PARTIAL, 10 NOT MET
 
 - **52 acceptance criteria total**
-- **40 PASS:** verified from implementation/build evidence
-- **7 PARTIAL:** implemented but missing a required detail or runtime verification
-- **4 NOT IMPLEMENTED:** outside or incomplete relative to this implementation
-- **1 NOT VERIFIED:** requires statement/query-count testing
-- **17 test cases:** 0 manual test cases executed; 17 NOT RUN
-- **Migration:** tested successfully on throwaway PostgreSQL
-- **Latest migration revision:** retested successfully after adding delete-safe attendance history
-- **Supabase:** unchanged
-- **Build/lint:** backend and frontend pass
-- **Native Excel `.xlsx`:** pending leader decision
-- **PR status:** ready for code review into `dev`; not ready for production completion
+- **Migration:** applies on a fresh throwaway PostgreSQL 17. Not applied to Supabase
+- **17 test cases:** not run as written
+- **Unit tests for the new code:** none
