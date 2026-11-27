@@ -1,5 +1,7 @@
 # MCCTEST Portal — Backlog Tracking
 
+Ticket index (acceptance criteria and UAT for every MP ticket): `ticket-index.md`.
+
 Structured acceptance criteria extracted from Jira, organized by role and module.
 Each `acceptance.md` file contains acceptance criteria with PASS / PARTIAL / FAIL status.
 
