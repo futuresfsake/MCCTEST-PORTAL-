@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-60 |
 | **Type** | Feature (Trainee, Trainer, Registrar and Encoder pages and one shared backend module) |
-| **Status** | IN PROGRESS: MP-60 part built on `feature/MP-60` (17 PASS, 10 PARTIAL, 13 NOT STARTED) |
+| **Status** | IN PROGRESS: MP-60 part built on `feature/MP-60` (15 PASS, 12 PARTIAL, 13 NOT STARTED) |
 | **Assignee** | Chelsea Cllj (Jira default, reassign if needed) |
 | **Depends on** | MP-24 (trainee scope), MP-25 (payments, for the fee check). The pattern to copy is the withdrawal pipeline (MP-45 to MP-49, `shared/withdrawal/acceptance.md`) |
 | **Related** | **MP-61 (Trainer step, detail in `trainer/clearance/acceptance.md`) MP-62 (Registrar step, detail in `registrar/clearance/acceptance.md`) and MP-63 (Encoder step, detail in `encoder/clearance/acceptance.md`).** MP-52 (notifications, not needed), FUNC-010 (certificate generation) and FUNC-017 (public certificate verification), both later |
@@ -177,7 +177,8 @@ The criteria in this file for the Trainer (CL-19 to CL-22), the Registrar (CL-23
 - **Pipeline status column** is `request_form.pipeline_status`. It is NULL on rows older than the migration, and those are not listed.
 - **Certificate types:** the migration adds COC, COT and OTHER only where they are missing.
 - **Cancel** leaves the clearance status as `PENDING` (the status table above only names submit, validate and reject).
-- **Tested** on a throwaway PostgreSQL only: 38 API checks and 11 browser checks. The only schema drift left is TECH-03.
+- **Tested** on a throwaway PostgreSQL only: 75 API checks and 30 browser checks in the audit. The only schema drift left is TECH-03.
+- **Audit:** `audit-dod.md` (2026-11-27). Open questions are items 18 and 19 of `to-be-discussed.md`.
 - **Before release:** apply the migration to the shared database (ask the project leader first).
 
 ---
@@ -204,14 +205,14 @@ The criteria in this file for the Trainer (CL-19 to CL-22), the Registrar (CL-23
 | CL-9 | On submit the system makes a unique control number, creates the request as `PENDING_VALIDATION` with the clearance status `PENDING`, and writes the first history row, all in one transaction | PASS | Open question 3. Control number from the sequence `clearance_control_number_seq`, see Build notes |
 | CL-10 | A trainee can submit only for their own enrollment in `ENROLLED` or `COMPLETED`. Another status returns 400. An enrollment that is not theirs returns 403 | PASS | Open question 1 |
 | CL-11 | A second open request for the same enrollment returns 409. A rejected, cancelled or released request is not open | PASS | Open question 7. Five submits at the same moment: one 201, four 409 |
-| CL-12 | Bad input returns 400 with a clear message: missing fields, a malformed id, an oversized text, an unknown certificate type. Fields the client may not set (status, control number, validators, dates) are ignored | PASS |  |
+| CL-12 | Bad input returns 400 with a clear message: missing fields, a malformed id, an oversized text, an unknown certificate type. Fields the client may not set (status, control number, validators, dates) are ignored | PARTIAL | A NUL character in free text gives 500 (TECH-07, audit F-9) |
 
 ### Following the Request (Trainee)
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
 | CL-13 | The trainee's list shows control number, certificate requested, status and date, with a status filter and paging, all kept in the URL | PASS |  |
-| CL-14 | The progress view shows the stages Request, Trainer, Registrar, Encoder, Release, the current stage, and who the request is waiting for | PASS | Same idea as MP-46 T-5. Later stages checked with statuses set in the test database |
+| CL-14 | The progress view shows the stages Request, Trainer, Registrar, Encoder, Release, the current stage, and who the request is waiting for | PARTIAL | Same idea as MP-46 T-5. Later stages checked with statuses set in the test database. At PROCESSED the page does not say who will release it (audit F-4) |
 | CL-15 | The detail shows the history: each step with who, when and any remark. A rejection shows its reason | PASS | A rejection reason shows once MP-61 or MP-62 writes one |
 | CL-16 | The trainee can cancel only while the request is `PENDING_VALIDATION`. Any other status returns 400. A cancel and a Trainer action at the same moment cannot both win | PARTIAL | Same as MP-46 T-6. Cancel rules and two cancels at once pass. The race with a Trainer action needs MP-61 |
 | CL-17 | After a rejection or a cancel the trainee can submit a new request | PASS | Open question 7. After a cancel (API). Rejected is not an open status |
@@ -262,7 +263,7 @@ The criteria in this file for the Trainer (CL-19 to CL-22), the Registrar (CL-23
 | CL-37 | Control numbers are unique and stay unique when many requests are submitted at the same moment | PASS | `ctrl_num_seq` |
 | CL-38 | Responses never include `password_hash`. Each role sees only the fields it needs (no parents, beneficiary or insurance data) | PARTIAL | Trainee responses checked |
 | CL-39 | Every page has loading, empty and error states, and keeps its filter, search and page in the URL | PARTIAL | Trainee pages done |
-| CL-40 | Backend and frontend lint, type-check and build pass with 0 problems. Unit tests cover every step, wrong status, duplicates, cancel, validation limits and concurrency. The withdrawal tests still pass | PARTIAL | Lint, type-check, build and 198 backend tests pass for what is built. Other steps: MP-61 to MP-63 |
+| CL-40 | Backend and frontend lint, type-check and build pass with 0 problems. Unit tests cover every step, wrong status, duplicates, cancel, validation limits and concurrency. The withdrawal tests still pass | PARTIAL | Lint, type-check, build and 202 backend tests pass for what is built. Other steps: MP-61 to MP-63 |
 
 ---
 
@@ -336,4 +337,4 @@ The criteria in this file for the Trainer (CL-19 to CL-22), the Registrar (CL-23
 
 ---
 
-## Summary: 17 PASS, 10 PARTIAL, 13 NOT STARTED
+## Summary: 15 PASS, 12 PARTIAL, 13 NOT STARTED
