@@ -113,22 +113,39 @@ model certificates {
 }
 
 model clearance {
-  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  request_form_id       String                  @unique @db.Uuid
-  enrollment_id         String                  @db.Uuid
-  clearance_status      clearance_status_enum   @default(NOT_CLEARED)
-  surrendered_id        Boolean                 @default(false)
-  schedule              DateTime?               @db.Date
-  release_date          DateTime?               @db.Date
-  released_by           String?                 @db.Uuid
-  date_released         DateTime?               @db.Date
-  remarks               String?
-  enrollments           enrollments             @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users                 users?                  @relation(fields: [released_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  request_form          request_form            @relation(fields: [request_form_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  clearance_approval    clearance_approval[]
-  clearance_certificate clearance_certificate[]
-  generated_certificate generated_certificate[]
+  id                           String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  request_form_id              String                  @unique @db.Uuid
+  enrollment_id                String                  @db.Uuid
+  clearance_status             clearance_status_enum   @default(NOT_CLEARED)
+  surrendered_id               Boolean                 @default(false)
+  schedule                     DateTime?               @db.Date
+  release_date                 DateTime?               @db.Date
+  released_by                  String?                 @db.Uuid
+  date_released                DateTime?               @db.Date
+  remarks                      String?
+  trainer_validated_by         String?                 @db.Uuid
+  trainer_validated_at         DateTime?               @db.Timestamptz(6)
+  trainer_remarks              String?
+  trainer_hours_complete       Boolean                 @default(false)
+  trainer_assessments_complete Boolean                 @default(false)
+  trainer_portfolio_submitted  Boolean                 @default(false)
+  trainer_tools_returned       Boolean                 @default(false)
+  registrar_validated_by       String?                 @db.Uuid
+  registrar_validated_at       DateTime?               @db.Timestamptz(6)
+  registrar_remarks            String?
+  finances_cleared             Boolean                 @default(false)
+  documents_submitted          Boolean                 @default(false)
+  encoder_processed_by         String?                 @db.Uuid
+  encoder_processed_at         DateTime?               @db.Timestamptz(6)
+  trainer_validator            users?                  @relation("clearance_trainer_validated_by", fields: [trainer_validated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  registrar_validator          users?                  @relation("clearance_registrar_validated_by", fields: [registrar_validated_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  encoder_processor            users?                  @relation("clearance_encoder_processed_by", fields: [encoder_processed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments                  enrollments             @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                        users?                  @relation(fields: [released_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  request_form                 request_form            @relation(fields: [request_form_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  clearance_approval           clearance_approval[]
+  clearance_certificate        clearance_certificate[]
+  generated_certificate        generated_certificate[]
 
   @@index([request_form_id], map: "idx_clearance_request")
   @@index([clearance_status], map: "idx_clearance_status")
@@ -157,6 +174,21 @@ model clearance_certificate {
   clearance           clearance        @relation(fields: [clearance_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@id([clearance_id, certificate_type_id])
+}
+
+/// Append-only log: one row per step of a clearance request.
+model clearance_status_history {
+  id              String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  request_form_id String                         @db.Uuid
+  old_status      clearance_request_status_enum?
+  new_status      clearance_request_status_enum
+  changed_by      String                         @db.Uuid
+  changed_at      DateTime                       @default(now()) @db.Timestamptz(6)
+  remarks         String?
+  request_form    request_form                   @relation(fields: [request_form_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  changed_by_user users                          @relation("clearance_history_changed_by", fields: [changed_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([request_form_id, changed_at(sort: Desc)], map: "idx_clearance_history_request_changed")
 }
 
 model competency {
@@ -428,20 +460,28 @@ model program_schedule {
 }
 
 model request_form {
-  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  enrollment_id       String              @db.Uuid
-  certificate_type_id String              @db.Uuid
+  id                  String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  enrollment_id       String                         @db.Uuid
+  certificate_type_id String                         @db.Uuid
   other_specify       String?
   purpose_of_request  String
-  request_status      request_status_enum @default(PENDING)
-  is_window_open      Boolean             @default(false)
-  requested_at        DateTime            @default(now()) @db.Timestamptz(6)
+  request_status      request_status_enum            @default(PENDING)
+  is_window_open      Boolean                        @default(false)
+  requested_at        DateTime                       @default(now()) @db.Timestamptz(6)
   remarks             String?
+  /// Paper form number, made by the system (MCCTEST00 and a running number).
+  control_number      String?                        @unique @db.VarChar(30)
+  /// Pipeline status. request_status is the older, coarser column.
+  pipeline_status     clearance_request_status_enum? @default(PENDING_VALIDATION)
+  certified           Boolean                        @default(false)
+  certified_at        DateTime?                      @db.Timestamptz(6)
+  status_history      clearance_status_history[]
   clearance           clearance?
-  certificate_type    certificate_type    @relation(fields: [certificate_type_id], references: [certificate_type_id], onDelete: NoAction, onUpdate: NoAction)
-  enrollments         enrollments         @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  certificate_type    certificate_type               @relation(fields: [certificate_type_id], references: [certificate_type_id], onDelete: NoAction, onUpdate: NoAction)
+  enrollments         enrollments                    @relation(fields: [enrollment_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([enrollment_id], map: "idx_request_form_enrollment")
+  @@index([pipeline_status], map: "idx_request_form_pipeline_status")
   @@index([request_status], map: "idx_request_form_status")
 }
 
@@ -599,6 +639,10 @@ model users {
   attendance                          attendance[]
   batch                               batch[]
   clearance                           clearance[]
+  clearance_trainer_validations       clearance[]                     @relation("clearance_trainer_validated_by")
+  clearance_registrar_validations     clearance[]                     @relation("clearance_registrar_validated_by")
+  clearance_encoder_processing        clearance[]                     @relation("clearance_encoder_processed_by")
+  clearance_status_changes            clearance_status_history[]      @relation("clearance_history_changed_by")
   clearance_approval                  clearance_approval[]
   distribution_checklist              distribution_checklist[]
   enrollments                         enrollments[]
@@ -736,6 +780,16 @@ enum civil_status_enum {
   WIDOWED
   SEPARATED
   DIVORCED
+}
+
+enum clearance_request_status_enum {
+  PENDING_VALIDATION
+  TRAINER_VALIDATED
+  REGISTRAR_VALIDATED
+  PROCESSED
+  RELEASED
+  REJECTED
+  CANCELLED
 }
 
 enum clearance_status_enum {
