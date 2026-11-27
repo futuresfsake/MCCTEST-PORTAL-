@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-53 |
 | **Type** | Feature (Registrar only, its own page) |
-| **Status** | BUILT on branch `MP-53-uniform-distribution`, PR #106 open, not merged. Audited 2026-11-23: 22 PASS, 1 PARTIAL, 1 NOT MET, see `audit-dod.md`. Jira: In Progress |
+| **Status** | MERGED INTO `dev` (PR #106, 2026-11-23 14:17), together with PR #105 (the stock display on the enrollment form). Audited 2026-11-23 before the merge: 22 PASS, 1 PARTIAL, 1 NOT MET. **Fixes F-1, F-2 and F-4 done and re-checked the same day: 23 PASS, 1 PARTIAL** (AC 23: the unit tests were written and run locally but are not committed, see `audit-dod.md` section 13). Audited again on `dev` after the merge (`audit-dev.md`): 23 PASS, 1 PARTIAL. Browser check not done. Jira: In Progress |
 | **Assignee** | Rhoddz Gerunda |
 | **Depends on** | MP-35 (inventory module, `InventoryService.deductAndLog`) |
 | **Related** | MP-35 follow-up F2, MP-16 (enrollment form), MP-59 (restock reminder, split out of this ticket), MP-58 (enrollment bug) |
@@ -116,7 +116,7 @@ Everything for this feature sits under the Registrar. There is no shared `Distri
 | 5 | The summary shows the count given and the count waiting | PASS | |
 | 6 | The list filters by uniform status, program and batch, searches by name or ID card number, and is paged | PASS | |
 | 7 | Withdrawn, dropped and completed enrollments are shown **greyed out with an Inactive badge** and have no "Mark as given" action | PASS | Open question 3 |
-| 7a | The list shows Active enrollments by default. A filter includes Inactive rows. Inactive rows are not counted as waiting | PARTIAL | Audit 2026-11-23: with Include inactive on, the waiting count includes inactive rows (audit F-2) |
+| 7a | The list shows Active enrollments by default. A filter includes Inactive rows. Inactive rows are not counted as waiting | PASS | Fixed (audit F-2). Live check: with Include inactive on, 3 inactive rows are listed and waiting stays at 1, the same as the default view. Unit test covers it and the break-it run catches its removal |
 
 ### Distribution and Deduction
 
@@ -142,7 +142,7 @@ Everything for this feature sits under the Registrar. There is no shared `Distri
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| 23 | Backend and frontend lint and build pass. Tests cover success, out of stock, already given, wrong status and concurrency | NOT MET | Audit 2026-11-23: backend lint has 16 errors and the new code has no unit tests (audit F-3, F-4) |
+| 23 | Backend and frontend lint and build pass. Tests cover success, out of stock, already given, wrong status and concurrency | PARTIAL | Backend lint 0 errors (audit F-4 fixed), frontend lint and build pass. Unit tests (62, break-it 13 of 13) were written and run locally but **not committed**, by the project leader's decision, so the repo still has no unit tests for the new code (audit F-3). Concurrency is proven by the end-to-end run (AC 15 and 16) |
 
 ---
 
@@ -206,4 +206,4 @@ Everything for this feature sits under the Registrar. There is no shared `Distri
 
 ---
 
-## Summary: 0/24 PASS, NOT STARTED
+## Summary: 23 PASS, 1 PARTIAL (AC 23: unit tests not committed). Re-checked 2026-11-23 after fixes F-1, F-2 and F-4. Not reviewed or merged. Browser check of the page not done
