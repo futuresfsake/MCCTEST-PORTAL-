@@ -4,7 +4,7 @@
 |---|---|
 | **Branch** | `feature/MP-67`, code at `0528f39` (PR #113) |
 | **Date** | 2026-11-27 |
-| **Result** | **22 PASS, 20 PARTIAL, 10 NOT MET.** Do not merge yet |
+| **Result** | **22 PASS, 19 PARTIAL, 8 NOT MET, 3 DEFERRED.** Do not merge yet |
 | **Full audit** | `audit-dod.md` |
 
 Each criterion shows the steps, what should happen, and the **last result**. "Run" means it was checked with requests or database commands on a throwaway database. "Code" means code reading only. The manual steps below have not all been rehearsed exactly as written.
@@ -380,21 +380,27 @@ In the steps, replace `TODAY`, `PAST` and similar words with real dates such as 
 
 **Last result:** **320%**, and the label **still describes sessions present**.
 
-### AT-32: Trainer Dashboard (NOT MET, Code)
+### AT-32: Trainer Dashboard (DEFERRED to MP-65)
+**Not required for this ticket.**
+
 | Step | Do this | Expected |
 |---|---|---|
 | 1 | Log in as W and open the Trainer Dashboard after saving today | Hours progress, behind pace and "Attendance recorded" |
 
 **Last result:** not built.
 
-### AT-33: Clearance "hours complete" (NOT MET, Code)
+### AT-33: Clearance "hours complete" (DEFERRED to MP-61)
+**Not required for this ticket.**
+
 | Step | Do this | Expected |
 |---|---|---|
 | 1 | Search for a clearance feature using the shared hours function | It can read hours completed |
 
 **Last result:** not built.
 
-### AT-34: Start date rules agree (PARTIAL, Run and Code)
+### AT-34: Start date rules agree (DEFERRED to MP-66)
+**Only step 1 is required for this ticket.** Step 2 belongs to MP-66.
+
 | Step | Do this | Expected |
 |---|---|---|
 | 1 | Save a date before the batch start (see AT-14) | Refused |

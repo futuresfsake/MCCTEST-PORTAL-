@@ -182,9 +182,9 @@ Time in and out, notifications to trainees about absences, an Admin or Registrar
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
 | AT-31 | The Trainee Dashboard (MP-30) shows the counts and percentage from the new rows without a change to its endpoint. A trainee sees only their own attendance | PARTIAL | Percentage meaning changed, not capped, label wrong |
-| AT-32 | The Trainer Dashboard (MP-65) uses the shared function for hours progress, behind pace and "Attendance recorded" for today | NOT MET | Not built |
-| AT-33 | The Trainer clearance check "hours complete" (MP-61) can read hours completed from the shared function. It stays ticked by hand until MCCTEST decides the minimum | NOT MET | Not built |
-| AT-34 | Changing a batch start date (MP-66) to a date after a recorded session is refused. Recording a session before the batch start date is refused. The two rules agree | PARTIAL | No guard in Class Management |
+| AT-32 | The Trainer Dashboard (MP-65) uses the shared function for hours progress, behind pace and "Attendance recorded" for today | DEFERRED | Moved to MP-65 (decided 2026-11-27) |
+| AT-33 | The Trainer clearance check "hours complete" (MP-61) can read hours completed from the shared function. It stays ticked by hand until MCCTEST decides the minimum | DEFERRED | Moved to MP-61 (decided 2026-11-27) |
+| AT-34 | Changing a batch start date (MP-66) to a date after a recorded session is refused. Recording a session before the batch start date is refused. The two rules agree | DEFERRED | Recording rule works. Class Management check moved to MP-66 (decided 2026-11-27) |
 
 ### Integrity, concurrency and performance
 
@@ -337,7 +337,7 @@ Time in and out, notifications to trainees about absences, an Admin or Registrar
 
 Full report: `audit-dod.md`. **Not ready to merge.** A real trainer cannot use the page (F-1), stale saves overwrite data, and same-day enrollees are left off the roster. Statuses above show what works once F-1 is fixed.
 
-## Summary: 22 PASS, 20 PARTIAL, 10 NOT MET
+## Summary: 22 PASS, 19 PARTIAL, 8 NOT MET, 3 DEFERRED
 
 - **52 acceptance criteria total**
 - **Migration:** applies on a fresh throwaway PostgreSQL 17. Not applied to Supabase

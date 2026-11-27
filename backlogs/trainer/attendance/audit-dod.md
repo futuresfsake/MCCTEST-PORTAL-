@@ -23,11 +23,11 @@ The migration is good. The feature is not.
 2. **Stale saves overwrite data.** A change to statuses or remarks does not move the session version, and two saves at the same moment both succeed in 9 of 10 tries (F-2, F-3).
 3. **Trainees enrolled on the session day are left off the roster** if enrolled after 08:00 Manila time (F-4).
 4. **The Trainee Dashboard is changed and now misleading.** The percentage is now hours against program hours, the label still says "Present of N sessions", and it can show 320% (F-5).
-5. **Missing work:** Missing class days, export header, Trainer Dashboard and clearance use, history screen, and the MP-66 start date guard.
+5. **Missing work:** Missing class days, export header and history screen.
 6. **No unit tests** for the new code.
 7. **`acceptance.md` on the branch claims 40 PASS.** That is not what the tests show. Pull request #113 can be merged on GitHub (no conflict, no review), so nothing there stops it.
 
-Acceptance Criteria: **22 PASS, 20 PARTIAL, 10 NOT MET** (52).
+Acceptance Criteria: **22 PASS, 19 PARTIAL, 8 NOT MET, 3 DEFERRED** (52). AT-32, AT-33 and the Class Management side of AT-34 were moved to MP-65, MP-61 and MP-66 on 2026-11-27 (D-5).
 
 Because of F-1, everything past access control was tested with test trainers whose `trainer.id` was set equal to their user id, in the throwaway database only. The statuses below show what works **once F-1 is fixed**. As the code stands, a real trainer cannot use any of it.
 
@@ -105,9 +105,9 @@ None. The migration is not on Supabase and both attendance tables are empty.
 | AT-29 | "Program hours not set" | PARTIAL | API returns no percentage. The page shows nothing |
 | AT-30 | One shared hours rule | PASS | `common/attendance/attendance-hours.ts` |
 | AT-31 | Trainee Dashboard shows new data | PARTIAL | Shows hours and counts. Meaning of the percentage changed, not capped, label wrong (F-5) |
-| AT-32 | Trainer Dashboard uses the function | NOT MET | Not built |
-| AT-33 | Clearance can read hours | NOT MET | Not built |
-| AT-34 | Both start date rules agree | PARTIAL | Recording rule works. Class Management has no check for recorded sessions (code search) |
+| AT-32 | Trainer Dashboard uses the function | DEFERRED | Moved to MP-65 (decided 2026-11-27) |
+| AT-33 | Clearance can read hours | DEFERRED | Moved to MP-61 (decided 2026-11-27) |
+| AT-34 | Both start date rules agree | DEFERRED | Recording rule works. Class Management check moved to MP-66 (decided 2026-11-27) |
 | AT-35 | Stale save returns 409 | NOT MET | After a status change, a save with the old version returned 200 and overwrote it (F-2) |
 | AT-36 | Same-moment saves give one winner | NOT MET | New date: 10 of 10 correct. Existing session: 9 of 10 had two winners (F-3) |
 | AT-37 | No duplicate rows | PASS | Unique key rejects it |
@@ -127,7 +127,7 @@ None. The migration is not on Supabase and both attendance tables are empty.
 | AT-51 | Formula text is plain text | PASS | `=HYPERLINK` name written with a leading `'` |
 | AT-52 | Export rules for ONGOING and CLOSED | PARTIAL | API: 200 for closed, 404, 409, 400 correct. The page cannot select a closed batch |
 
-**Totals: 22 PASS, 20 PARTIAL, 10 NOT MET = 52.** The earlier self-audit in `acceptance.md` said 40 PASS.
+**Totals: 22 PASS, 19 PARTIAL, 8 NOT MET, 3 DEFERRED = 52.** The earlier self-audit in `acceptance.md` said 40 PASS.
 
 Test cases TC-01 to TC-17 were not run as written. TC-15 and TC-17 need a browser.
 
@@ -169,6 +169,7 @@ The ticket has none. From the Jira migration comment:
 | D-2 | `PATCH .../session` instead of `PUT .../sessions/:date`, `.../session?date=` instead of `.../sheet`, `.../export` instead of `.../export.xlsx` |
 | D-3 | Trainee Dashboard percentage changed from present over sessions to hours over program hours |
 | D-4 | `event_type` text instead of the `attendance_change_enum` |
+| D-5 | **Decided by the project leader, 2026-11-27:** AT-32 moves to MP-65, AT-33 to MP-61, and the Class Management check of AT-34 to MP-66. AT-31 (Trainee Dashboard) stays in this ticket |
 
 ## 8. Findings
 
@@ -194,7 +195,6 @@ The ticket has none. From the Jira migration comment:
 |---|---|
 | Which percentage does the trainee see? | Hours over program hours (new) or present over sessions (old), or both |
 | Is CSV enough? | Accept CSV, or require `.xlsx` with the header and session hours |
-| Are AT-32, AT-33 and the MP-66 guard part of this ticket? | Build here, or move to MP-65, MP-61 and MP-66 |
 
 ## 10. Release steps still open
 

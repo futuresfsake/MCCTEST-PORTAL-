@@ -106,6 +106,12 @@ The Trainer confirms four things. **All four must be confirmed to validate.** If
 
 ---
 
+## Carried Over from MP-67 (decided 2026-11-27)
+
+MP-67 AT-33 moved here. The "hours complete" check must be able to read hours completed from the shared hours function of MP-67 (`backend-nestjs/src/common/attendance/attendance-hours.ts`, arrives with MP-67). The box stays ticked by hand until MCCTEST decides the minimum. No criterion or test case of this ticket covers this yet.
+
+---
+
 ## Acceptance Criteria
 
 ### Access and Scope

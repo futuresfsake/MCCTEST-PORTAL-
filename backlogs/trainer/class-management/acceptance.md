@@ -118,6 +118,12 @@ Creating and cancelling batches (Admin, Registrar), attendance and sessions (FUN
 
 ---
 
+## Carried Over from MP-67 (decided 2026-11-27)
+
+The Class Management part of MP-67 AT-34 moved here. Changing a batch start date to a date after a recorded attendance session must be refused. MP-67 already refuses recording a session before the batch start date, and the two rules must agree. No criterion or test case of this ticket covers this yet.
+
+---
+
 ## Acceptance Criteria
 
 ### Access and security

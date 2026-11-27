@@ -95,6 +95,12 @@ The pages the cards link to (My Batches, Class Records, Attendance, Progress, Gr
 
 ---
 
+## Carried Over from MP-67 (decided 2026-11-27)
+
+MP-67 AT-32 moved here. Hours progress, behind pace and "Attendance recorded" for today must use the shared hours function of MP-67 (`backend-nestjs/src/common/attendance/attendance-hours.ts`, arrives with MP-67). Related: TD-22, TD-35 to TD-38.
+
+---
+
 ## Acceptance Criteria
 
 ### Already in place (placeholder)
