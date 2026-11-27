@@ -17,7 +17,7 @@ backlogs/
     authentication/acceptance.md                 — MP-4: Auth & Landing Page
     landing-page/acceptance.md                   — MP-20: Landing Page Chatbot
     notifications/acceptance.md                  — MP-52: Notification Foundation (shared bell, notifications table, live push) (NOT STARTED)
-    clearance-request/acceptance.md              — MP-60: Clearance and Certificate Request, student form and pipeline Trainer, Registrar, Encoder (NOT STARTED). 40 criteria, 14 test cases
+    clearance-request/acceptance.md              — MP-60: Clearance and Certificate Request, student form and pipeline Trainer, Registrar, Encoder (MP-60 part built on a branch, 2026-11-27: 17 PASS, 10 PARTIAL, 13 NOT STARTED). 40 criteria, 14 test cases
   to-be-discussed.md                           — Open decisions and gaps, with a summary table (photo storage, restock reminder, MP-58, MP-41, MP-42)
   open-items.md                                — Everything still open across MP-41, MP-42, MP-47, MP-49 and the loose ends, one checklist (2026-11-10)
   admin/
@@ -146,7 +146,7 @@ backlogs/
 | MP-59 | Uniform Restock Reminder, Registrar to Admin (split from MP-53) | Chelsea Cllj | Not Started | Depends on MP-52, MP-54 and MP-53. See `registrar/uniform-restock-reminder` |
 | MP-53 | Uniform Distribution page (Registrar only) | Rhoddz Gerunda | On `dev` (PR #106, 2026-11-23), `staging` (PR #111) | Audited before the merge (`audit-dod.md`, fixed: migration restored, waiting count, lint) and on `dev` (`audit-dev.md`). Open: no unit tests in the repo, browser check not done, Jira still In Progress |
 | MP-58 | Bug: enrollment does not deduct uniform stock | Rhoddz Gerunda | Not Started | In Sprint 4. See `registrar/enrollment-uniform-deduction-bug` |
-| MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Same pattern as the withdrawal pipeline. See `shared/clearance-request` |
+| MP-60 | Clearance and Certificate Request: student form, Trainer, Registrar and Encoder pipeline | Chelsea Cllj (Jira default, reassign if needed) | In Progress | Trainee form, progress, claim stub, module and migration built on `feature/MP-60` (2026-11-27), not merged. Migration not applied to Supabase. See `shared/clearance-request` |
 | MP-61 | Clearance and Certificate Request, Trainer: validate the trainee's clearance (first step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60. The Trainer confirms four checks. See `trainer/clearance` |
 | MP-62 | Clearance and Certificate Request, Registrar: validate the trainee's clearance (second step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-61. The Registrar confirms ID surrendered, fees settled and documents submitted. See `registrar/clearance` |
 | MP-63 | Clearance and Certificate Request, Encoder: process the request, set the release schedule, release and keep the release log (last step) | Chelsea Cllj (Jira default, reassign if needed) | Not Started | Created 2026-11-23. Depends on MP-60 and MP-62. The Encoder does not reject. See `encoder/clearance` |
