@@ -272,6 +272,17 @@ describe('ClearanceService (trainee)', () => {
       expect(prisma.request_form.create).not.toHaveBeenCalled();
     });
 
+    it('locks the enrollment row before looking for an open request', async () => {
+      readyToSubmit();
+      await service.createForTrainee(USER_ID, dto);
+
+      const [sql] = prisma.$queryRaw.mock.calls[0] as [string[], string];
+      expect(sql.join('?')).toContain('FOR UPDATE');
+      expect(prisma.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+        prisma.request_form.findFirst.mock.invocationCallOrder[0],
+      );
+    });
+
     it('saves nothing when a certificate type is not set up', async () => {
       readyToSubmit();
       prisma.certificate_type.findMany.mockResolvedValue([]);
@@ -316,6 +327,32 @@ describe('ClearanceService (trainee)', () => {
     });
   });
 
+  describe('listForTrainee defaults', () => {
+    it('shows the first page of 10 and hides rows without a status', async () => {
+      prisma.request_form.findMany.mockResolvedValue([]);
+      prisma.request_form.count.mockResolvedValue(0);
+
+      const result = await service.listForTrainee(USER_ID, {});
+
+      expect(prisma.request_form.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            enrollments: { trainee_id: TRAINEE_ID },
+            pipeline_status: { not: null },
+          },
+          skip: 0,
+          take: 10,
+        }),
+      );
+      expect(result.meta).toEqual({
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 1,
+      });
+    });
+  });
+
   describe('getForTrainee', () => {
     it('returns the filled-in form and the history', async () => {
       prisma.request_form.findFirst.mockResolvedValue(detailRow());
@@ -330,6 +367,20 @@ describe('ClearanceService (trainee)', () => {
       });
       expect(result.history).toHaveLength(1);
       expect(JSON.stringify(result)).not.toContain('password');
+    });
+
+    it("looks only among the trainee's own requests", async () => {
+      prisma.request_form.findFirst.mockResolvedValue(detailRow());
+      await service.getForTrainee(USER_ID, REQUEST_ID);
+      expect(prisma.request_form.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: REQUEST_ID,
+            enrollments: { trainee_id: TRAINEE_ID },
+            pipeline_status: { not: null },
+          },
+        }),
+      );
     });
 
     it('uses the batch end date once the enrollment is completed', async () => {
@@ -376,6 +427,16 @@ describe('ClearanceService (trainee)', () => {
           new_status: Status.CANCELLED,
           changed_by: USER_ID,
         },
+      });
+    });
+
+    it("looks only among the trainee's own requests before cancelling", async () => {
+      prisma.request_form.findFirst.mockResolvedValue(detailRow());
+      prisma.request_form.updateMany.mockResolvedValue({ count: 1 });
+      await service.cancelForTrainee(USER_ID, REQUEST_ID);
+      expect(prisma.request_form.findFirst).toHaveBeenNthCalledWith(1, {
+        where: { id: REQUEST_ID, enrollments: { trainee_id: TRAINEE_ID } },
+        select: { id: true },
       });
     });
 
