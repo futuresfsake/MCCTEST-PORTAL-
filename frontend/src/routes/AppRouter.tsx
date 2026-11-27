@@ -26,6 +26,8 @@ import TraineeAnnouncementsPage from '../pages/users/trainee/announcements/Train
 import WithdrawalPage from '../pages/users/trainee/withdrawal/WithdrawalPage'
 import WithdrawalDetailPage from '../pages/users/trainee/withdrawal/WithdrawalDetailPage'
 import TraineeProfilePage from '../pages/users/trainee/profile/TraineeProfilePage'
+import ClearancePage from '../pages/users/trainee/clearance/ClearancePage'
+import ClearanceDetailPage from '../pages/users/trainee/clearance/ClearanceDetailPage'
 import EncoderDashboard from '../pages/users/encoder/EncoderDashboard'
 import EncoderAnnouncementsPage from '../pages/users/encoder/announcements/EncoderAnnouncementsPage'
 
@@ -448,6 +450,24 @@ return ( <Routes>
     element={
       <ProtectedRoute allowedRoles={['TRAINEE']}>
         <WithdrawalDetailPage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/trainee/clearance-requests"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINEE']}>
+        <ClearancePage />
+      </ProtectedRoute>
+    }
+  />
+
+  <Route
+    path="/trainee/clearance-requests/:id"
+    element={
+      <ProtectedRoute allowedRoles={['TRAINEE']}>
+        <ClearanceDetailPage />
       </ProtectedRoute>
     }
   />
