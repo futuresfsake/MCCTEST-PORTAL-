@@ -302,7 +302,7 @@ const sidebarConfig: Record<
         items: [
           {
             label: 'Clearance',
-            path: '/trainee/clearance',
+            path: '/trainee/clearance-requests',
             icon: 'fa-solid fa-clipboard-check',
           },
           {
