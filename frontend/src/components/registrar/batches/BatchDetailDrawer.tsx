@@ -1,8 +1,13 @@
 // src/components/admin/batches/BatchDetailDrawer.tsx
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { BatchRow } from './BatchTable';
+import { DateConfirmationLabel } from './BatchTable';
 import { BatchStatusBadge } from './BatchStatusBadge';
+import { apiFetch } from '../../../api/auth.api';
+import { formatDateOnly } from '../../trainee-information/format';
+import { SCHEDULE_CHANGE_LABELS } from '../../../types/class-management.type';
+import type { ScheduleHistoryEntry } from '../../../types/class-management.type';
 
 export interface BatchDetail extends BatchRow {
   session_count?: number;
@@ -14,6 +19,8 @@ interface Props {
   batch: BatchDetail | null;
   onClose: () => void;
   onEdit: (batch: BatchRow) => void;
+  /** Where to read the date history, e.g. /api/admin/batches. Left out: no history. */
+  historyEndpoint?: string;
 }
 
 function formatDate(dateStr?: string) {
@@ -51,7 +58,24 @@ export const BatchDetailDrawer: React.FC<Props> = ({
   batch,
   onClose,
   onEdit,
+  historyEndpoint,
 }) => {
+  const [history, setHistory] = useState<ScheduleHistoryEntry[] | null>(null);
+  const batchId = open ? batch?.id : undefined;
+
+  useEffect(() => {
+    if (!historyEndpoint || !batchId) return;
+    let active = true;
+    setHistory(null);
+    apiFetch(`${historyEndpoint}/${batchId}/history`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : []))
+      .then((rows: ScheduleHistoryEntry[]) => active && setHistory(rows))
+      .catch(() => active && setHistory([]));
+    return () => {
+      active = false;
+    };
+  }, [historyEndpoint, batchId]);
+
   if (!open) return null;
 
   return (
@@ -129,7 +153,59 @@ export const BatchDetailDrawer: React.FC<Props> = ({
                     label="End date"
                     value={formatDate(batch.end_date)}
                   />
+
+                  <Stat
+                    label="Dates"
+                    value={
+                      <span className="flex flex-col gap-0.5">
+                        <DateConfirmationLabel batch={batch} />
+                        {batch.start_date_confirmed_by && (
+                          <span className="text-[10px] font-medium text-slate-500">
+                            by {batch.start_date_confirmed_by}
+                            {batch.start_date_confirmed_at &&
+                              ` on ${formatDate(batch.start_date_confirmed_at)}`}
+                          </span>
+                        )}
+                      </span>
+                    }
+                  />
                 </Section>
+
+                {historyEndpoint && (
+                  <div>
+                    <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                      Date history
+                    </p>
+                    <div className="border border-slate-200 bg-slate-50 p-4">
+                      {history === null ? (
+                        <p className="text-xs text-slate-400">Loading...</p>
+                      ) : history.length === 0 ? (
+                        <p className="text-xs text-slate-500">No changes yet.</p>
+                      ) : (
+                        <ol className="space-y-3">
+                          {history.map((entry) => (
+                            <li key={entry.id} className="text-xs">
+                              <p className="font-semibold text-slate-800">
+                                {SCHEDULE_CHANGE_LABELS[entry.changeType]}
+                              </p>
+                              <p className="text-slate-500">
+                                {new Date(entry.changedAt).toLocaleString('en-PH')} · {entry.changedBy}
+                              </p>
+                              {(entry.oldStartDate !== entry.newStartDate ||
+                                entry.oldEndDate !== entry.newEndDate) && (
+                                <p className="text-slate-700">
+                                  {formatDateOnly(entry.oldStartDate)} – {formatDateOnly(entry.oldEndDate)} →{' '}
+                                  {formatDateOnly(entry.newStartDate)} – {formatDateOnly(entry.newEndDate)}
+                                </p>
+                              )}
+                              <p className="whitespace-pre-wrap text-slate-600">{entry.reason}</p>
+                            </li>
+                          ))}
+                        </ol>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 <Section title="Enrollment">
                   <Stat

@@ -51,7 +51,7 @@ const EXIT_ENROLLMENT_STATUSES: enrollment_status_enum[] = [
 ];
 
 /** Batch fields needed to apply the program rules. */
-const programRuleBatchSelect = {
+export const programRuleBatchSelect = {
   start_date: true,
   end_date: true,
   programs: {
@@ -66,7 +66,7 @@ const programRuleBatchSelect = {
   },
 } as const;
 
-type ProgramRuleBatch = {
+export type ProgramRuleBatch = {
   start_date: Date;
   end_date: Date;
   programs: {
@@ -85,7 +85,7 @@ type ProgramRuleBatch = {
  * - non-accredited programs are unlimited, but no schedule may overlap
  *   any active enrollment (accredited or not)
  */
-function findProgramRuleConflict(
+export function findProgramRuleConflict(
   activeBatches: ProgramRuleBatch[],
   candidate: ProgramRuleBatch,
 ): string | null {
@@ -127,7 +127,7 @@ function findProgramRuleConflict(
  * how Prisma reads and writes @db.Date columns. Using the local day keeps the
  * stored date the same as the day the registrar sees.
  */
-function localCalendarDay(date: Date, addYears = 0): Date {
+export function localCalendarDay(date: Date, addYears = 0): Date {
   return new Date(
     Date.UTC(date.getFullYear() + addYears, date.getMonth(), date.getDate()),
   );
@@ -428,6 +428,7 @@ export class EnrollmentsService {
         start_date: true,
         end_date: true,
         batch_status: true,
+        start_date_confirmed_at: true,
         programs: {
           select: {
             id: true,

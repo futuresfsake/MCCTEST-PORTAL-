@@ -61,6 +61,12 @@ export class AdminBatchesController {
     return this.batchesService.getDropdownData();
   }
 
+  /** GET /api/admin/batches/:id/history: date and status changes, newest first */
+  @Get(':id/history')
+  getHistory(@Param('id', ParseUUIDPipe) id: string) {
+    return this.batchesService.getHistory(id);
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.batchesService.findOne(id);
@@ -75,8 +81,12 @@ export class AdminBatchesController {
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateBatchDto) {
-    return this.batchesService.update(id, dto);
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBatchDto,
+    @Request() req: { user: AuthenticatedUser },
+  ) {
+    return this.batchesService.update(id, dto, req.user.id);
   }
 
   @Patch(':id/status')

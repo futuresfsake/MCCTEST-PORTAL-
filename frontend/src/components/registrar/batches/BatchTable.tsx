@@ -12,6 +12,9 @@ export interface BatchRow {
   trainer: { id: string; full_name: string } | null;
   start_date: string;
   end_date: string;
+  /** Set once the trainer confirmed the start date; the dates are then the trainer's. */
+  start_date_confirmed_at: string | null;
+  start_date_confirmed_by: string | null;
   capacity: number;
   enrollment_count: number;
   available_slots: number;
@@ -46,6 +49,15 @@ function SlotBar({ enrolled, capacity }: { enrolled: number; capacity: number })
         {enrolled}/{capacity}
       </span>
     </div>
+  );
+}
+
+/** Planned (set by staff) or Confirmed by trainer. */
+export function DateConfirmationLabel({ batch }: { batch: Pick<BatchRow, 'start_date_confirmed_at'> }) {
+  return batch.start_date_confirmed_at ? (
+    <span className="text-[10px] font-semibold uppercase tracking-wider text-green-700">Confirmed by trainer</span>
+  ) : (
+    <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Planned</span>
   );
 }
 
@@ -204,6 +216,7 @@ export const BatchTable: React.FC<Props> = ({
                     <div className="flex flex-col gap-0.5">
                       <span>{formatDate(b.start_date)}</span>
                       <span className="text-[10px] text-slate-400">to {formatDate(b.end_date)}</span>
+                      <DateConfirmationLabel batch={b} />
                     </div>
                   </td>
 
