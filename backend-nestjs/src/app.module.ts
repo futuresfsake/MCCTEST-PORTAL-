@@ -24,6 +24,7 @@ import { AdminTraineesModule } from './users/admin/trainee-information/trainees.
 import { InventoryModule } from './inventory/inventory.module';
 import { TraineeModule } from './users/trainee/trainee.module';
 import { TrainerTraineesModule } from './users/trainer/trainee-information/trainees.module';
+import { TrainerClassesModule } from './users/trainer/classes/trainer-classes.module';
 import { TrainerWithdrawalModule } from './users/trainer/withdrawal/trainer-withdrawal.module';
 import { RegistrarWithdrawalModule } from './users/registrar/withdrawal/registrar-withdrawal.module';
 import { AdminWithdrawalModule } from './users/admin/withdrawal/admin-withdrawal.module';
@@ -61,6 +62,7 @@ import { EncoderTraineesModule } from './users/encoder/trainee-information/train
     InventoryModule,
     TraineeModule,
     TrainerTraineesModule,
+    TrainerClassesModule,
     TrainerWithdrawalModule,
     RegistrarWithdrawalModule,
     AdminWithdrawalModule,

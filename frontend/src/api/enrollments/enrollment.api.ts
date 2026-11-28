@@ -101,6 +101,7 @@ export function createEnrollmentApi(scope: EnrollmentScope) {
           })),
           startDate: batch.start_date,
           endDate: batch.end_date,
+          datesConfirmed: Boolean(batch.start_date_confirmed_at),
           capacity: batch.capacity,
           remainingCapacity: batch.remainingCapacity ?? (batch.capacity - (batch._count?.enrollments || 0)),
           batchStatus: batch.batch_status,

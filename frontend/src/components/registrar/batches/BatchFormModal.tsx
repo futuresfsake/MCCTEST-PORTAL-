@@ -63,6 +63,8 @@ export const BatchFormModal: React.FC<Props> = ({
 
   const isEdit = !!batch;
   const isLocked = isEdit && CRITICAL_LOCKED_STATUSES.includes(batch?.batch_status ?? '');
+  // Once the trainer confirmed the start date, only the trainer changes the dates.
+  const datesLocked = isLocked || (isEdit && !!batch?.start_date_confirmed_at);
 
   useEffect(() => {
     let nextForm: FormData;
@@ -157,6 +159,11 @@ export const BatchFormModal: React.FC<Props> = ({
               {isLocked && (
                 <p className="mt-1 text-xs text-amber-700 font-medium">
                   Some fields are locked — batch status is {batch?.batch_status.toLowerCase()}
+                </p>
+              )}
+              {!isLocked && datesLocked && (
+                <p className="mt-1 text-xs text-amber-700 font-medium">
+                  The trainer confirmed the start date. Ask the trainer to change the dates.
                 </p>
               )}
             </div>
@@ -267,8 +274,8 @@ export const BatchFormModal: React.FC<Props> = ({
                   type="date"
                   value={form.start_date}
                   onChange={(e) => set('start_date', e.target.value)}
-                  disabled={isLocked}
-                  className={inputClass(!!errors.start_date, isLocked)}
+                  disabled={datesLocked}
+                  className={inputClass(!!errors.start_date, datesLocked)}
                 />
               </Field>
             </div>
@@ -279,8 +286,8 @@ export const BatchFormModal: React.FC<Props> = ({
                   type="date"
                   value={form.end_date}
                   onChange={(e) => set('end_date', e.target.value)}
-                  disabled={isLocked}
-                  className={inputClass(!!errors.end_date, isLocked)}
+                  disabled={datesLocked}
+                  className={inputClass(!!errors.end_date, datesLocked)}
                 />
               </Field>
             </div>

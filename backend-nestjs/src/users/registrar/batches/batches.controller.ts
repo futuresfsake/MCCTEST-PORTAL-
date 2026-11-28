@@ -83,8 +83,12 @@ export class BatchesController {
    * PATCH /api/registrar/batches/:id
    */
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateBatchDto) {
-    return this.batchesService.update(id, dto);
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdateBatchDto,
+    @Request() req: { user: AuthenticatedUser },
+  ) {
+    return this.batchesService.update(id, dto, req.user.id);
   }
 
   /**

@@ -737,7 +737,7 @@ const Step2BatchSelection: React.FC<{
                     <span className="min-w-0 flex-1">
                       <span className="block font-medium">{batch.batchName}</span>
                       <span className="block text-xs">
-                        {new Date(batch.startDate).toLocaleDateString()} – {new Date(batch.endDate).toLocaleDateString()} · {formatSchedules(batch)}
+                        {new Date(batch.startDate).toLocaleDateString()} – {new Date(batch.endDate).toLocaleDateString()} ({batch.datesConfirmed ? 'Confirmed by trainer' : 'Planned'}) · {formatSchedules(batch)}
                       </span>
                       <span className="block text-xs">Remaining slots: {batch.remainingCapacity} / {batch.capacity}</span>
                       {!batch.eligible && <span className="mt-1 block text-xs font-medium">{batch.blockedReason}</span>}

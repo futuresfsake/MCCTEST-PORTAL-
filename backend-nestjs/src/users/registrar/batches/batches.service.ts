@@ -1,16 +1,26 @@
 //backend-nestjs\src\users\registrar\batches\batches.service.ts
 import {
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import {
+  batch_schedule_change_enum,
   batch_status_enum,
   user_role_enum,
 } from '../../../generated/prisma/client';
 
 import { PrismaService } from '../../../prisma/prisma.service';
+import {
+  BatchScheduleService,
+  toDateOnly,
+} from '../../../batch-schedule/batch-schedule.service';
+import {
+  CONFIRMED_BY_TRAINER_MESSAGE,
+  ONLY_TRAINER_STARTS_OR_CLOSES_MESSAGE,
+} from '../../../batch-schedule/batch-schedule.constants';
 import { CreateBatchDto } from './dto/create-batch.dto';
 import { UpdateBatchDto, UpdateBatchStatusDto } from './dto/update-batch.dto';
 
@@ -28,9 +38,16 @@ const CRITICAL_FIELDS: (keyof UpdateBatchDto)[] = [
   'capacity',
 ];
 
+const CONFIRMER_SELECT = {
+  select: { first_name: true, last_name: true },
+} as const;
+
 @Injectable()
 export class BatchesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly schedule: BatchScheduleService,
+  ) {}
 
   // ─── LIST ─────────────────────────────────────────────────────────────────
 
@@ -71,6 +88,7 @@ export class BatchesService {
             },
           },
         },
+        start_date_confirmer: CONFIRMER_SELECT,
         _count: {
           select: {
             enrollments: {
@@ -113,6 +131,7 @@ export class BatchesService {
             },
           },
         },
+        start_date_confirmer: CONFIRMER_SELECT,
         _count: {
           select: {
             enrollments: {
@@ -194,6 +213,7 @@ export class BatchesService {
             users: { select: { id: true, first_name: true, last_name: true } },
           },
         },
+        start_date_confirmer: CONFIRMER_SELECT,
         _count: { select: { enrollments: true } },
       },
     });
@@ -208,7 +228,7 @@ export class BatchesService {
 
   // ─── UPDATE ───────────────────────────────────────────────────────────────
 
-  async update(id: string, dto: UpdateBatchDto) {
+  async update(id: string, dto: UpdateBatchDto, changedBy: string) {
     const batch = await this.prisma.batch.findUnique({ where: { id } });
     if (!batch) throw new NotFoundException(`Batch ${id} not found`);
 
@@ -274,30 +294,79 @@ export class BatchesService {
       if (!trainer) throw new NotFoundException('Trainer not found');
     }
 
-    const updated = await this.prisma.batch.update({
-      where: { id },
-      data: {
-        ...(dto.trainer_id && { trainer_id: dto.trainer_id }),
-        ...(dto.batch_name && { batch_name: dto.batch_name }),
-        ...(dto.capacity !== undefined && { capacity: dto.capacity }),
-        ...(hasStartDate &&
-          dto.start_date && { start_date: new Date(dto.start_date) }),
-        ...(hasEndDate && dto.end_date && { end_date: new Date(dto.end_date) }),
-        ...(dto.venue !== undefined && { remarks: dto.venue }), // stored in remarks for now
-        ...(dto.remarks !== undefined && { remarks: dto.remarks }),
-      },
-      include: {
-        programs: { select: { id: true, name: true, program_code: true } },
-        trainer: {
-          include: {
-            users: { select: { id: true, first_name: true, last_name: true } },
+    // The form sends the dates on every save, so only a real change counts.
+    const datesChanged =
+      (hasStartDate &&
+        dto.start_date?.slice(0, 10) !== toDateOnly(batch.start_date)) ||
+      (hasEndDate && dto.end_date?.slice(0, 10) !== toDateOnly(batch.end_date));
+    if (datesChanged && batch.start_date_confirmed_at) {
+      throw new ConflictException(CONFIRMED_BY_TRAINER_MESSAGE);
+    }
+
+    const data = {
+      ...(dto.trainer_id && { trainer_id: dto.trainer_id }),
+      ...(dto.batch_name && { batch_name: dto.batch_name }),
+      ...(dto.capacity !== undefined && { capacity: dto.capacity }),
+      ...(hasStartDate &&
+        dto.start_date && { start_date: new Date(dto.start_date) }),
+      ...(hasEndDate && dto.end_date && { end_date: new Date(dto.end_date) }),
+      ...(dto.venue !== undefined && { remarks: dto.venue }), // stored in remarks for now
+      ...(dto.remarks !== undefined && { remarks: dto.remarks }),
+    };
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      if (datesChanged) {
+        // Locked, so a trainer confirming at the same moment cannot be overwritten.
+        const locked = await this.schedule.lockBatch(tx, id);
+        if (locked.start_date_confirmed_at) {
+          throw new ConflictException(CONFIRMED_BY_TRAINER_MESSAGE);
+        }
+        const newStart = data.start_date ?? locked.start_date;
+        const newEnd = data.end_date ?? locked.end_date;
+        await this.schedule.assertNoTraineeConflicts(tx, id, newStart, newEnd);
+        await this.schedule.recordHistory(
+          tx,
+          locked,
+          {
+            start_date: newStart,
+            end_date: newEnd,
+            batch_status: locked.batch_status,
           },
+          batch_schedule_change_enum.DATES_EDITED_BY_STAFF,
+          'Planned dates edited by staff',
+          changedBy,
+        );
+      }
+
+      return tx.batch.update({
+        where: { id },
+        data,
+        include: {
+          programs: { select: { id: true, name: true, program_code: true } },
+          trainer: {
+            include: {
+              users: {
+                select: { id: true, first_name: true, last_name: true },
+              },
+            },
+          },
+          start_date_confirmer: CONFIRMER_SELECT,
+          _count: { select: { enrollments: true } },
         },
-        _count: { select: { enrollments: true } },
-      },
+      });
     });
 
     return this.formatBatch(updated);
+  }
+
+  /** The batch date and status timeline, newest first. */
+  async getHistory(id: string) {
+    const batch = await this.prisma.batch.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+    if (!batch) throw new NotFoundException(`Batch ${id} not found`);
+    return this.schedule.getHistory(id);
   }
 
   // ─── ADVANCE STATUS ───────────────────────────────────────────────────────
@@ -312,6 +381,13 @@ export class BatchesService {
 
     if (!dto.batch_status) {
       throw new BadRequestException('Batch status is required');
+    }
+
+    if (
+      dto.batch_status === batch_status_enum.ONGOING ||
+      dto.batch_status === batch_status_enum.CLOSED
+    ) {
+      throw new ConflictException(ONLY_TRAINER_STARTS_OR_CLOSES_MESSAGE);
     }
 
     const currentIdx = STATUS_ORDER.indexOf(batch.batch_status);
@@ -447,6 +523,10 @@ export class BatchesService {
       capacity: batch.capacity,
       start_date: batch.start_date,
       end_date: batch.end_date,
+      start_date_confirmed_at: batch.start_date_confirmed_at ?? null,
+      start_date_confirmed_by: batch.start_date_confirmer
+        ? `${batch.start_date_confirmer.first_name} ${batch.start_date_confirmer.last_name}`
+        : null,
       batch_status: batch.batch_status,
       remarks: batch.remarks,
       created_at: batch.created_at,

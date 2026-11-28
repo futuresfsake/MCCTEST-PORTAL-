@@ -73,6 +73,8 @@ export interface BatchInfo {
   schedules: BatchSchedule[];
   startDate: string;
   endDate: string;
+  /** True once the trainer confirmed the start date. */
+  datesConfirmed: boolean;
   capacity: number;
   remainingCapacity: number;
   batchStatus: 'OPEN' | 'ONGOING' | 'CLOSED' | 'CANCELLED';

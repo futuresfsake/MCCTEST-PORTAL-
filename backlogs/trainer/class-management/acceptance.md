@@ -4,7 +4,7 @@
 |-------|-------|
 | **Jira** | MP-66 |
 | **Type** | Feature (new Trainer page, new endpoints, one migration) |
-| **Status** | NOT STARTED |
+| **Status** | BUILT, not merged. The PM applies the migration to Supabase |
 | **Assignee** | Chelsea Cllj (Jira default, reassign if needed) |
 | **Route** | `/trainer/classes` (the sidebar link "Class Records" becomes "Class Management") |
 | **Backend** | `/api/trainer/classes` (new) |
@@ -124,80 +124,80 @@ Creating and cancelling batches (Admin, Registrar), attendance and sessions (FUN
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| CM-1 | Only `TRAINER` can open `/trainer/classes`. Other roles go to `/403` | NOT STARTED | `ProtectedRoute` |
-| CM-2 | Every endpoint needs a login (401) and the `TRAINER` role (403 for Admin, Registrar, Encoder, Trainee) | NOT STARTED | Guards |
-| CM-3 | A trainer sees and changes only batches where they are the batch trainer. Another trainer's batch returns 404 on read and on every change | NOT STARTED | Same ownership rule as MP-48 and MP-50 |
-| CM-4 | The trainer comes from the login. No query, body or path value picks a trainer | NOT STARTED | `@CurrentUser()` |
-| CM-5 | Responses have no password hash, email, contact number, address or birth date. Trainees in a conflict list appear by name and system ID only | NOT STARTED | Typed response |
-| CM-6 | Input is validated: bad ids, dates that are not dates, a reason too short or too long, and extra fields are rejected or dropped | NOT STARTED | DTOs, `whitelist` |
+| CM-1 | Only `TRAINER` can open `/trainer/classes`. Other roles go to `/403` | PASS | `ProtectedRoute` |
+| CM-2 | Every endpoint needs a login (401) and the `TRAINER` role (403 for Admin, Registrar, Encoder, Trainee) | PASS | Guards |
+| CM-3 | A trainer sees and changes only batches where they are the batch trainer. Another trainer's batch returns 404 on read and on every change | PASS | Same ownership rule as MP-48 and MP-50 |
+| CM-4 | The trainer comes from the login. No query, body or path value picks a trainer | PASS | `@CurrentUser()` |
+| CM-5 | Responses have no password hash, email, contact number, address or birth date. Trainees in a conflict list appear by name and system ID only | PASS | Typed response |
+| CM-6 | Input is validated: bad ids, dates that are not dates, a reason too short or too long, and extra fields are rejected or dropped | PASS | DTOs, `whitelist` |
 
 ### List and page
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| CM-7 | The page lists my batches (not cancelled) with program, batch name, status, start and end date, the Planned or Confirmed by trainer label, enrolled out of capacity, and class days and time | NOT STARTED | |
-| CM-8 | The status filter and the page are kept in the URL and survive a refresh | NOT STARTED | |
-| CM-9 | Empty, loading and error states exist. A trainer with no batch sees a friendly empty state and the API returns 200 | NOT STARTED | |
-| CM-10 | The sidebar link reads "Class Management" and opens `/trainer/classes` | NOT STARTED | Open question 5 |
-| CM-11 | The side panel shows the history timeline (who, when, old and new dates, reason) newest first | NOT STARTED | |
+| CM-7 | The page lists my batches (not cancelled) with program, batch name, status, start and end date, the Planned or Confirmed by trainer label, enrolled out of capacity, and class days and time | PASS |  |
+| CM-8 | The status filter and the page are kept in the URL and survive a refresh | PASS |  |
+| CM-9 | Empty, loading and error states exist. A trainer with no batch sees a friendly empty state and the API returns 200 | PASS | Empty state and the 200 checked. The loading and error states exist but were not forced in the browser |
+| CM-10 | The sidebar link reads "Class Management" and opens `/trainer/classes` | PASS | Open question 5 |
+| CM-11 | The side panel shows the history timeline (who, when, old and new dates, reason) newest first | PASS |  |
 
 ### Confirm or change the start date
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| CM-12 | The trainer can confirm or change the start date of an `OPEN` batch with a reason. The batch then shows Confirmed by trainer, with who and when | NOT STARTED | |
-| CM-13 | By default the end date moves by the same number of days. The trainer can edit it in the same save. The preview shows both new dates before saving | NOT STARTED | Open question 7 |
-| CM-14 | The new end date must be after the new start date. Otherwise 400 | NOT STARTED | |
-| CM-15 | A start date in the past is accepted (with a reason), as long as no recorded session is earlier than it (CM-18). The page shows a note that the date is in the past | NOT STARTED | Decided: past dates allowed |
-| CM-16 | A reason is required (5 to 500 characters) for every change. A missing reason returns 400 | NOT STARTED | |
-| CM-17 | A batch that is `ONGOING`, `CLOSED` or `CANCELLED` cannot have its start date changed (409) | NOT STARTED | |
-| CM-18 | A new start date after the date of a recorded session of the batch returns 400 and names the session date | NOT STARTED | Empty until FUNC-006 |
-| CM-19 | If the new dates would put an enrolled trainee in conflict with another active enrollment of that trainee, the change is refused (409) and the response says how many trainees and which. The rule is the shared enrollment rule, not a copy | NOT STARTED | `enrollments.service` overlap rule |
-| CM-20 | `GET .../date-check` returns the same conflict list without changing anything, and the page shows it in the preview | NOT STARTED | |
-| CM-21 | With the tick box on, an announcement for the batch scope is posted with the new dates, in the same transaction. With it off, none is posted | NOT STARTED | Open question 6 |
+| CM-12 | The trainer can confirm or change the start date of an `OPEN` batch with a reason. The batch then shows Confirmed by trainer, with who and when | PASS |  |
+| CM-13 | By default the end date moves by the same number of days. The trainer can edit it in the same save. The preview shows both new dates before saving | PASS | Open question 7 |
+| CM-14 | The new end date must be after the new start date. Otherwise 400 | PASS |  |
+| CM-15 | A start date in the past is accepted (with a reason), as long as no recorded session is earlier than it (CM-18). The page shows a note that the date is in the past | PASS | Decided: past dates allowed |
+| CM-16 | A reason is required (5 to 500 characters) for every change. A missing reason returns 400 | PASS |  |
+| CM-17 | A batch that is `ONGOING`, `CLOSED` or `CANCELLED` cannot have its start date changed (409) | PASS |  |
+| CM-18 | A new start date after the date of a recorded session of the batch returns 400 and names the session date | PASS | Empty until FUNC-006 |
+| CM-19 | If the new dates would put an enrolled trainee in conflict with another active enrollment of that trainee, the change is refused (409) and the response says how many trainees and which. The rule is the shared enrollment rule, not a copy | PASS | `enrollments.service` overlap rule |
+| CM-20 | `GET .../date-check` returns the same conflict list without changing anything, and the page shows it in the preview | PASS |  |
+| CM-21 | With the tick box on, an announcement for the batch scope is posted with the new dates, in the same transaction. With it off, none is posted | PASS | Open question 6 |
 
 ### Mark as started and change the end date
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| CM-22 | Mark as started moves an `OPEN` batch to `ONGOING` and writes a `STARTED` history row. The batch must have a start date of today or earlier, otherwise 400 | NOT STARTED | |
-| CM-23 | Mark as started on a batch that is not `OPEN` returns 409 and changes nothing | NOT STARTED | |
-| CM-24 | There is no minimum number of trainees. A batch with any number of enrolled trainees, even none, can be started. The enrolled number never goes above the capacity | NOT STARTED | Decided: no minimum |
-| CM-25 | The trainer can change the end date of an `ONGOING` batch with a reason. It must be today or later and after the start date. There is no limit on how far it is extended | NOT STARTED | Decided: no limit |
-| CM-26 | The same trainee-conflict rule applies to an end date extension (CM-19) | NOT STARTED | |
+| CM-22 | Mark as started moves an `OPEN` batch to `ONGOING` and writes a `STARTED` history row. The batch must have a start date of today or earlier, otherwise 400 | PASS |  |
+| CM-23 | Mark as started on a batch that is not `OPEN` returns 409 and changes nothing | PASS |  |
+| CM-24 | There is no minimum number of trainees. A batch with any number of enrolled trainees, even none, can be started. The enrolled number never goes above the capacity | PASS | Decided: no minimum |
+| CM-25 | The trainer can change the end date of an `ONGOING` batch with a reason. It must be today or later and after the start date. There is no limit on how far it is extended | PASS | Decided: no limit |
+| CM-26 | The same trainee-conflict rule applies to an end date extension (CM-19) | PASS |  |
 
 ### Close the batch
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| CM-39 | The trainer can close an `ONGOING` batch with a remark. The status becomes `CLOSED` and a `CLOSED` history row is written with who and when | NOT STARTED | Decided: the trainer closes |
-| CM-40 | Closing a batch that is not `ONGOING` returns 409 and changes nothing. Another trainer's batch returns 404 | NOT STARTED | |
-| CM-41 | If the end date is in the future when the batch is closed, it is set to today in the same save, and the history row shows the old and new end date. A closed batch no longer blocks the trainees' schedules for new enrollments | NOT STARTED | Enrollment overlap rule reads `end_date` |
-| CM-42 | Closing changes only the batch. It does not change any enrollment status (what closing does to enrollments is TBA) | NOT STARTED | Open question 5 (TBA) |
-| CM-43 | This page and API use each batch's own `capacity` and no fixed maximum (no 25 or 30 in the code). Enrolling beyond the capacity still fails as today | NOT STARTED | Decided: dynamic. The `@Max(25)` in the Registrar DTOs is a separate follow-up |
-| CM-44 | The Admin and the Registrar cannot move a batch to `ONGOING` or `CLOSED`. The existing batch status endpoints return 409 with "Only the trainer can start or close a batch". Cancelling still works for them | NOT STARTED | Decided: up to the trainer. Cancelling kept is an assumption |
+| CM-39 | The trainer can close an `ONGOING` batch with a remark. The status becomes `CLOSED` and a `CLOSED` history row is written with who and when | PASS | Decided: the trainer closes |
+| CM-40 | Closing a batch that is not `ONGOING` returns 409 and changes nothing. Another trainer's batch returns 404 | PASS |  |
+| CM-41 | If the end date is in the future when the batch is closed, it is set to today in the same save, and the history row shows the old and new end date. A closed batch no longer blocks the trainees' schedules for new enrollments | PASS | Enrollment overlap rule reads `end_date` |
+| CM-42 | Closing changes only the batch. It does not change any enrollment status (what closing does to enrollments is TBA) | PASS | Open question 5 (TBA) |
+| CM-43 | This page and API use each batch's own `capacity` and no fixed maximum (no 25 or 30 in the code). Enrolling beyond the capacity still fails as today | PASS | Decided: dynamic. The `@Max(25)` in the Registrar DTOs is a separate follow-up |
+| CM-44 | The Admin and the Registrar cannot move a batch to `ONGOING` or `CLOSED`. The existing batch status endpoints return 409 with "Only the trainer can start or close a batch". Cancelling still works for them | PASS | Decided: up to the trainer. Cancelling kept is an assumption |
 
 ### Reflection
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| CM-27 | After a change, the Admin batch list, the Registrar batch list and enrollment batch picker, the Trainee Dashboard and the Trainer Dashboard show the new dates on the next load, with no old copy kept in the frontend | NOT STARTED | Core of the ticket |
-| CM-28 | The Admin and Registrar batch lists show Planned or Confirmed by trainer, and the Admin sees the history | NOT STARTED | |
-| CM-29 | After the trainer confirmed the start date, the Registrar and the Admin editing the dates of that batch get 409 with the message to ask the trainer. There is no override for anyone. Other fields (batch name, capacity, trainer) still follow the existing rules | NOT STARTED | Decided: no override |
-| CM-30 | A Registrar or Admin edit of the dates of an unconfirmed batch still works and writes a `DATES_EDITED_BY_STAFF` history row | NOT STARTED | Keeps the history complete |
-| CM-31 | The trainee in the batch sees the batch announcement posted by the trainer | NOT STARTED | Uses the existing batch scope |
+| CM-27 | After a change, the Admin batch list, the Registrar batch list and enrollment batch picker, the Trainee Dashboard and the Trainer Dashboard show the new dates on the next load, with no old copy kept in the frontend | PASS | Core of the ticket. Checked on the Admin and Registrar lists, the enrollment batch picker and the Trainee Dashboard. The Trainer Dashboard (MP-65) does not show batch dates yet |
+| CM-28 | The Admin and Registrar batch lists show Planned or Confirmed by trainer, and the Admin sees the history | PASS |  |
+| CM-29 | After the trainer confirmed the start date, the Registrar and the Admin editing the dates of that batch get 409 with the message to ask the trainer. There is no override for anyone. Other fields (batch name, capacity, trainer) still follow the existing rules | PASS | Decided: no override |
+| CM-30 | A Registrar or Admin edit of the dates of an unconfirmed batch still works and writes a `DATES_EDITED_BY_STAFF` history row | PASS | Keeps the history complete. The history reason is "Planned dates edited by staff", because the staff form has no reason field |
+| CM-31 | The trainee in the batch sees the batch announcement posted by the trainer | PASS | Uses the existing batch scope |
 
 ### Integrity, concurrency and performance
 
 | # | Criteria | Status | Notes |
 |---|---------|--------|-------|
-| CM-32 | A stale save (the batch changed since the trainer loaded it) returns 409 and changes nothing | NOT STARTED | Compare-and-set on the dates and status |
-| CM-33 | Two changes at the same moment give one winner, also a trainer and a Registrar at once | NOT STARTED | Conditional update or row lock |
-| CM-34 | The batch change, the history row and the announcement are saved together or not at all. A failure in the announcement leaves the batch unchanged | NOT STARTED | One transaction |
-| CM-35 | History is append-only. The application has no update or delete for it | NOT STARTED | By convention, noted in the audit |
-| CM-36 | The list runs a fixed number of queries, whatever the number of batches | NOT STARTED | Statement logging |
-| CM-37 | The migration applies on a fresh database and `prisma migrate diff` shows no drift for the new objects. Existing batches keep their dates and show Planned | NOT STARTED | TECH-02 and TECH-03 known |
-| CM-38 | Constants (reason length, status names) are in one place on each side, and the date rules are shared by the trainer, Registrar and Admin endpoints | NOT STARTED | Config duplication check |
+| CM-32 | A stale save (the batch changed since the trainer loaded it) returns 409 and changes nothing | PASS | Compare-and-set on the dates and status |
+| CM-33 | Two changes at the same moment give one winner, also a trainer and a Registrar at once | PASS | Conditional update or row lock |
+| CM-34 | The batch change, the history row and the announcement are saved together or not at all. A failure in the announcement leaves the batch unchanged | PASS | One transaction |
+| CM-35 | History is append-only. The application has no update or delete for it | PASS | By convention, noted in the audit |
+| CM-36 | The list runs a fixed number of queries, whatever the number of batches | NOT TESTED | Statement logging. Not measured. The list is 2 queries by design (page and count), whatever the number of batches |
+| CM-37 | The migration applies on a fresh database and `prisma migrate diff` shows no drift for the new objects. Existing batches keep their dates and show Planned | PASS | TECH-02 and TECH-03 known. On a throwaway database. The PM applies the migration to Supabase |
+| CM-38 | Constants (reason length, status names) are in one place on each side, and the date rules are shared by the trainer, Registrar and Admin endpoints | PASS | Config duplication check |
 
 ---
 
@@ -306,4 +306,22 @@ Creating and cancelling batches (Admin, Registrar), attendance and sessions (FUN
 
 ---
 
-## Summary: 0 PASS, 44 NOT STARTED (44 criteria), 16 test cases
+## How It Was Checked
+
+On a throwaway Postgres 17 outside the repository, then shut down. Nothing was run on Supabase.
+
+- All 15 migrations applied to an empty database ("Database schema is up to date"), with the TECH-02 byte-order mark removed from a copy of `0_init`. The schema on `dev` plus only this migration shows no drift.
+- 139 real API requests against the built backend, all passed: every role and missing login, ownership, validation, each action and its refusals, the trainee conflict, recorded sessions, the announcement on and off, a stale save, a failed announcement rolling everything back, a trainer and a Registrar saving at the same moment (6 rounds, one winner each), and closing freeing the trainees' schedules.
+- 28 checks on the real pages in headless Edge as Trainer, Admin and Registrar, all passed.
+- No unit test files were added, the same choice as MP-43 and MP-47 (D-11). The 102 existing tests pass.
+
+## Decisions Made While Building
+
+| # | Decision | Why |
+|---|----------|-----|
+| 1 | Mark as started and close also need a reason | The rule says every change needs one |
+| 2 | A Registrar or Admin date edit is also refused when it would put a trainee in conflict | The ticket says the date rules are shared by every endpoint |
+| 3 | The Registrar and Admin batch lists show the label; only the Admin batch panel shows the history | CM-28 |
+| 4 | A staff save that sends the dates unchanged (the edit form always sends them) does not count as a date change | So the capacity or name of a confirmed batch can still be edited |
+
+## Summary: 43 PASS, 1 NOT TESTED (CM-36, query count not measured), 16 test cases

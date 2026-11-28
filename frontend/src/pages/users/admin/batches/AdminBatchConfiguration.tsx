@@ -326,6 +326,7 @@ function AdminBatchConfiguration() {
         batch={selectedBatch}
         onClose={() => setDrawerOpen(false)}
         onEdit={handleEdit}
+        historyEndpoint={batchesEndpoint}
       />
 
       {/* Create / Edit modal */}

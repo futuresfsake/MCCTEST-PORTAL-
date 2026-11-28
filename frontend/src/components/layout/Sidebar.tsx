@@ -186,7 +186,7 @@ const sidebarConfig: Record<
             icon: 'fa-solid fa-layer-group',
           },
           {
-            label: 'Class Records',
+            label: 'Class Management',
             path: '/trainer/classes',
             icon: 'fa-solid fa-users-rectangle',
           },
